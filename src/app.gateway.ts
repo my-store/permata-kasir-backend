@@ -1,4 +1,4 @@
-import { Admin, User } from 'generated/prisma';
+import { Admin, User } from 'prisma/generated';
 import { Server, Socket } from 'socket.io';
 import { AppService } from './app.service';
 import {

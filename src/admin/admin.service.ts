@@ -1,4 +1,4 @@
-import { Admin, Prisma } from '../../generated/prisma/client';
+import { Admin, Prisma } from '../../prisma/generated/client';
 import { PrismaService } from '../prisma.service';
 import { encryptPassword } from 'src/libs/bcrypt';
 import { Injectable } from '@nestjs/common';
