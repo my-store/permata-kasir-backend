@@ -1,4 +1,4 @@
-import { Admin, Prisma } from '../../generated/prisma/client';
+import { Admin, Prisma } from '../../prisma/generated/client';
 import { FileInterceptor } from '@nestjs/platform-express';
 import { UpdateAdminDto, UpdateAdminPasswordDto } from './dto/update-admin.dto';
 import { CreateAdminDto } from './dto/create-admin.dto';

@@ -1,4 +1,4 @@
-import { User, Prisma } from '../../generated/prisma/client';
+import { User, Prisma } from '../../prisma/generated/client';
 import { FileInterceptor } from '@nestjs/platform-express';
 import { AdminService } from 'src/admin/admin.service';
 import { CreateUserDto } from './dto/create-user.dto';
