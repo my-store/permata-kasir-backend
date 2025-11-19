@@ -1,19 +1,19 @@
-import { User, Prisma } from '../../prisma/generated/client';
-import { FileInterceptor } from '@nestjs/platform-express';
-import { AdminService } from 'src/admin/admin.service';
-import { CreateUserDto } from './dto/create-user.dto';
-import { UpdateUserDto, UpdateUserPasswordDto } from './dto/update-user.dto';
-import { AuthGuard } from 'src/auth/auth.guard';
-import { ParseUrlQuery } from 'src/libs/string';
-import { UserService } from './user.service';
-import * as bcrypt from 'bcrypt';
+import { User, Prisma } from "../../prisma/generated/client";
+import { FileInterceptor } from "@nestjs/platform-express";
+import { AdminService } from "src/admin/admin.service";
+import { CreateUserDto } from "./dto/create-user.dto";
+import { UpdateUserDto, UpdateUserPasswordDto } from "./dto/update-user.dto";
+import { AuthGuard } from "src/auth/auth.guard";
+import { ParseUrlQuery } from "src/libs/string";
+import { UserService } from "./user.service";
+import * as bcrypt from "bcrypt";
 import {
   GetFileDestBeforeUpload,
   ProfileImageValidator,
   upload_img_dir,
   DeleteFile,
   UploadFile,
-} from 'src/libs/upload-file-handler';
+} from "src/libs/upload-file-handler";
 import {
   InternalServerErrorException,
   UnauthorizedException,
@@ -29,25 +29,25 @@ import {
   Body,
   Post,
   Get,
-} from '@nestjs/common';
-import { encryptPassword } from 'src/libs/bcrypt';
+} from "@nestjs/common";
+import { encryptPassword } from "src/libs/bcrypt";
 
-@Controller('user')
+@Controller("user")
 export class UserController {
   constructor(
     private readonly userService: UserService,
-    private readonly adminService: AdminService,
+    private readonly adminService: AdminService
   ) {}
 
   // Look at .env file
   // The URL should be '/api/admin/register/APP_REGISTER_DEVCODE'
-  @Post('register/:dev_code')
-  @UseInterceptors(FileInterceptor('foto'))
+  @Post("register/:dev_code")
+  @UseInterceptors(FileInterceptor("foto"))
   async register(
-    @Param('dev_code') dev_code: string,
+    @Param("dev_code") dev_code: string,
     @Body() data: CreateUserDto,
     @UploadedFile()
-    foto: Express.Multer.File,
+    foto: Express.Multer.File
   ): Promise<any> {
     // Wrong developer key not presented
     if (!dev_code || dev_code != process.env.APP_REGISTER_DEVCODE) {
@@ -58,17 +58,17 @@ export class UserController {
   }
 
   @UseGuards(AuthGuard)
-  @Post('verify-password/:tlp')
+  @Post("verify-password/:tlp")
   async checkPassword(
-    @Param('tlp') tlp: string,
-    @Body() { password }: UpdateUserPasswordDto,
+    @Param("tlp") tlp: string,
+    @Body() { password }: UpdateUserPasswordDto
   ): Promise<any> {
     /* ------------------ MENGAMBIL DATA LAMA ------------------ */
     let oldData: User | null;
     try {
       oldData = await this.userService.findOne({ where: { tlp } });
     } catch {
-      throw new BadRequestException('User tidak ditemukan!');
+      throw new BadRequestException("User tidak ditemukan!");
     }
 
     const oldPassword: any = oldData?.password;
@@ -78,17 +78,17 @@ export class UserController {
 
   @UseGuards(AuthGuard)
   @Post()
-  @UseInterceptors(FileInterceptor('foto'))
+  @UseInterceptors(FileInterceptor("foto"))
   async create(
     @Body() data: CreateUserDto,
     @UploadedFile()
-    foto: Express.Multer.File,
+    foto: Express.Multer.File
   ): Promise<User> {
     let newData: any;
 
     /* ------------------ USER TIDAK MENGUNGGAH FOTO ------------------ */
     if (!foto) {
-      throw new BadRequestException('Wajib mengunggah foto!');
+      throw new BadRequestException("Wajib mengunggah foto!");
     } else {
       /* --------------------- PENGECEKAN FORMAT DAN UKURAN FOTO ---------------------
       |  Format foto yang dibolehkan adalah: JPG, JPEG dan PNG
@@ -153,15 +153,15 @@ export class UserController {
         ...data,
 
         // Remove 'public' from image directory
-        foto: data.foto.replace('public', ''),
+        foto: data.foto.replace("public", ""),
       });
     } catch (e) {
       // Unique constraint error
       if (e instanceof Prisma.PrismaClientKnownRequestError) {
         // The .code property can be accessed in a type-safe manner
-        if (e.code === 'P2002') {
+        if (e.code === "P2002") {
           throw new BadRequestException(
-            'There is a unique constraint violation.',
+            "There is a unique constraint violation."
           );
         }
       }
@@ -204,8 +204,8 @@ export class UserController {
   }
 
   @UseGuards(AuthGuard)
-  @Get(':tlp')
-  async findOne(@Param('tlp') tlp: string): Promise<User | null> {
+  @Get(":tlp")
+  async findOne(@Param("tlp") tlp: string): Promise<User | null> {
     let data: User | null;
 
     try {
@@ -218,11 +218,11 @@ export class UserController {
   }
 
   @UseGuards(AuthGuard)
-  @Patch(':tlp')
+  @Patch(":tlp")
   async update(
-    @Param('tlp') tlp: string,
+    @Param("tlp") tlp: string,
     @Body() data: UpdateUserDto,
-    @UploadedFile() foto?: Express.Multer.File,
+    @UploadedFile() foto?: Express.Multer.File
   ): Promise<User> {
     let updatedData: User;
 
@@ -231,7 +231,7 @@ export class UserController {
     try {
       oldData = await this.userService.findOne({ where: { tlp } });
     } catch {
-      throw new BadRequestException('User tidak ditemukan!');
+      throw new BadRequestException("User tidak ditemukan!");
     }
 
     /* ------------------ USER MERUBAH NO. TLP ------------------
@@ -309,8 +309,8 @@ export class UserController {
           ...data,
 
           // Remove 'public' from image directory
-          foto: data.foto?.replace('public', ''),
-        },
+          foto: data.foto?.replace("public", ""),
+        }
       );
     } catch (e) {
       throw new InternalServerErrorException(e);
@@ -323,14 +323,14 @@ export class UserController {
     if (foto) {
       // Hapus foto lama dulu
       try {
-        DeleteFile('public' + oldData?.foto);
+        DeleteFile("public" + oldData?.foto);
       } catch (e) {
         throw new InternalServerErrorException(e);
       }
 
       // Mengunggah foto baru
       try {
-        UploadFile(foto, 'public' + updatedData.foto);
+        UploadFile(foto, "public" + updatedData.foto);
       } catch (e) {
         throw new InternalServerErrorException(e);
       }
@@ -345,8 +345,8 @@ export class UserController {
   }
 
   @UseGuards(AuthGuard)
-  @Delete(':tlp')
-  async remove(@Param('tlp') tlp: string): Promise<User> {
+  @Delete(":tlp")
+  async remove(@Param("tlp") tlp: string): Promise<User> {
     let deletedData: User;
 
     // Delete data from database
@@ -359,7 +359,7 @@ export class UserController {
     // Delete image profile too
     try {
       // Dont forget to add 'public' int the path
-      DeleteFile('public' + deletedData.foto);
+      DeleteFile("public" + deletedData.foto);
     } catch (e) {
       throw new InternalServerErrorException(e);
     }

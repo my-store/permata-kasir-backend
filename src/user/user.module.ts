@@ -1,8 +1,8 @@
-import { AdminService } from 'src/admin/admin.service';
-import { UserController } from './user.controller';
-import { PrismaService } from '../prisma.service';
-import { UserService } from './user.service';
-import { Module } from '@nestjs/common';
+import { UserController } from "./user.controller";
+import { AdminService } from "src/admin/admin.service";
+import { PrismaService } from "../prisma.service";
+import { UserService } from "./user.service";
+import { Module } from "@nestjs/common";
 
 @Module({
   exports: [UserService],
