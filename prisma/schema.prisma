@@ -1,0 +1,44 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+// Looking for ways to speed up your queries, or scale easily with your serverless or edge functions?
+// Try Prisma Accelerate: https://pris.ly/cli/accelerate-init
+
+generator client {
+  provider = "prisma-client-js"
+  output   = "./generated"
+}
+
+datasource db {
+  // provider = "postgresql"
+  provider = "sqlite"
+  url      = env("DATABASE_URL")
+}
+
+model Admin {
+  id         Int      @id @default(autoincrement())
+  nama       String
+  tlp        String   @unique
+  password   String
+  foto       String   @default("") // URL foto
+  online     Boolean  @default(false)
+  lastOnline String   @default("")
+  createdAt  DateTime
+  updatedAt  DateTime
+}
+
+model User {
+  id        Int      @id @default(autoincrement())
+  nama      String
+  tlp       String   @unique
+  password  String
+  foto      String   @default("") // URL foto
+  createdAt DateTime
+  updatedAt DateTime
+
+  online     Boolean @default(false)
+  lastOnline String  @default("")
+
+  active        Boolean @default(false) // Need to activate by admin
+  deactivatedAt String  @default("") // This is empty until admin block this user
+}

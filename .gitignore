@@ -1,0 +1,13 @@
+node_modules
+
+prisma/database.sqlite
+prisma/migrations
+prisma/generated
+
+public/img/admin
+public/img/user
+
+.turbo
+dist
+test
+.env
