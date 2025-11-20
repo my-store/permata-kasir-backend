@@ -1,9 +1,9 @@
-import { Injectable, UnauthorizedException } from '@nestjs/common';
-import { Admin, User } from '../../prisma/generated/client';
-import { AdminService } from '../admin/admin.service';
-import { UserService } from '../user/user.service';
-import { JwtService } from '@nestjs/jwt';
-import * as bcrypt from 'bcrypt';
+import { Injectable, UnauthorizedException } from "@nestjs/common";
+import { Admin, User } from "../../prisma/generated/client";
+import { AdminService } from "../admin/admin.service";
+import { UserService } from "../user/user.service";
+import { JwtService } from "@nestjs/jwt";
+import * as bcrypt from "bcrypt";
 
 interface FindAdminOrUser {
   data: Admin | User;
@@ -15,24 +15,24 @@ export class AuthService {
   constructor(
     private readonly admin: AdminService,
     private readonly user: UserService,
-    private readonly jwt: JwtService,
+    private readonly jwt: JwtService
   ) {}
 
   async findAdminOrUser(tlp: string): Promise<FindAdminOrUser> {
     let data: any;
-    let role: string = '';
+    let role: string = "";
 
     // Try find admin first
     try {
       data = await this.admin.findOne({ where: { tlp } });
-      role = 'Admin';
+      role = "Admin";
     } catch (error) {}
 
     // Admin not found, try find User
     if (!data) {
       try {
         data = await this.user.findOne({ where: { tlp } });
-        role = 'User';
+        role = "User";
       } catch (error) {}
     }
 
@@ -45,7 +45,7 @@ export class AuthService {
     // Admin or User not found
     if (!data) {
       // Terminate task
-      throw new UnauthorizedException('Akun tidak ditemukan!');
+      throw new UnauthorizedException("Akun tidak ditemukan!");
     }
 
     // Compare password
@@ -53,24 +53,24 @@ export class AuthService {
 
     // Wrong password
     if (!correctPassword) {
-      throw new UnauthorizedException('Password salah!');
+      throw new UnauthorizedException("Password salah!");
     }
 
     // User rules
-    if (role == 'User') {
+    if (role == "User") {
       // Blocked | banned account | not activated yet
       if (!data.active) {
         // Blocked or banned
         if (data.deactivatedAt.length > 0) {
           // Terminate task
-          throw new UnauthorizedException('Akun anda telah di blokir!');
+          throw new UnauthorizedException("Akun anda telah di blokir!");
         }
 
         // Not activated (make sure deactivatedAt is empty string)
         else {
           // Terminate task
           throw new UnauthorizedException(
-            'Akun anda belum di aktivasi, silahkan menghubungi admin.',
+            "Akun anda belum di aktivasi, silahkan menghubungi admin."
           );
         }
       }
@@ -93,7 +93,7 @@ export class AuthService {
     // Admin or User not found
     if (!data) {
       // Terminate task
-      throw new UnauthorizedException('Akun tidak ditemukan!');
+      throw new UnauthorizedException("Akun tidak ditemukan!");
     }
 
     // --------------------------------------------------------------
