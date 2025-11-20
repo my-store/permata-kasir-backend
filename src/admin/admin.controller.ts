@@ -1,19 +1,19 @@
-import { Admin, Prisma } from '../../prisma/generated/client';
-import { FileInterceptor } from '@nestjs/platform-express';
-import { UpdateAdminDto, UpdateAdminPasswordDto } from './dto/update-admin.dto';
-import { CreateAdminDto } from './dto/create-admin.dto';
-import { UserService } from 'src/user/user.service';
-import { AuthGuard } from 'src/auth/auth.guard';
-import { ParseUrlQuery } from 'src/libs/string';
-import { AdminService } from './admin.service';
-import * as bcrypt from 'bcrypt';
+import { UpdateAdminDto, UpdateAdminPasswordDto } from "./dto/update-admin.dto";
+import { Admin, Prisma } from "../../prisma/generated/client";
+import { FileInterceptor } from "@nestjs/platform-express";
+import { CreateAdminDto } from "./dto/create-admin.dto";
+import { UserService } from "src/user/user.service";
+import { AuthGuard } from "src/auth/auth.guard";
+import { ParseUrlQuery } from "src/libs/string";
+import { AdminService } from "./admin.service";
+import * as bcrypt from "bcrypt";
 import {
   GetFileDestBeforeUpload,
   ProfileImageValidator,
   upload_img_dir,
   DeleteFile,
   UploadFile,
-} from 'src/libs/upload-file-handler';
+} from "src/libs/upload-file-handler";
 import {
   InternalServerErrorException,
   UnauthorizedException,
@@ -29,25 +29,25 @@ import {
   Body,
   Post,
   Get,
-} from '@nestjs/common';
-import { encryptPassword } from 'src/libs/bcrypt';
+} from "@nestjs/common";
+import { encryptPassword } from "src/libs/bcrypt";
 
-@Controller('admin')
+@Controller("admin")
 export class AdminController {
   constructor(
     private readonly adminService: AdminService,
-    private readonly userService: UserService,
+    private readonly userService: UserService
   ) {}
 
   // Look at .env file
   // The URL should be '/api/admin/register/APP_REGISTER_DEVCODE'
-  @Post('register/:dev_code')
-  @UseInterceptors(FileInterceptor('foto'))
+  @Post("register/:dev_code")
+  @UseInterceptors(FileInterceptor("foto"))
   async register(
-    @Param('dev_code') dev_code: string,
+    @Param("dev_code") dev_code: string,
     @Body() data: CreateAdminDto,
     @UploadedFile()
-    foto: Express.Multer.File,
+    foto: Express.Multer.File
   ): Promise<any> {
     // Wrong developer key not presented
     if (!dev_code || dev_code != process.env.APP_REGISTER_DEVCODE) {
@@ -58,17 +58,17 @@ export class AdminController {
   }
 
   @UseGuards(AuthGuard)
-  @Post('verify-password/:tlp')
+  @Post("verify-password/:tlp")
   async checkPassword(
-    @Param('tlp') tlp: string,
-    @Body() { password }: UpdateAdminPasswordDto,
+    @Param("tlp") tlp: string,
+    @Body() { password }: UpdateAdminPasswordDto
   ): Promise<any> {
     /* ------------------ MENGAMBIL DATA LAMA ------------------ */
     let oldData: Admin | null;
     try {
       oldData = await this.adminService.findOne({ where: { tlp } });
     } catch {
-      throw new BadRequestException('Admin tidak ditemukan!');
+      throw new BadRequestException("Admin tidak ditemukan!");
     }
 
     const oldPassword: any = oldData?.password;
@@ -78,17 +78,17 @@ export class AdminController {
 
   @UseGuards(AuthGuard)
   @Post()
-  @UseInterceptors(FileInterceptor('foto'))
+  @UseInterceptors(FileInterceptor("foto"))
   async create(
     @Body() data: CreateAdminDto,
     @UploadedFile()
-    foto: Express.Multer.File,
+    foto: Express.Multer.File
   ): Promise<Admin> {
     let newData: any;
 
     /* ------------------ ADMIN TIDAK MENGUNGGAH FOTO ------------------ */
     if (!foto) {
-      throw new BadRequestException('Wajib mengunggah foto!');
+      throw new BadRequestException("Wajib mengunggah foto!");
     } else {
       /* --------------------- PENGECEKAN FORMAT DAN UKURAN FOTO ---------------------
     |  Format foto yang dibolehkan adalah: JPG, JPEG dan PNG
@@ -153,15 +153,15 @@ export class AdminController {
         ...data,
 
         // Remove 'public' from image directory
-        foto: data.foto.replace('public', ''),
+        foto: data.foto.replace("public", ""),
       });
     } catch (e) {
       // Unique constraint error
       if (e instanceof Prisma.PrismaClientKnownRequestError) {
         // The .code property can be accessed in a type-safe manner
-        if (e.code === 'P2002') {
+        if (e.code === "P2002") {
           throw new BadRequestException(
-            'There is a unique constraint violation.',
+            "There is a unique constraint violation."
           );
         }
       }
@@ -204,8 +204,8 @@ export class AdminController {
   }
 
   @UseGuards(AuthGuard)
-  @Get(':tlp')
-  async findOne(@Param('tlp') tlp: string): Promise<Admin | null> {
+  @Get(":tlp")
+  async findOne(@Param("tlp") tlp: string): Promise<Admin | null> {
     let data: Admin | null;
 
     try {
@@ -218,12 +218,12 @@ export class AdminController {
   }
 
   @UseGuards(AuthGuard)
-  @Patch(':tlp')
-  @UseInterceptors(FileInterceptor('foto'))
+  @Patch(":tlp")
+  @UseInterceptors(FileInterceptor("foto"))
   async update(
-    @Param('tlp') tlp: string,
+    @Param("tlp") tlp: string,
     @Body() data: UpdateAdminDto,
-    @UploadedFile() foto?: Express.Multer.File,
+    @UploadedFile() foto?: Express.Multer.File
   ): Promise<Admin> {
     let updatedData: Admin;
 
@@ -232,7 +232,7 @@ export class AdminController {
     try {
       oldData = await this.adminService.findOne({ where: { tlp } });
     } catch {
-      throw new BadRequestException('Admin tidak ditemukan!');
+      throw new BadRequestException("Admin tidak ditemukan!");
     }
 
     /* ------------------ ADMIN MERUBAH NO. TLP ------------------
@@ -310,8 +310,8 @@ export class AdminController {
           ...data,
 
           // Remove 'public' from image directory
-          foto: data.foto?.replace('public', ''),
-        },
+          foto: data.foto?.replace("public", ""),
+        }
       );
     } catch (e) {
       throw new InternalServerErrorException(e);
@@ -324,14 +324,14 @@ export class AdminController {
     if (foto) {
       // Hapus foto lama dulu
       try {
-        DeleteFile('public' + oldData?.foto);
+        DeleteFile("public" + oldData?.foto);
       } catch (e) {
         throw new InternalServerErrorException(e);
       }
 
       // Mengunggah foto baru
       try {
-        UploadFile(foto, 'public' + updatedData.foto);
+        UploadFile(foto, "public" + updatedData.foto);
       } catch (e) {
         throw new InternalServerErrorException(e);
       }
@@ -346,8 +346,8 @@ export class AdminController {
   }
 
   @UseGuards(AuthGuard)
-  @Delete(':tlp')
-  async remove(@Param('tlp') tlp: string): Promise<Admin> {
+  @Delete(":tlp")
+  async remove(@Param("tlp") tlp: string): Promise<Admin> {
     let deletedData: Admin;
 
     // Delete data from database
@@ -360,7 +360,7 @@ export class AdminController {
     // Delete image profile too
     try {
       // Dont forget to add 'public' int the path
-      DeleteFile('public' + deletedData.foto);
+      DeleteFile("public" + deletedData.foto);
     } catch (e) {
       throw new InternalServerErrorException(e);
     }
