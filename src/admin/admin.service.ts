@@ -1,12 +1,7 @@
-import { Admin, Prisma } from '../../prisma/generated/client';
-import { PrismaService } from '../prisma.service';
-import { encryptPassword } from 'src/libs/bcrypt';
-import { Injectable } from '@nestjs/common';
-
-function getDevPhoneFromEnv(): string {
-  const tlp: any = process.env.APP_OWNER_PHONE;
-  return tlp.replace('(+62)', '0').replace(/\s/g, '').replace(/\-/g, '');
-}
+import { Admin, Prisma } from "../../prisma/generated/client";
+import { PrismaService } from "../prisma.service";
+import { encryptPassword } from "src/libs/bcrypt";
+import { Injectable } from "@nestjs/common";
 
 @Injectable()
 export class AdminService {
@@ -31,14 +26,6 @@ export class AdminService {
     lastOnline: true,
     createdAt: true,
     updatedAt: true,
-  };
-
-  private readonly getAllFilter: Prisma.AdminWhereInput = {
-    // Filter by phone number
-    tlp: {
-      // Developer phone
-      not: getDevPhoneFromEnv(),
-    },
   };
 
   constructor(private readonly prisma: PrismaService) {}
@@ -86,12 +73,7 @@ export class AdminService {
         ...select,
       },
       cursor,
-      where: {
-        ...where,
-
-        // Exception filter
-        ...this.getAllFilter,
-      },
+      where,
       orderBy,
     });
   }
