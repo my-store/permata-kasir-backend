@@ -1,7 +1,7 @@
-import { Prisma, User } from '../../prisma/generated/client';
-import { PrismaService } from '../prisma.service';
-import { encryptPassword } from '../libs/bcrypt';
-import { Injectable } from '@nestjs/common';
+import { Prisma, User } from "../../prisma/generated/client";
+import { PrismaService } from "../prisma.service";
+import { encryptPassword } from "../libs/bcrypt";
+import { Injectable } from "@nestjs/common";
 
 @Injectable()
 export class UserService {
@@ -31,6 +31,13 @@ export class UserService {
 
     // Enkripsi password
     newData.password = encryptPassword(newData.password);
+
+    // Fix active value (if client send through FormData)
+    if (newData.active) {
+      if (typeof newData.active == "string") {
+        newData.active = newData.active == "1" ? true : false;
+      }
+    }
 
     // Save a new data
     return this.prisma.user.create({ data: newData });
