@@ -12,6 +12,7 @@ dist
 test
 
 update/payload
+update/log
 
 # Remove the comment in production
 #.env
