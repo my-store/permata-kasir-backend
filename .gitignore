@@ -11,5 +11,7 @@ public/img/user
 dist
 test
 
+update/payload
+
 # Remove the comment in production
 #.env
