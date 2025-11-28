@@ -1,11 +1,18 @@
-import { existsSync, mkdirSync, rmSync, writeFileSync } from 'fs';
-import { NumberAddComma } from './string';
-import { dirname, extname } from 'path';
+import { existsSync, mkdirSync, rmSync, writeFileSync } from "fs";
+import { NumberAddComma } from "./string";
+import { dirname, extname } from "path";
 
+export const public_root_dir: string = "public";
+
+// Update configurations
+export const update_root_dir: string = "update";
+export const upload_update_dir: string = `${update_root_dir}/payload`;
+export const upload_update_builder_dir: string = `${update_root_dir}/builder`;
+
+// Image upload configurations
 export const max_profile_img_size: number = 2097152;
 export const profile_img_type: RegExp = /image\/png|image\/jpeg|image\/jpg/;
-export const root_dir: string = 'public';
-export const upload_img_dir: string = `${root_dir}/img`;
+export const upload_img_dir: string = `${public_root_dir}/img`;
 
 export interface ProfileImageValidatorResponse {
   status: boolean;
@@ -13,7 +20,7 @@ export interface ProfileImageValidatorResponse {
 }
 
 export function ProfileImageValidator(
-  file: Express.Multer.File,
+  file: Express.Multer.File
 ): ProfileImageValidatorResponse {
   let response: ProfileImageValidatorResponse = {
     status: false,
@@ -25,8 +32,8 @@ export function ProfileImageValidator(
       .toString() // Ubah ke string
       .substring(1) // Menghapus garis-miring pertama
       .slice(0, -1) // Menghapus garis-miring terakhir
-      .replaceAll('\\', '') // Mneghapus seluruh back-slash
-      .replaceAll('|', ', '); // Ubah or sign '|' menjadi koma
+      .replaceAll("\\", "") // Mneghapus seluruh back-slash
+      .replaceAll("|", ", "); // Ubah or sign '|' menjadi koma
     response.status = false;
     response.message = `Ektensi foto yang di izinkan adalah [${mimetypes}]`;
   }
@@ -65,7 +72,7 @@ export function UploadFile(file: Express.Multer.File, dest: string): void {
 export function GetFileDestBeforeUpload(
   file: Express.Multer.File,
   dir: string, // Full path, include root file directory
-  filename: string, // Gived name by user
+  filename: string // Gived name by user
 ): string {
   const { originalname } = file;
   const ext = extname(originalname);
