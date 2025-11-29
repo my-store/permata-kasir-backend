@@ -32,7 +32,7 @@ import {
 } from "@nestjs/common";
 import { encryptPassword } from "src/libs/bcrypt";
 
-@Controller("admin")
+@Controller("api/admin")
 export class AdminController {
     constructor(
         private readonly adminService: AdminService,

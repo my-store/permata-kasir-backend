@@ -22,11 +22,6 @@ import { extname } from "path";
 export class AppController {
     constructor(private readonly service: AppService) {}
 
-    @Get()
-    index() {
-        return "Oke";
-    }
-
     @Get("update-execute/:dev_code")
     updateExecute(@Param("dev_code") dev_code: string) {
         // Wrong developer key not presented
