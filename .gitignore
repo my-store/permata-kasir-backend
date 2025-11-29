@@ -10,9 +10,7 @@ public/img/user
 .turbo
 dist
 test
-
-update/payload
-update/log
+update
 
 # Remove the comment in production
 #.env
