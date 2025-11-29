@@ -10,7 +10,6 @@ export const public_root_dir: string = "public";
 export const update_root_dir: string = "update";
 export const upload_update_from_dir: string = `${update_root_dir}/payload`;
 export const upload_update_to_dir: string = dist_dir;
-export const upload_update_builder_dir: string = `${update_root_dir}/builder`;
 
 // Image upload configurations
 export const max_profile_img_size: number = 2097152;

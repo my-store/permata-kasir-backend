@@ -10,18 +10,18 @@ import { Module } from "@nestjs/common";
 import { join } from "path";
 
 @Module({
-  imports: [
-    ServeStaticModule.forRoot({
-      rootPath: join(__dirname, "../../", "client", "dist"),
-    }),
-    ConfigModule.forRoot({ isGlobal: true }),
-    AdminModule,
-    UserModule,
-    AuthModule,
-  ],
+    imports: [
+        ServeStaticModule.forRoot({
+            rootPath: join(__dirname, "../../", "client", "dist"),
+        }),
+        ConfigModule.forRoot({ isGlobal: true }),
+        AdminModule,
+        UserModule,
+        AuthModule,
+    ],
 
-  controllers: [AppController],
+    controllers: [AppController],
 
-  providers: [AppGateway, AppService],
+    providers: [AppGateway, AppService],
 })
 export class AppModule {}
