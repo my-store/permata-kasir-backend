@@ -2,7 +2,6 @@ import { NestExpressApplication } from "@nestjs/platform-express";
 import { ValidationPipe } from "@nestjs/common";
 import { NestFactory } from "@nestjs/core";
 import { AppModule } from "./app.module";
-import { join } from "path";
 
 async function bootstrap() {
     const app = await NestFactory.create<NestExpressApplication>(AppModule);
@@ -14,9 +13,7 @@ async function bootstrap() {
     });
 
     // Enable public folder
-    app.useStaticAssets(join(__dirname, "..", "public"), {
-        prefix: "/static/",
-    });
+    app.useStaticAssets("./public", { prefix: "/static/" });
 
     app.useGlobalPipes(new ValidationPipe());
 

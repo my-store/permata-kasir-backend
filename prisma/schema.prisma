@@ -5,7 +5,7 @@
 // Try Prisma Accelerate: https://pris.ly/cli/accelerate-init
 
 generator client {
-  provider = "prisma-client-js"
+  provider = "prisma-client"
   output   = "./generated"
 }
 
@@ -15,29 +15,119 @@ datasource db {
 }
 
 model Admin {
-  id         Int      @id @default(autoincrement())
+  id         Int     @id @default(autoincrement())
   nama       String
-  tlp        String   @unique
+  tlp        String  @unique
   password   String
-  foto       String   @default("") // URL foto
-  online     Boolean  @default(false)
-  lastOnline String   @default("")
-  createdAt  DateTime
-  updatedAt  DateTime
+  foto       String  @default("") // URL foto
+  online     Boolean @default(false)
+  lastOnline String  @default("")
+
+  // Child tables
+  user               User[]
+  produk             Produk[]
+  member             Member[]
+  diskon             Diskon[]
+  transaksiPembelian TransaksiPembelian[]
+
+  createdAt DateTime
+  updatedAt DateTime
 }
 
 model User {
-  id        Int      @id @default(autoincrement())
-  nama      String
-  tlp       String   @unique
-  password  String
-  foto      String   @default("") // URL foto
-  createdAt DateTime
-  updatedAt DateTime
+  id       Int    @id @default(autoincrement())
+  nama     String
+  tlp      String @unique
+  password String
+  foto     String @default("") // URL foto
 
   online     Boolean @default(false)
   lastOnline String  @default("")
 
   active        Boolean @default(false) // Need to activate by admin
   deactivatedAt String  @default("") // This is empty until admin block this user
+
+  // Parent table
+  admin   Admin @relation(fields: [adminId], references: [id])
+  adminId Int
+
+  createdAt DateTime
+  updatedAt DateTime
+}
+
+model Produk {
+  id   Int    @id @default(autoincrement())
+  nama String
+
+  hargaPokok Int @default(0)
+  hargaJual  Int @default(0)
+  stok       Int @default(0)
+
+  // Parent table
+  admin   Admin @relation(fields: [adminId], references: [id])
+  adminId Int
+
+  // Child tables
+  diskon Diskon[]
+
+  createdAt DateTime
+  updatedAt DateTime
+}
+
+model Member {
+  id     Int    @id @default(autoincrement())
+  nama   String
+  alamat String
+  tlp    String
+
+  // Jika ada diskon, harga diskon tetap berlaku + harga spesial member
+  diskonPembelian Int @default(0)
+
+  // Parent table
+  admin   Admin @relation(fields: [adminId], references: [id])
+  adminId Int
+
+  createdAt DateTime
+  updatedAt DateTime
+}
+
+model Diskon {
+  id         Int    @id @default(autoincrement())
+  keterangan String
+  persen     Int    @default(0)
+
+  // Parent table
+  produk   Produk @relation(fields: [produkId], references: [id])
+  produkId Int
+
+  // Parent table
+  admin   Admin @relation(fields: [adminId], references: [id])
+  adminId Int
+
+  createdAt DateTime
+  updatedAt DateTime
+}
+
+model TransaksiPembelian {
+  id     Int    @id @default(autoincrement())
+  produk String // JSON format [{nama, harga, dll}]
+  total  Int    @default(0)
+
+  // Parent table
+  admin   Admin @relation(fields: [adminId], references: [id])
+  adminId Int
+
+  createdAt DateTime
+  updatedAt DateTime
+}
+
+model TransaksiPenjualan {
+  id       Int    @id @default(autoincrement())
+  produk   String // JSON format [{nama, harga, dll}]
+  potongan Int    @default(0) // Harga spesial member + diskon (jika ada)
+  member   String // JSON format {nama, alamat, tlp dll}
+  total    Int    @default(0)
+
+  createdAt DateTime
+  updatedAt DateTime
 }
