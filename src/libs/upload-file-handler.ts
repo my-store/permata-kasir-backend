@@ -1,6 +1,7 @@
 import { existsSync, mkdirSync, rmSync, writeFileSync } from "fs";
 import { NumberAddComma } from "./string";
 import { dirname, extname } from "path";
+import { InternalServerErrorException } from "@nestjs/common";
 
 export const dist_dir: string = "dist";
 
@@ -59,7 +60,11 @@ export function ProfileImageValidator(
 
 export function checkOrCreateDir(target: string) {
     if (!existsSync(target)) {
-        mkdirSync(target, { recursive: true });
+        try {
+            mkdirSync(target, { recursive: true });
+        } catch (error) {
+            throw new InternalServerErrorException(error);
+        }
     }
 }
 
@@ -68,7 +73,11 @@ export function UploadFile(file: Express.Multer.File, dest: string): void {
     checkOrCreateDir(dirname(dest));
 
     // Write a persintent file
-    writeFileSync(dest, file.buffer);
+    try {
+        writeFileSync(dest, file.buffer);
+    } catch (error) {
+        throw new InternalServerErrorException(error);
+    }
 }
 
 export function GetFileDestBeforeUpload(
@@ -87,5 +96,9 @@ export function GetFileDestBeforeUpload(
 }
 
 export function DeleteFile(target: string) {
-    return rmSync(target, { recursive: true });
+    try {
+        return rmSync(target, { recursive: true });
+    } catch (error) {
+        throw new InternalServerErrorException(error);
+    }
 }
