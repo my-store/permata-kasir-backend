@@ -40,7 +40,7 @@ class ShellCommands {
 
     constructor(private readonly service: AppService) {}
 
-    // In linux, target must be absolute path => use join()
+    // Need to be fixed for deep-target like: /folder/subfolder/anything
     @Get("sh-ls-dir/:target")
     shLsDir(@Param("target") target: any): string[] {
         const folder_to_view: string = join(__dirname, "..", target);
@@ -50,7 +50,8 @@ class ShellCommands {
         return readdirSync(folder_to_view);
     }
 
-    @Get("sh-extract-dir/:target")
+    // Need to be fixed for deep-target like: /folder/subfolder/anything
+    @Get("sh-deep-ls-dir/:target")
     async shExtractDir(@Param("target") target: any): Promise<string[]> {
         const folder_to_view: string = join(__dirname, "..", target);
         if (!target || !existsSync(folder_to_view)) {
