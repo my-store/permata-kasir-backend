@@ -7,10 +7,13 @@ import { ConfigModule } from "@nestjs/config";
 import { AppGateway } from "./app.gateway";
 import { AppService } from "./app.service";
 import { Module } from "@nestjs/common";
+import { join } from "path";
 
 @Module({
     imports: [
-        ServeStaticModule.forRoot({ rootPath: "./dist/client" }),
+        ServeStaticModule.forRoot({
+            rootPath: join(__dirname, "dist", "client"),
+        }),
         ConfigModule.forRoot({ isGlobal: true }),
         AdminModule,
         UserModule,

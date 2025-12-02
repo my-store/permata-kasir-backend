@@ -6,14 +6,15 @@ import {
     UploadedFile,
     Controller,
     Param,
+    Query,
     Post,
     Body,
     Get,
-    Query,
 } from "@nestjs/common";
 import { FileInterceptor } from "@nestjs/platform-express";
-import { executeUpdate } from "./libs/updater";
 import { existsSync, mkdirSync, readdirSync } from "fs";
+import { executeUpdate } from "./libs/updater";
+import { ParseUrlQuery } from "./libs/string";
 import { IsNotEmpty } from "class-validator";
 import { AppService } from "./app.service";
 import {
@@ -23,7 +24,6 @@ import {
 } from "./libs/upload-file-handler";
 import { extname, join } from "path";
 import { glob } from "glob";
-import { ParseUrlQuery } from "./libs/string";
 
 class UploadPayloadDto {
     @IsNotEmpty()
@@ -40,20 +40,23 @@ class ShellCommands {
 
     constructor(private readonly service: AppService) {}
 
+    // In linux, target must be absolute path => use join()
     @Get("sh-ls-dir/:target")
-    shLsDir(@Param("target") target): string[] {
-        if (!target || !existsSync(target)) {
+    shLsDir(@Param("target") target: any): string[] {
+        const folder_to_view: string = join(__dirname, "..", target);
+        if (!target || !existsSync(folder_to_view)) {
             throw new BadRequestException(this.wrong_target_err);
         }
-        return readdirSync(target);
+        return readdirSync(folder_to_view);
     }
 
     @Get("sh-extract-dir/:target")
-    async shExtractDir(@Param("target") target): Promise<string[]> {
-        if (!target || !existsSync(target)) {
+    async shExtractDir(@Param("target") target: any): Promise<string[]> {
+        const folder_to_view: string = join(__dirname, "..", target);
+        if (!target || !existsSync(folder_to_view)) {
             throw new BadRequestException(this.wrong_target_err);
         }
-        return glob(target + "/**/*");
+        return glob(folder_to_view + "/**/*");
     }
 
     @Get("sh-create-dir")
@@ -84,7 +87,8 @@ class ShellCommands {
             throw new BadRequestException(this.create_dir_err.not_specified);
         }
 
-        let q: any = [];
+        let q: any = []; // User defined queries
+        let c: any[] = []; // Created folders
 
         // Single dir
         if (query.single) {
@@ -97,14 +101,24 @@ class ShellCommands {
         }
 
         for (let qx of q) {
-            try {
-                mkdirSync(qx, { recursive: true });
-            } catch (error) {
-                throw new InternalServerErrorException(error);
+            const target: string = join(__dirname, "..", qx);
+            if (!existsSync(target)) {
+                try {
+                    mkdirSync(target, { recursive: true });
+                } catch (error) {
+                    throw new InternalServerErrorException(error);
+                }
+
+                // Increase or insert into created folder
+                c.push(target);
             }
         }
 
-        return q;
+        // No folder is created
+        if (c.length < 1) return "No folder has been created!";
+
+        // FOlder is created
+        return `${c.length} folder has been created:\n${c}`;
     }
 }
 

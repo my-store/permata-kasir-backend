@@ -11,7 +11,7 @@ import {
     GetFileDestBeforeUpload,
     ProfileImageValidator,
     upload_img_dir,
-    DeleteFile,
+    DeleteFileOrDir,
     UploadFile,
 } from "src/libs/upload-file-handler";
 import {
@@ -31,6 +31,7 @@ import {
     Get,
 } from "@nestjs/common";
 import { encryptPassword } from "src/libs/bcrypt";
+import { join } from "path";
 
 @Controller("api/admin")
 export class AdminController {
@@ -328,7 +329,7 @@ export class AdminController {
         if (foto) {
             // Hapus foto lama dulu
             try {
-                DeleteFile("public" + oldData?.foto);
+                DeleteFileOrDir(join(__dirname, "public", `${oldData?.foto}`));
             } catch (e) {
                 throw new InternalServerErrorException(e);
             }
@@ -364,7 +365,7 @@ export class AdminController {
         // Delete image profile too
         try {
             // Dont forget to add 'public' int the path
-            DeleteFile("public" + deletedData.foto);
+            DeleteFileOrDir(join(__dirname, "public", deletedData.foto));
         } catch (e) {
             throw new InternalServerErrorException(e);
         }

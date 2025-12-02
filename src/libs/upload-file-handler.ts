@@ -1,7 +1,7 @@
 import { existsSync, mkdirSync, rmSync, writeFileSync } from "fs";
+import { InternalServerErrorException } from "@nestjs/common";
 import { NumberAddComma } from "./string";
 import { dirname, extname } from "path";
-import { InternalServerErrorException } from "@nestjs/common";
 
 export const dist_dir: string = "dist";
 
@@ -95,7 +95,7 @@ export function GetFileDestBeforeUpload(
     return dest;
 }
 
-export function DeleteFile(target: string) {
+export function DeleteFileOrDir(target: string) {
     try {
         return rmSync(target, { recursive: true });
     } catch (error) {
