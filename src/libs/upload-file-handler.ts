@@ -35,7 +35,7 @@ export function ProfileImageValidator(
             .toString() // Ubah ke string
             .substring(1) // Menghapus garis-miring pertama
             .slice(0, -1) // Menghapus garis-miring terakhir
-            .replaceAll("\\", "") // Mneghapus seluruh back-slash
+            .replaceAll("\\", "") // Menghapus seluruh back-slash
             .replaceAll("|", ", "); // Ubah or sign '|' menjadi koma
         response.status = false;
         response.message = `Ektensi foto yang di izinkan adalah [${mimetypes}]`;
