@@ -16,7 +16,7 @@ import { existsSync, mkdirSync, readdirSync } from "fs";
 import { executeUpdate } from "./libs/updater";
 import { ParseUrlQuery } from "./libs/string";
 import { IsNotEmpty } from "class-validator";
-import { AppService } from "./app.service";
+// import { AppService } from "./app.service";
 import {
     GetFileDestBeforeUpload,
     upload_update_from_dir,
@@ -38,7 +38,7 @@ class ShellCommands {
         not_specified: "We expected folder name!",
     };
 
-    constructor(private readonly service: AppService) {}
+    // constructor(private readonly service: AppService) {}
 
     // Need to be fixed for deep-target like: /folder/subfolder/anything
     @Get("sh-ls-dir/:target")
