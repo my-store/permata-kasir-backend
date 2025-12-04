@@ -30,6 +30,16 @@ class UploadPayloadDto {
     file_path: string;
 }
 
+class ShLsDirDto {
+    @IsNotEmpty()
+    target_path: string;
+}
+
+class ShDeepLsDirDto {
+    @IsNotEmpty()
+    target_path: string;
+}
+
 // Nanti harus ditambahkan fitur autentikasi
 class ShellCommands {
     private readonly wrong_target_err: string = "Wrong target path!";
@@ -40,21 +50,21 @@ class ShellCommands {
 
     // constructor(private readonly service: AppService) {}
 
-    // Need to be fixed for deep-target like: /folder/subfolder/anything
-    @Get("sh-ls-dir/:target")
-    shLsDir(@Param("target") target: any): string[] {
-        const folder_to_view: string = join(__dirname, "..", target);
-        if (!target || !existsSync(folder_to_view)) {
+    @Post("sh-ls-dir")
+    shLsDir(@Body() { target_path }: ShLsDirDto): string[] {
+        const folder_to_view: string = join(__dirname, "..", target_path);
+        if (!existsSync(folder_to_view)) {
             throw new BadRequestException(this.wrong_target_err);
         }
         return readdirSync(folder_to_view);
     }
 
-    // Need to be fixed for deep-target like: /folder/subfolder/anything
-    @Get("sh-deep-ls-dir/:target")
-    async shExtractDir(@Param("target") target: any): Promise<string[]> {
-        const folder_to_view: string = join(__dirname, "..", target);
-        if (!target || !existsSync(folder_to_view)) {
+    @Post("sh-deep-ls-dir")
+    async shExtractDir(
+        @Body() { target_path }: ShDeepLsDirDto,
+    ): Promise<string[]> {
+        const folder_to_view: string = join(__dirname, "..", target_path);
+        if (!existsSync(folder_to_view)) {
             throw new BadRequestException(this.wrong_target_err);
         }
         return glob(folder_to_view + "/**/*");
