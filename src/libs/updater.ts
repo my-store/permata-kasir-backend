@@ -53,6 +53,6 @@ export async function executeUpdate(
 
     // Restart backend server (PRODUCTION ONLY)
     if (reload_server && process.env.DEPLOY_MODE == "production") {
-        spawn("pm2 restart permata-kasir-backend");
+        spawn(`pm2 restart ${process.env.APP_PM2_ID}`);
     }
 }
