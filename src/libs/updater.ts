@@ -30,12 +30,12 @@ export async function uploadUpdateFiles(): Promise<void> {
             );
 
             // Create a folder if it doesn't exist
-            await checkOrCreateDir(dirname(dest));
+            checkOrCreateDir(dirname(dest));
 
             // SOON will be fixed for subfolder copy!
             // Copy update file
             try {
-                await copyFileSync(join(__dirname, "..", "..", f), dest);
+                copyFileSync(join(__dirname, "..", "..", f), dest);
             } catch (error) {
                 throw new InternalServerErrorException(error);
             }
