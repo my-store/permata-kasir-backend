@@ -1,12 +1,16 @@
-import { User, Prisma } from "../../prisma/generated/client";
+import { UpdateUserDto, UpdateUserPasswordDto } from "./dto/update-user.dto";
+import { UserRegisterTicketService } from "./user.register.ticket.service";
 import { FileInterceptor } from "@nestjs/platform-express";
 import { AdminService } from "src/admin/admin.service";
-import { CreateUserDto } from "./dto/create-user.dto";
-import { UpdateUserDto, UpdateUserPasswordDto } from "./dto/update-user.dto";
+import { encryptPassword } from "src/libs/bcrypt";
 import { AuthGuard } from "src/auth/auth.guard";
 import { ParseUrlQuery } from "src/libs/string";
 import { UserService } from "./user.service";
-import * as bcrypt from "bcrypt";
+import {
+    User,
+    Prisma,
+    UserRegisterTicket,
+} from "../../prisma/generated/client";
 import {
     GetFileDestBeforeUpload,
     ProfileImageValidator,
@@ -14,6 +18,12 @@ import {
     DeleteFileOrDir,
     UploadFile,
 } from "src/libs/upload-file-handler";
+import * as bcrypt from "bcrypt";
+import {
+    CreateUserRegisterTicketDto,
+    CreateUserDto,
+} from "./dto/create-user.dto";
+import { join } from "path";
 import {
     InternalServerErrorException,
     UnauthorizedException,
@@ -30,34 +40,69 @@ import {
     Post,
     Get,
 } from "@nestjs/common";
-import { encryptPassword } from "src/libs/bcrypt";
-import { join } from "path";
 
 @Controller("api/user")
 export class UserController {
     constructor(
         private readonly userService: UserService,
+        private readonly userRegisterTicketService: UserRegisterTicketService,
         private readonly adminService: AdminService,
     ) {}
 
-    // Look at .env file
-    // The URL should be '/api/admin/register/APP_REGISTER_DEVCODE'
-    @Post("register/:dev_code")
+    /* =====================================================
+    |  REGISTRASI
+    |  =====================================================
+    |  Saat user registrasi atau mengisi form di frontend,
+    |  dibalik layar data tersebut disimpan browser-storage,
+    |  sebelum melakukan submit, harus meminta kode aktivasi
+    |  terlebih dahulu ke admin, kemudian kode aktivasi itu
+    |  yang nantinya akan digunakan pada parameter dibawah.
+    |  -----------------------------------------------------
+    |  Kode tiket tersebut akan dihapus dari database,
+    |  setelah user berhasil registrasi.
+    */
+    @Post("register/:ticket_code")
     @UseInterceptors(FileInterceptor("foto"))
     async register(
-        @Param("dev_code") dev_code: string,
+        @Param("ticket_code") ticket_code: string,
         @Body() data: CreateUserDto,
         @UploadedFile()
         foto: Express.Multer.File,
     ): Promise<any> {
+        // Pencarian tiket pada database
+        let ticket: any = null;
+        try {
+            ticket = await this.userRegisterTicketService.findOne({
+                where: {
+                    code: ticket_code,
+                },
+            });
+        } catch {}
+
         // Wrong developer key not presented
-        if (!dev_code || dev_code != process.env.APP_REGISTER_DEVCODE) {
+        if (!ticket_code || !ticket) {
             // Terminate task
             throw new UnauthorizedException();
         }
         return this.create(data, foto);
     }
 
+    // Admin only !
+    @UseGuards(AuthGuard)
+    @Post("register-ticket")
+    async createRegisterTicket(
+        @Body() data: CreateUserRegisterTicketDto,
+    ): Promise<UserRegisterTicket> {
+        let newRegisterCode: UserRegisterTicket;
+        try {
+            newRegisterCode = await this.userRegisterTicketService.create(data);
+        } catch (error) {
+            throw new InternalServerErrorException(error);
+        }
+        return newRegisterCode;
+    }
+
+    // Admin only !
     @UseGuards(AuthGuard)
     @Post("verify-password/:tlp")
     async checkPassword(
@@ -92,9 +137,9 @@ export class UserController {
             throw new BadRequestException("Wajib mengunggah foto!");
         } else {
             /* --------------------- PENGECEKAN FORMAT DAN UKURAN FOTO ---------------------
-      |  Format foto yang dibolehkan adalah: JPG, JPEG dan PNG
-      |  Lihat selengkapnya di: libs/upload-file-handler.ts/ProfileImageValidator()
-      */
+            |  Format foto yang dibolehkan adalah: JPG, JPEG dan PNG
+            |  Lihat selengkapnya di: libs/upload-file-handler.ts/ProfileImageValidator()
+            */
             const { status, message } = ProfileImageValidator(foto);
             if (!status) {
                 throw new BadRequestException(message);
@@ -102,10 +147,10 @@ export class UserController {
         }
 
         /* ------------------ PENGECEKAN NO. TLP ------------------
-    |  Pastikan No. Tlp belum ada yang menggunakan, jika ada
-    |  user ataupun admin yang menggunakan No. Tlp tersebut,
-    |  permintaan input data ditolak.
-    */
+        |  Pastikan No. Tlp belum ada yang menggunakan, jika ada
+        |  user ataupun admin yang menggunakan No. Tlp tersebut,
+        |  permintaan input data ditolak.
+        */
         let alreadyUsed: boolean = false;
         try {
             // Pengecekan apakah ada user yang menggunakan No. Tlp tersebut
@@ -141,16 +186,16 @@ export class UserController {
         }
 
         /* ------------------ NAMA FOTO ------------------
-    |  Nama foto berasal dari No. Tlp user
-    */
+        |  Nama foto berasal dari No. Tlp user
+        */
         const img_path = `${upload_img_dir}/user/profile`;
         const img_name = data.tlp;
         data.foto = GetFileDestBeforeUpload(foto, img_path, img_name);
 
         /* ------------------ MENYIMPAN DATA ------------------
-    |  Simpan data dulu, foto hanya URL saja, upload file
-    |  setelah berhasil menyimpan data.
-    */
+        |  Simpan data dulu, foto hanya URL saja, upload file
+        |  setelah berhasil menyimpan data.
+        */
         try {
             newData = await this.userService.create({
                 ...data,
@@ -174,9 +219,9 @@ export class UserController {
         }
 
         /* ------------------ MENGUNGGAH FOTO ------------------
-    |  Setelah data berhasil disimpan, proses selanjutnya
-    |  adalah mengunggah foto.
-    */
+        |  Setelah data berhasil disimpan, proses selanjutnya
+        |  adalah mengunggah foto.
+        */
         try {
             UploadFile(foto, data.foto);
         } catch (e) {
@@ -184,10 +229,10 @@ export class UserController {
         }
 
         /* ------------------ SELESAI ------------------
-    |  Setelah data berhasil disimpan, dan foto
-    |  berhasil di unggah, proses selanjutnya adalah
-    |  mengembalikan data baru tersebut kepada client.
-    */
+        |  Setelah data berhasil disimpan, dan foto
+        |  berhasil di unggah, proses selanjutnya adalah
+        |  mengembalikan data baru tersebut kepada client.
+        */
         return newData;
     }
 
@@ -238,10 +283,10 @@ export class UserController {
         }
 
         /* ------------------ USER MERUBAH NO. TLP ------------------
-    |  Pastikan No. Tlp belum ada yang menggunakan, jika ada
-    |  user ataupun admin yang menggunakan No. Tlp tersebut,
-    |  permintaan input data ditolak.
-    */
+        |  Pastikan No. Tlp belum ada yang menggunakan, jika ada
+        |  user ataupun admin yang menggunakan No. Tlp tersebut,
+        |  permintaan input data ditolak.
+        */
         if (data.tlp) {
             // Pastikan No. Tlp baru tidak sama dengan No. Tlp lama
             if (data.tlp != oldData?.tlp) {
@@ -290,17 +335,17 @@ export class UserController {
         /* ------------------ USER MERUBAH FOTO ------------------ */
         if (foto) {
             /* --------------------- PENGECEKAN FORMAT DAN UKURAN FOTO ---------------------
-      |  Format foto yang dibolehkan adalah: JPG, JPEG dan PNG
-      |  Lihat selengkapnya di: libs/upload-file-handler.ts/ProfileImageValidator()
-      */
+            |  Format foto yang dibolehkan adalah: JPG, JPEG dan PNG
+            |  Lihat selengkapnya di: libs/upload-file-handler.ts/ProfileImageValidator()
+            */
             const { status, message } = ProfileImageValidator(foto);
             if (!status) {
                 throw new BadRequestException(message);
             }
 
             /* ------------------ NAMA FOTO ------------------
-      |  Nama foto berasal dari No. Tlp user
-      */
+            |  Nama foto berasal dari No. Tlp user
+            */
             const img_path = `${upload_img_dir}/user/profile`;
             const img_name = tlp;
             data.foto = GetFileDestBeforeUpload(foto, img_path, img_name);
@@ -322,9 +367,9 @@ export class UserController {
         }
 
         /* ------------------ MENGUNGGAH FOTO (JIKA ADA) ------------------
-    |  Setelah data berhasil disimpan, proses selanjutnya
-    |  adalah mengunggah foto.
-    */
+        |  Setelah data berhasil disimpan, proses selanjutnya
+        |  adalah mengunggah foto.
+        */
         if (foto) {
             // Hapus foto lama dulu
             try {
@@ -342,10 +387,10 @@ export class UserController {
         }
 
         /* --------------------- SELESAI ---------------------
-    |  Setelah data berhasil disimpan, dan foto (jika ada)
-    |  berhasil di unggah, proses selanjutnya adalah
-    |  mengembalikan data baru tersebut kepada client.
-    */
+        |  Setelah data berhasil disimpan, dan foto (jika ada)
+        |  berhasil di unggah, proses selanjutnya adalah
+        |  mengembalikan data baru tersebut kepada client.
+        */
         return updatedData;
     }
 

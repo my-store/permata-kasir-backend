@@ -32,9 +32,6 @@ export class UserService {
         // Enkripsi password
         newData.password = encryptPassword(newData.password);
 
-        // Parent table
-        newData.adminId = parseInt(data.adminId);
-
         // Fix active value (if client send through FormData)
         if (newData.active) {
             if (typeof newData.active == "string") {

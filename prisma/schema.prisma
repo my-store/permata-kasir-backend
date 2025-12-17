@@ -24,11 +24,7 @@ model Admin {
   lastOnline String  @default("")
 
   // Child tables
-  user               User[]
-  produk             Produk[]
-  member             Member[]
-  diskon             Diskon[]
-  transaksiPembelian TransaksiPembelian[]
+  userRegisterTicket UserRegisterTicket[]
 
   createdAt DateTime
   updatedAt DateTime
@@ -44,12 +40,77 @@ model User {
   online     Boolean @default(false)
   lastOnline String  @default("")
 
-  active        Boolean @default(false) // Need to activate by admin
+  active        Boolean @default(false) //init Need to activate by admin
   deactivatedAt String  @default("") // This is empty until admin block this user
+
+  // Child tables
+  toko Toko[]
+
+  createdAt DateTime
+  updatedAt DateTime
+}
+
+/**
+ * =====================================================
+ * |  REGISTER SECURITY TABLE
+ * |  =====================================================
+ * |  Hanya dapat digunakan dalam waktu beberapa menit saja
+ * |  jika batas waktu telah habis, tidak dapat digunakan
+ * |  untuk registrasi lagi.
+ * |  Menggunakan metode scheduling (nestjs-schedule).
+ */
+model UserRegisterTicket {
+  id   Int    @id @default(autoincrement())
+  code String @unique
 
   // Parent table
   admin   Admin @relation(fields: [adminId], references: [id])
   adminId Int
+}
+
+model Toko {
+  id Int @id @default(autoincrement())
+
+  // Parent table
+  user   User @relation(fields: [userId], references: [id])
+  userId Int
+
+  nama   String
+  alamat String
+
+  // Child tables
+  produk             Produk[]
+  member             Member[]
+  diskon             Diskon[]
+  jasa               Jasa[]
+  karyawan           Karyawan[]
+  transaksiPembelian TransaksiPembelian[]
+  transaksiPenjualan TransaksiPenjualan[]
+
+  createdAt DateTime
+  updatedAt DateTime
+}
+
+model Karyawan {
+  id   Int    @id @default(autoincrement())
+  nama String
+
+  // Tidak unique, jadi si karyawan dapat bekerja di semua toko yang ada di database.
+  // Pengecekan terletak pada pada controller input karyawan,
+  // jika nomor telah digunakan blokir permintaan input.
+  tlp String
+
+  password String
+  foto     String @default("") // URL foto
+
+  online     Boolean @default(false)
+  lastOnline String  @default("")
+
+  active        Boolean @default(false) // Need to activate by admin
+  deactivatedAt String  @default("") // This is empty until admin block this user
+
+  // Many to many relations
+  toko Toko[]
 
   createdAt DateTime
   updatedAt DateTime
@@ -64,11 +125,23 @@ model Produk {
   stok       Int @default(0)
 
   // Parent table
-  admin   Admin @relation(fields: [adminId], references: [id])
-  adminId Int
+  toko     Toko    @relation(fields: [tokoId], references: [id])
+  tokoId   Int
+  diskon   Diskon? @relation(fields: [diskonId], references: [id])
+  diskonId Int?
 
-  // Child tables
-  diskon Diskon[]
+  createdAt DateTime
+  updatedAt DateTime
+}
+
+model Jasa {
+  id    Int    @id @default(autoincrement())
+  nama  String
+  biaya Int    @default(0)
+
+  // Parent table
+  toko   Toko @relation(fields: [tokoId], references: [id])
+  tokoId Int
 
   createdAt DateTime
   updatedAt DateTime
@@ -78,14 +151,17 @@ model Member {
   id     Int    @id @default(autoincrement())
   nama   String
   alamat String
-  tlp    String
+  tlp    String @unique
 
   // Jika ada diskon, harga diskon tetap berlaku + harga spesial member
   diskonPembelian Int @default(0)
 
   // Parent table
-  admin   Admin @relation(fields: [adminId], references: [id])
-  adminId Int
+  toko   Toko @relation(fields: [tokoId], references: [id])
+  tokoId Int
+
+  // Child tables
+  transaksiPenjualan TransaksiPenjualan[]
 
   createdAt DateTime
   updatedAt DateTime
@@ -97,12 +173,11 @@ model Diskon {
   persen     Int    @default(0)
 
   // Parent table
-  produk   Produk @relation(fields: [produkId], references: [id])
-  produkId Int
+  toko   Toko @relation(fields: [tokoId], references: [id])
+  tokoId Int
 
-  // Parent table
-  admin   Admin @relation(fields: [adminId], references: [id])
-  adminId Int
+  // Child table
+  produk Produk[]
 
   createdAt DateTime
   updatedAt DateTime
@@ -114,19 +189,23 @@ model TransaksiPembelian {
   total  Int    @default(0)
 
   // Parent table
-  admin   Admin @relation(fields: [adminId], references: [id])
-  adminId Int
+  toko   Toko @relation(fields: [tokoId], references: [id])
+  tokoId Int
 
   createdAt DateTime
   updatedAt DateTime
 }
 
 model TransaksiPenjualan {
-  id       Int    @id @default(autoincrement())
-  produk   String // JSON format [{nama, harga, dll}]
-  potongan Int    @default(0) // Harga spesial member + diskon (jika ada)
-  member   String // JSON format {nama, alamat, tlp dll}
-  total    Int    @default(0)
+  id     Int    @id @default(autoincrement())
+  produk String // JSON format [{ semua field produk }]
+  total  Int    @default(0)
+
+  // Parent table
+  toko     Toko?   @relation(fields: [tokoId], references: [id])
+  tokoId   Int?
+  member   Member? @relation(fields: [memberId], references: [id])
+  memberId Int?
 
   createdAt DateTime
   updatedAt DateTime
