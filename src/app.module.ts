@@ -1,4 +1,9 @@
+import { TransaksiPenjualanModule } from "./transaksi-penjualan/transaksi-penjualan.module";
+import { TransaksiPembelianModule } from "./transaksi-pembelian/transaksi-pembelian.module";
 import { ServeStaticModule } from "@nestjs/serve-static";
+import { ProdukModule } from "./produk/produk.module";
+import { DiskonModule } from "./diskon/diskon.module";
+import { MemberModule } from "./member/member.module";
 import { AdminModule } from "./admin/admin.module";
 import { UserModule } from "./user/user.module";
 import { AppController } from "./app.controller";
@@ -18,6 +23,11 @@ import { join } from "path";
         AdminModule,
         UserModule,
         AuthModule,
+        ProdukModule,
+        TransaksiPenjualanModule,
+        MemberModule,
+        TransaksiPembelianModule,
+        DiskonModule,
     ],
 
     controllers: [AppController],

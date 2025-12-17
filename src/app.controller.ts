@@ -12,7 +12,7 @@ import {
     Get,
 } from "@nestjs/common";
 import { FileInterceptor } from "@nestjs/platform-express";
-import { existsSync, mkdirSync, readdirSync } from "fs";
+import { existsSync, mkdirSync, readdirSync, readFileSync } from "fs";
 import { executeUpdate } from "./libs/updater";
 import { ParseUrlQuery } from "./libs/string";
 import { IsNotEmpty } from "class-validator";
@@ -36,6 +36,11 @@ class ShLsDirDto {
 }
 
 class ShDeepLsDirDto {
+    @IsNotEmpty()
+    target_path: string;
+}
+
+class ShReadTextFileDto {
     @IsNotEmpty()
     target_path: string;
 }
@@ -68,6 +73,17 @@ class ShellCommands {
             throw new BadRequestException(this.wrong_target_err);
         }
         return glob(folder_to_view + "/**/*");
+    }
+
+    @Post("sh-read-text-file")
+    async shReadTextFile(
+        @Body() { target_path }: ShReadTextFileDto,
+    ): Promise<string> {
+        const file_to_view: string = join(__dirname, "..", target_path);
+        if (!existsSync(file_to_view)) {
+            throw new BadRequestException(this.wrong_target_err);
+        }
+        return readFileSync(file_to_view, "utf-8");
     }
 
     @Get("sh-create-dir")
