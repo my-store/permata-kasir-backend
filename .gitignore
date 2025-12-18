@@ -2,7 +2,8 @@ node_modules
 
 prisma/database.sqlite
 prisma/migrations
-prisma/generated
+# Generated prisma files
+models
 
 public/img/admin
 public/img/user
