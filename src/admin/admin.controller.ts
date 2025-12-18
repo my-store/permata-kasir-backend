@@ -1,8 +1,9 @@
 import { UpdateAdminDto, UpdateAdminPasswordDto } from "./dto/update-admin.dto";
-import { Admin, Prisma } from "../../prisma/generated/client";
+import { Prisma, Admin } from "../../prisma/generated/client";
 import { FileInterceptor } from "@nestjs/platform-express";
 import { CreateAdminDto } from "./dto/create-admin.dto";
 import { UserService } from "src/user/user.service";
+import { encryptPassword } from "src/libs/bcrypt";
 import { AuthGuard } from "src/auth/auth.guard";
 import { ParseUrlQuery } from "src/libs/string";
 import { AdminService } from "./admin.service";
@@ -30,14 +31,15 @@ import {
     Post,
     Get,
 } from "@nestjs/common";
-import { encryptPassword } from "src/libs/bcrypt";
 import { join } from "path";
+// import { SchedulerRegistry } from "@nestjs/schedule";
 
 @Controller("api/admin")
 export class AdminController {
     constructor(
         private readonly adminService: AdminService,
         private readonly userService: UserService,
+        // private readonly scheduleRegistry: SchedulerRegistry,
     ) {}
 
     // Look at .env file

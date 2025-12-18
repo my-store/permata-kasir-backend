@@ -1,14 +1,14 @@
-import { IsNotEmpty } from 'class-validator';
+import { IsNotEmpty } from "class-validator";
 
 export class CreateAdminDto {
-  @IsNotEmpty()
-  nama: string;
+    @IsNotEmpty()
+    nama: string;
 
-  @IsNotEmpty()
-  tlp: string;
+    @IsNotEmpty()
+    tlp: string;
 
-  @IsNotEmpty()
-  password: string;
+    @IsNotEmpty()
+    password: string;
 
-  foto?: string;
+    foto?: string;
 }

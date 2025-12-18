@@ -7,9 +7,9 @@ import { AuthGuard } from "src/auth/auth.guard";
 import { ParseUrlQuery } from "src/libs/string";
 import { UserService } from "./user.service";
 import {
-    User,
-    Prisma,
     UserRegisterTicket,
+    Prisma,
+    User,
 } from "../../prisma/generated/client";
 import {
     GetFileDestBeforeUpload,
@@ -32,6 +32,7 @@ import {
     UploadedFile,
     Controller,
     UseGuards,
+    Request,
     Delete,
     Query,
     Patch,
@@ -87,12 +88,24 @@ export class UserController {
         return this.create(data, foto);
     }
 
-    // Admin only !
+    /* =====================================================
+    |  USER PRA-REGISTRASI - KHUSUS ADMIN
+    |  =====================================================
+    |  Sebelum user berhasil registrasi, admin harus
+    |  membuatkan terlebihdahulu tiket pendaftaran
+    |  yang nantinya akan digunakan user.
+    */
     @UseGuards(AuthGuard)
-    @Post("register-ticket")
+    @Post("create-register-ticket")
     async createRegisterTicket(
         @Body() data: CreateUserRegisterTicketDto,
+        @Request() req,
     ): Promise<UserRegisterTicket> {
+        // Not admin but visited this route
+        if (!req.user.role || req.user.role != "Admin") {
+            // Block request
+            throw new UnauthorizedException();
+        }
         let newRegisterCode: UserRegisterTicket;
         try {
             newRegisterCode = await this.userRegisterTicketService.create(data);
@@ -102,7 +115,6 @@ export class UserController {
         return newRegisterCode;
     }
 
-    // Admin only !
     @UseGuards(AuthGuard)
     @Post("verify-password/:tlp")
     async checkPassword(

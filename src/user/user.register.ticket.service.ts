@@ -1,9 +1,12 @@
 import { Prisma, UserRegisterTicket } from "../../prisma/generated/client";
+import { Injectable, Logger } from "@nestjs/common";
 import { PrismaService } from "../prisma.service";
-import { Injectable } from "@nestjs/common";
+import { generateId } from "src/libs/string";
 
 @Injectable()
 export class UserRegisterTicketService {
+    private readonly log: Logger = new Logger(UserRegisterTicketService.name);
+
     private readonly findOneKeys: Prisma.UserRegisterTicketSelect = {
         id: true,
         code: true,
@@ -12,8 +15,38 @@ export class UserRegisterTicketService {
     constructor(private readonly prisma: PrismaService) {}
 
     async create(data: any): Promise<UserRegisterTicket> {
+        // Generated ticket must be not exist!
+        let ticketExist: any = false;
+
+        // Generated ticket
+        const code: string = generateId(6);
+
+        // Find ticket
+        try {
+            ticketExist = await this.findOne({ where: { code } });
+        } catch {}
+
+        // Ticket already created/ being used
+        if (ticketExist) {
+            // Re-call this method
+            return this.create(data);
+        }
+
+        // Hapus otomatis setelah 1 menit
+        setTimeout(async () => {
+            try {
+                await this.remove({ code });
+                this.log.debug(
+                    `User register ticket => "${code}" has been deleted!`,
+                );
+            } catch {}
+        }, 60000);
+
         let newData: any = {
             ...data,
+
+            // Generated data
+            code,
 
             // Parse to intger
             adminId: parseInt(data.adminId),
