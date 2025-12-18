@@ -85,7 +85,8 @@ export class UserController {
             // Terminate task
             throw new UnauthorizedException();
         }
-        return this.create(data, foto);
+
+        return this.create(data, foto, ticket_code);
     }
 
     /* =====================================================
@@ -141,7 +142,16 @@ export class UserController {
         @Body() data: CreateUserDto,
         @UploadedFile()
         foto: Express.Multer.File,
+
+        // Security - This method can only called from register method
+        ticket_code: string = "",
     ): Promise<User> {
+        // Someone accessing this route, block it!
+        // Ticket code used for delete from database after insert user succeed
+        if (ticket_code == "" || ticket_code.length < 1) {
+            throw new UnauthorizedException();
+        }
+
         let newData: any;
 
         /* ------------------ USER TIDAK MENGUNGGAH FOTO ------------------ */
@@ -239,6 +249,11 @@ export class UserController {
         } catch (e) {
             throw new InternalServerErrorException(e);
         }
+
+        // Delete ticket code (disable re-using the code)
+        try {
+            await this.userRegisterTicketService.remove({ code: ticket_code });
+        } catch {}
 
         /* ------------------ SELESAI ------------------
         |  Setelah data berhasil disimpan, dan foto

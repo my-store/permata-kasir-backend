@@ -16,30 +16,36 @@ export class UserRegisterTicketService {
 
     async create(data: any): Promise<UserRegisterTicket> {
         // Generated ticket must be not exist!
-        let ticketExist: any = false;
+        let ticketIsUsed: any = false;
 
         // Generated ticket
         const code: string = generateId(6);
 
         // Find ticket
         try {
-            ticketExist = await this.findOne({ where: { code } });
+            ticketIsUsed = await this.findOne({ where: { code } });
         } catch {}
 
         // Ticket already created/ being used
-        if (ticketExist) {
+        if (ticketIsUsed) {
             // Re-call this method
             return this.create(data);
         }
 
         // Hapus otomatis setelah 1 menit
         setTimeout(async () => {
+            let ticketStillExist: any = false;
             try {
-                await this.remove({ code });
-                this.log.debug(
-                    `User register ticket => "${code}" has been deleted!`,
-                );
+                ticketStillExist = await this.findOne({ where: { code } });
             } catch {}
+            if (ticketStillExist) {
+                try {
+                    await this.remove({ code });
+                    this.log.debug(
+                        `User register ticket => "${code}" has been deleted!`,
+                    );
+                } catch {}
+            }
         }, 60000);
 
         let newData: any = {
