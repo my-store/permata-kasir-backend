@@ -1,4 +1,4 @@
-import { Prisma, UserRegisterTicket } from "../../prisma/generated/client";
+import { Prisma, UserRegisterTicket } from "models/client";
 import { Injectable, Logger } from "@nestjs/common";
 import { PrismaService } from "../prisma.service";
 import { generateId } from "src/libs/string";

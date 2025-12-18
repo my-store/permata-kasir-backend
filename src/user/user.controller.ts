@@ -1,16 +1,12 @@
 import { UpdateUserDto, UpdateUserPasswordDto } from "./dto/update-user.dto";
 import { UserRegisterTicketService } from "./user.register.ticket.service";
+import { UserRegisterTicket, Prisma, User } from "models/client";
 import { FileInterceptor } from "@nestjs/platform-express";
 import { AdminService } from "src/admin/admin.service";
 import { encryptPassword } from "src/libs/bcrypt";
 import { AuthGuard } from "src/auth/auth.guard";
 import { ParseUrlQuery } from "src/libs/string";
 import { UserService } from "./user.service";
-import {
-    UserRegisterTicket,
-    Prisma,
-    User,
-} from "../../prisma/generated/client";
 import {
     GetFileDestBeforeUpload,
     ProfileImageValidator,

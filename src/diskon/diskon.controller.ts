@@ -15,7 +15,7 @@ import { UpdateDiskonDto } from "./dto/update-diskon.dto";
 import { DiskonService } from "./diskon.service";
 import { AuthGuard } from "src/auth/auth.guard";
 import { ParseUrlQuery } from "src/libs/string";
-import { Diskon } from "prisma/generated";
+import { Diskon } from "models";
 
 @Controller("diskon")
 export class DiskonController {

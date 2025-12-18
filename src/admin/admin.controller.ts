@@ -1,5 +1,4 @@
 import { UpdateAdminDto, UpdateAdminPasswordDto } from "./dto/update-admin.dto";
-import { Prisma, Admin } from "../../prisma/generated/client";
 import { FileInterceptor } from "@nestjs/platform-express";
 import { CreateAdminDto } from "./dto/create-admin.dto";
 import { UserService } from "src/user/user.service";
@@ -7,6 +6,7 @@ import { encryptPassword } from "src/libs/bcrypt";
 import { AuthGuard } from "src/auth/auth.guard";
 import { ParseUrlQuery } from "src/libs/string";
 import { AdminService } from "./admin.service";
+import { Prisma, Admin } from "models/client";
 import * as bcrypt from "bcrypt";
 import {
     GetFileDestBeforeUpload,

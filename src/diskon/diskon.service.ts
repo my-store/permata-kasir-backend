@@ -1,6 +1,6 @@
 import { PrismaService } from "src/prisma.service";
-import { Diskon, Prisma } from "prisma/generated";
 import { Injectable } from "@nestjs/common";
+import { Diskon, Prisma } from "models";
 
 @Injectable()
 export class DiskonService {

@@ -15,7 +15,7 @@ import { UpdateProdukDto } from "./dto/update-produk.dto";
 import { ProdukService } from "./produk.service";
 import { AuthGuard } from "src/auth/auth.guard";
 import { ParseUrlQuery } from "src/libs/string";
-import { Produk } from "prisma/generated";
+import { Produk } from "models";
 
 @Controller("api/produk")
 export class ProdukController {

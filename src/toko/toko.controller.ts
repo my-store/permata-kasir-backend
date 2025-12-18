@@ -15,7 +15,7 @@ import { UpdateTokoDto } from "./dto/update-toko.dto";
 import { TokoService } from "./toko.service";
 import { AuthGuard } from "src/auth/auth.guard";
 import { ParseUrlQuery } from "src/libs/string";
-import { Toko } from "prisma/generated";
+import { Toko } from "models";
 
 @Controller("api/toko")
 export class TokoController {

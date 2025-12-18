@@ -1,6 +1,6 @@
 import { PrismaService } from "src/prisma.service";
-import { Toko, Prisma } from "prisma/generated";
 import { Injectable } from "@nestjs/common";
+import { Toko, Prisma } from "models";
 
 @Injectable()
 export class TokoService {

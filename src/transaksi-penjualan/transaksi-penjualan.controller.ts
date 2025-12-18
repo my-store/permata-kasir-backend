@@ -13,9 +13,9 @@ import {
 import { CreateTransaksiPenjualanDto } from "./dto/create-transaksi-penjualan.dto";
 import { UpdateTransaksiPenjualanDto } from "./dto/update-transaksi-penjualan.dto";
 import { TransaksiPenjualanService } from "./transaksi-penjualan.service";
-import { TransaksiPenjualan } from "prisma/generated";
 import { AuthGuard } from "src/auth/auth.guard";
 import { ParseUrlQuery } from "src/libs/string";
+import { TransaksiPenjualan } from "models";
 
 @Controller("transaksi-penjualan")
 export class TransaksiPenjualanController {

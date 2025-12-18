@@ -15,7 +15,7 @@ import { UpdateMemberDto } from "./dto/update-member.dto";
 import { MemberService } from "./member.service";
 import { AuthGuard } from "src/auth/auth.guard";
 import { ParseUrlQuery } from "src/libs/string";
-import { Member } from "prisma/generated";
+import { Member } from "models";
 
 @Controller("member")
 export class MemberController {

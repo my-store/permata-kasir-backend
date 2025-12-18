@@ -1,4 +1,4 @@
-import { Prisma, TransaksiPenjualan } from "prisma/generated";
+import { Prisma, TransaksiPenjualan } from "models";
 import { PrismaService } from "src/prisma.service";
 import { Injectable } from "@nestjs/common";
 

@@ -13,9 +13,9 @@ import {
 import { CreateTransaksiPembelianDto } from "./dto/create-transaksi-pembelian.dto";
 import { UpdateTransaksiPembelianDto } from "./dto/update-transaksi-pembelian.dto";
 import { TransaksiPembelianService } from "./transaksi-pembelian.service";
-import { TransaksiPembelian } from "prisma/generated";
 import { AuthGuard } from "src/auth/auth.guard";
 import { ParseUrlQuery } from "src/libs/string";
+import { TransaksiPembelian } from "models";
 
 @Controller("transaksi-pembelian")
 export class TransaksiPembelianController {
