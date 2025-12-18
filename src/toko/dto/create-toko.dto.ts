@@ -1,18 +1,15 @@
 import { IsNotEmpty } from "class-validator";
 
-export class CreateProdukDto {
+export class CreateTokoDto {
     @IsNotEmpty()
     nama: string;
 
     @IsNotEmpty()
-    hargaPokok: string;
+    alamat: string;
 
     @IsNotEmpty()
-    hargaJual: string;
+    tlp: string;
 
     @IsNotEmpty()
-    stok: string;
-
-    @IsNotEmpty()
-    tokoId: string;
+    userId: string;
 }

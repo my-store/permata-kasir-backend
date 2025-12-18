@@ -19,11 +19,13 @@ model Admin {
   nama       String
   tlp        String  @unique
   password   String
+  alamat     String
   foto       String  @default("") // URL foto
   online     Boolean @default(false)
   lastOnline String  @default("")
 
   // Child tables
+  userRanking        UserRanking[]
   userRegisterTicket UserRegisterTicket[]
 
   createdAt DateTime
@@ -35,6 +37,7 @@ model User {
   nama     String
   tlp      String @unique
   password String
+  alamat   String
   foto     String @default("") // URL foto
 
   online     Boolean @default(false)
@@ -43,8 +46,27 @@ model User {
   active        Boolean @default(false) //init Need to activate by admin
   deactivatedAt String  @default("") // This is empty until admin block this user
 
+  // Parent table
+  userRanking   UserRanking? @relation(fields: [userRankingId], references: [id])
+  userRankingId Int?
+
   // Child tables
   toko Toko[]
+
+  createdAt DateTime
+  updatedAt DateTime
+}
+
+model UserRanking {
+  id   Int    @id @default(autoincrement())
+  nama String
+
+  // Parent table
+  admin   Admin @relation(fields: [adminId], references: [id])
+  adminId Int
+
+  // Child tables
+  user User[]
 
   createdAt DateTime
   updatedAt DateTime
@@ -69,21 +91,21 @@ model UserRegisterTicket {
 }
 
 model Toko {
-  id Int @id @default(autoincrement())
+  id     Int    @id @default(autoincrement())
+  nama   String
+  alamat String
+  tlp    String
 
   // Parent table
   user   User @relation(fields: [userId], references: [id])
   userId Int
 
-  nama   String
-  alamat String
-
   // Child tables
   produk             Produk[]
-  member             Member[]
-  diskon             Diskon[]
   jasa               Jasa[]
-  karyawan           Karyawan[]
+  diskon             Diskon[]
+  member             Member[]
+  memberRanking      MemberRanking[]
   transaksiPembelian TransaksiPembelian[]
   transaksiPenjualan TransaksiPenjualan[]
 
@@ -91,44 +113,19 @@ model Toko {
   updatedAt DateTime
 }
 
-model Karyawan {
-  id   Int    @id @default(autoincrement())
-  nama String
-
-  // Tidak unique, jadi si karyawan dapat bekerja di semua toko yang ada di database.
-  // Pengecekan terletak pada pada controller input karyawan,
-  // jika nomor telah digunakan blokir permintaan input.
-  tlp String
-
-  password String
-  foto     String @default("") // URL foto
-
-  online     Boolean @default(false)
-  lastOnline String  @default("")
-
-  active        Boolean @default(false) // Need to activate by admin
-  deactivatedAt String  @default("") // This is empty until admin block this user
-
-  // Many to many relations
-  toko Toko[]
-
-  createdAt DateTime
-  updatedAt DateTime
-}
-
 model Produk {
-  id   Int    @id @default(autoincrement())
-  nama String
-
-  hargaPokok Int @default(0)
-  hargaJual  Int @default(0)
-  stok       Int @default(0)
+  id         Int    @id @default(autoincrement())
+  nama       String
+  hargaPokok Int
+  hargaJual  Int
+  stok       Int
 
   // Parent table
-  toko     Toko    @relation(fields: [tokoId], references: [id])
-  tokoId   Int
-  diskon   Diskon? @relation(fields: [diskonId], references: [id])
-  diskonId Int?
+  toko   Toko @relation(fields: [tokoId], references: [id])
+  tokoId Int
+
+  // Many to many relations
+  diskon Diskon[]
 
   createdAt DateTime
   updatedAt DateTime
@@ -137,31 +134,14 @@ model Produk {
 model Jasa {
   id    Int    @id @default(autoincrement())
   nama  String
-  biaya Int    @default(0)
+  biaya Int
 
   // Parent table
   toko   Toko @relation(fields: [tokoId], references: [id])
   tokoId Int
 
-  createdAt DateTime
-  updatedAt DateTime
-}
-
-model Member {
-  id     Int    @id @default(autoincrement())
-  nama   String
-  alamat String
-  tlp    String @unique
-
-  // Jika ada diskon, harga diskon tetap berlaku + harga spesial member
-  diskonPembelian Int @default(0)
-
-  // Parent table
-  toko   Toko @relation(fields: [tokoId], references: [id])
-  tokoId Int
-
-  // Child tables
-  transaksiPenjualan TransaksiPenjualan[]
+  // Many to many relations
+  diskon Diskon[]
 
   createdAt DateTime
   updatedAt DateTime
@@ -169,43 +149,92 @@ model Member {
 
 model Diskon {
   id         Int    @id @default(autoincrement())
-  keterangan String
-  persen     Int    @default(0)
+  keterangan String // Misal Jum'at berkah
+  nilai      Int // Persentase potongan
 
   // Parent table
   toko   Toko @relation(fields: [tokoId], references: [id])
   tokoId Int
 
-  // Child table
+  // Many to many relations
   produk Produk[]
+  jasa   Jasa[]
+
+  createdAt DateTime
+  updatedAt DateTime
+}
+
+model Member {
+  id     Int    @id @default(autoincrement())
+  tlp    String
+  nama   String
+  alamat String
+
+  // Parent table
+  toko            Toko           @relation(fields: [tokoId], references: [id])
+  tokoId          Int
+  // Optional | nullable
+  memberRanking   MemberRanking? @relation(fields: [memberRankingId], references: [id])
+  memberRankingId Int?
+
+  createdAt DateTime
+  updatedAt DateTime
+}
+
+model MemberRanking {
+  id   Int    @id @default(autoincrement())
+  nama String
+
+  // Potongan spesial member, tidak mempengaruhi diskon pada produk
+  // Diskon pada produk tetap berlaku.
+  potonganBelanja Int @default(0)
+
+  // Parent table
+  toko   Toko @relation(fields: [tokoId], references: [id])
+  tokoId Int
+
+  // Child tables
+  member Member[]
 
   createdAt DateTime
   updatedAt DateTime
 }
 
 model TransaksiPembelian {
-  id     Int    @id @default(autoincrement())
-  produk String // JSON format [{nama, harga, dll}]
-  total  Int    @default(0)
+  id Int @id @default(autoincrement())
 
   // Parent table
   toko   Toko @relation(fields: [tokoId], references: [id])
   tokoId Int
+
+  /**
+   * =====================================================
+   * |  JSON DATA - TIDAK BERGANTUNG DENGAN RELASI
+   * |  =====================================================
+   * |  Jika tabel produk dihapus, tidak akan berpengaruh
+   * |  pada data JSON ini.
+   */
+  produk String // Example: [{ id: Important, nama, harga, dll }]
 
   createdAt DateTime
   updatedAt DateTime
 }
 
 model TransaksiPenjualan {
-  id     Int    @id @default(autoincrement())
-  produk String // JSON format [{ semua field produk }]
-  total  Int    @default(0)
+  id Int @id @default(autoincrement())
 
   // Parent table
-  toko     Toko?   @relation(fields: [tokoId], references: [id])
-  tokoId   Int?
-  member   Member? @relation(fields: [memberId], references: [id])
-  memberId Int?
+  toko   Toko? @relation(fields: [tokoId], references: [id])
+  tokoId Int?
+
+  /**
+   * =====================================================
+   * |  JSON DATA - TIDAK BERGANTUNG DENGAN RELASI
+   * |  =====================================================
+   * |  Jika tabel produk dihapus, tidak akan berpengaruh
+   * |  pada data JSON ini.
+   */
+  produk String // Example: [{ id: Important, nama, harga, dll }]
 
   createdAt DateTime
   updatedAt DateTime

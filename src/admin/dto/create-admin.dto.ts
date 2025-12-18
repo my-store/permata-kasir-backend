@@ -10,5 +10,8 @@ export class CreateAdminDto {
     @IsNotEmpty()
     password: string;
 
+    @IsNotEmpty()
+    alamat: string;
+
     foto?: string;
 }

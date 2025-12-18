@@ -17,7 +17,7 @@ import { AuthGuard } from "src/auth/auth.guard";
 import { ParseUrlQuery } from "src/libs/string";
 import { Produk } from "prisma/generated";
 
-@Controller("produk")
+@Controller("api/produk")
 export class ProdukController {
     constructor(private readonly service: ProdukService) {}
 
@@ -38,8 +38,14 @@ export class ProdukController {
 
     @UseGuards(AuthGuard)
     @Post()
-    create(@Body() createProdukDto: CreateProdukDto) {
-        return this.service.create(createProdukDto);
+    async create(@Body() createProdukDto: CreateProdukDto): Promise<Produk> {
+        let produk: Produk;
+        try {
+            produk = await this.service.create(createProdukDto);
+        } catch (error) {
+            throw new InternalServerErrorException(error);
+        }
+        return produk;
     }
 
     @UseGuards(AuthGuard)

@@ -6,14 +6,45 @@ import { Injectable } from "@nestjs/common";
 export class ProdukService {
     private readonly findAllKeys: Prisma.ProdukSelect = {
         id: true,
+        nama: true,
+        hargaPokok: true,
+        hargaJual: true,
         createdAt: true,
         updatedAt: true,
+
+        // toko: {
+        //     select: {
+        //         nama: true,
+        //         alamat: true,
+        //         tlp: true,
+        //     },
+        // },
     };
 
     private readonly findOneKeys: Prisma.ProdukSelect = {
         id: true,
+        nama: true,
+        hargaPokok: true,
+        hargaJual: true,
         createdAt: true,
         updatedAt: true,
+
+        // toko: {
+        //     select: {
+        //         id: true,
+        //         nama: true,
+        //         alamat: true,
+        //         tlp: true,
+        //         user: {
+        //             select: {
+        //                 id: true,
+        //                 nama: true,
+        //                 tlp: true,
+        //                 createdAt: true,
+        //             },
+        //         },
+        //     },
+        // },
     };
 
     constructor(private readonly prisma: PrismaService) {}

@@ -10,6 +10,9 @@ export class CreateUserDto {
     @IsNotEmpty()
     password: string;
 
+    @IsNotEmpty()
+    alamat: string;
+
     foto?: string;
 }
 

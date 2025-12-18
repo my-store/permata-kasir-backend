@@ -10,6 +10,7 @@ import { ScheduleModule } from "@nestjs/schedule";
 import { AppController } from "./app.controller";
 import { AuthModule } from "./auth/auth.module";
 import { UserModule } from "./user/user.module";
+import { TokoModule } from "./toko/toko.module";
 import { ConfigModule } from "@nestjs/config";
 import { AppGateway } from "./app.gateway";
 import { AppService } from "./app.service";
@@ -31,6 +32,7 @@ import { join } from "path";
         MemberModule,
         TransaksiPembelianModule,
         DiskonModule,
+        TokoModule,
     ],
 
     controllers: [AppController],
