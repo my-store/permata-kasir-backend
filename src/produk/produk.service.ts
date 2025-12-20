@@ -26,25 +26,27 @@ export class ProdukService {
         nama: true,
         hargaPokok: true,
         hargaJual: true,
+        stok: true,
         createdAt: true,
         updatedAt: true,
 
-        // toko: {
-        //     select: {
-        //         id: true,
-        //         nama: true,
-        //         alamat: true,
-        //         tlp: true,
-        //         user: {
-        //             select: {
-        //                 id: true,
-        //                 nama: true,
-        //                 tlp: true,
-        //                 createdAt: true,
-        //             },
-        //         },
-        //     },
-        // },
+        toko: {
+            select: {
+                id: true,
+                nama: true,
+                alamat: true,
+                tlp: true,
+                createdAt: true,
+                user: {
+                    select: {
+                        id: true,
+                        nama: true,
+                        tlp: true,
+                        createdAt: true,
+                    },
+                },
+            },
+        },
     };
 
     constructor(private readonly prisma: PrismaService) {}
