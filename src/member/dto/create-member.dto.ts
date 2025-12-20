@@ -1,1 +1,15 @@
-export class CreateMemberDto {}
+import { IsNotEmpty } from "class-validator";
+
+export class CreateMemberDto {
+    @IsNotEmpty()
+    nama: string;
+
+    @IsNotEmpty()
+    alamat: string;
+
+    @IsNotEmpty()
+    tlp: string;
+
+    @IsNotEmpty()
+    tokoId: string;
+}
