@@ -23,9 +23,11 @@ export class TokoService {
 
         user: {
             select: {
+                id: true,
                 nama: true,
-                alamat: true,
                 tlp: true,
+                alamat: true,
+                createdAt: true,
             },
         },
     };
