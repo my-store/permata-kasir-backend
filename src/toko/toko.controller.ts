@@ -38,7 +38,11 @@ export class TokoController {
 
     @Post()
     create(@Body() createTokoDto: CreateTokoDto) {
-        return this.service.create(createTokoDto);
+        try {
+            return this.service.create(createTokoDto);
+        } catch (error) {
+            throw new InternalServerErrorException(error);
+        }
     }
 
     @Get(":id")

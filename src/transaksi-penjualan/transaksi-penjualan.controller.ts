@@ -38,7 +38,11 @@ export class TransaksiPenjualanController {
 
     @Post()
     create(@Body() createTransaksiPenjualanDto: CreateTransaksiPenjualanDto) {
-        return this.service.create(createTransaksiPenjualanDto);
+        try {
+            return this.service.create(createTransaksiPenjualanDto);
+        } catch (error) {
+            throw new InternalServerErrorException(error);
+        }
     }
 
     @Get(":id")

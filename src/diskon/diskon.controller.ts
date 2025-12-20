@@ -38,7 +38,11 @@ export class DiskonController {
 
     @Post()
     create(@Body() createDiskonDto: CreateDiskonDto) {
-        return this.service.create(createDiskonDto);
+        try {
+            return this.service.create(createDiskonDto);
+        } catch (error) {
+            throw new InternalServerErrorException(error);
+        }
     }
 
     @Get(":id")

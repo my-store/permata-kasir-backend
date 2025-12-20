@@ -38,13 +38,11 @@ export class ProdukController {
 
     @Post()
     async create(@Body() createProdukDto: CreateProdukDto): Promise<Produk> {
-        let produk: Produk;
         try {
-            produk = await this.service.create(createProdukDto);
+            return this.service.create(createProdukDto);
         } catch (error) {
             throw new InternalServerErrorException(error);
         }
-        return produk;
     }
 
     @Get(":id")

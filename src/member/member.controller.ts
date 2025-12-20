@@ -38,7 +38,11 @@ export class MemberController {
 
     @Post()
     create(@Body() createMemberDto: CreateMemberDto) {
-        return this.service.create(createMemberDto);
+        try {
+            return this.service.create(createMemberDto);
+        } catch (error) {
+            throw new InternalServerErrorException(error);
+        }
     }
 
     @Get(":id")

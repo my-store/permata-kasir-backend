@@ -38,7 +38,11 @@ export class TransaksiPembelianController {
 
     @Post()
     create(@Body() createTransaksiPembelianDto: CreateTransaksiPembelianDto) {
-        return this.service.create(createTransaksiPembelianDto);
+        try {
+            return this.service.create(createTransaksiPembelianDto);
+        } catch (error) {
+            throw new InternalServerErrorException(error);
+        }
     }
 
     @Get(":id")
