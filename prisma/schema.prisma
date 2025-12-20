@@ -103,7 +103,7 @@ model Toko {
   id     Int    @id @default(autoincrement())
   nama   String
   alamat String
-  tlp    String
+  tlp    String @unique
 
   // Parent table
   user   User @relation(fields: [userId], references: [id])
@@ -177,7 +177,7 @@ model Member {
   id     Int    @id @default(autoincrement())
   nama   String
   alamat String
-  tlp    String
+  tlp    String @unique
 
   // Parent table
   toko            Toko           @relation(fields: [tokoId], references: [id])
