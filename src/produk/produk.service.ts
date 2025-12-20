@@ -42,6 +42,7 @@ export class ProdukService {
                         id: true,
                         nama: true,
                         tlp: true,
+                        alamat: true,
                         createdAt: true,
                     },
                 },

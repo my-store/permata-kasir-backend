@@ -20,9 +20,9 @@ model Admin {
   tlp        String  @unique
   password   String
   alamat     String
-  foto       String  @default("") // URL foto
+  foto       String? // URL foto
   online     Boolean @default(false)
-  lastOnline String  @default("")
+  lastOnline String?
 
   // Child tables
   userRanking        UserRanking[]
@@ -33,18 +33,27 @@ model Admin {
 }
 
 model User {
-  id       Int    @id @default(autoincrement())
+  id       Int     @id @default(autoincrement())
   nama     String
-  tlp      String @unique
+  tlp      String  @unique
   password String
   alamat   String
-  foto     String @default("") // URL foto
+  foto     String? // URL foto
 
   online     Boolean @default(false)
-  lastOnline String  @default("")
+  lastOnline String?
 
-  active        Boolean @default(false) //init Need to activate by admin
-  deactivatedAt String  @default("") // This is empty until admin block this user
+  /**
+   * ==========================================================
+   * |  USER STATUS
+   * |  =======================================================
+   * |  1. active = Need to activate by admin
+   * |  2. deactivatedAt = kapan admin memblokir user ini
+   * |  3. deactivatedReason = alasan admin memblokir user ini
+   */
+  active            Boolean   @default(false)
+  deactivatedAt     DateTime?
+  deactivatedReason String?
 
   // Parent table
   userRanking   UserRanking? @relation(fields: [userRankingId], references: [id])
