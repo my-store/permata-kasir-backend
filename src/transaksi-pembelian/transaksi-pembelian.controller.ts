@@ -1,3 +1,9 @@
+import { CreateTransaksiPembelianDto } from "./dto/create-transaksi-pembelian.dto";
+import { UpdateTransaksiPembelianDto } from "./dto/update-transaksi-pembelian.dto";
+import { TransaksiPembelianService } from "./transaksi-pembelian.service";
+import { AuthGuard } from "src/auth/auth.guard";
+import { ParseUrlQuery } from "src/libs/string";
+import { TransaksiPembelian } from "models";
 import {
     InternalServerErrorException,
     Controller,
@@ -10,18 +16,12 @@ import {
     Post,
     Get,
 } from "@nestjs/common";
-import { CreateTransaksiPembelianDto } from "./dto/create-transaksi-pembelian.dto";
-import { UpdateTransaksiPembelianDto } from "./dto/update-transaksi-pembelian.dto";
-import { TransaksiPembelianService } from "./transaksi-pembelian.service";
-import { AuthGuard } from "src/auth/auth.guard";
-import { ParseUrlQuery } from "src/libs/string";
-import { TransaksiPembelian } from "models";
 
+@UseGuards(AuthGuard)
 @Controller("transaksi-pembelian")
 export class TransaksiPembelianController {
     constructor(private readonly service: TransaksiPembelianService) {}
 
-    @UseGuards(AuthGuard)
     @Get()
     async findAll(@Query() query: any): Promise<TransaksiPembelian[]> {
         const args: any = ParseUrlQuery(query);
@@ -36,13 +36,11 @@ export class TransaksiPembelianController {
         return data;
     }
 
-    @UseGuards(AuthGuard)
     @Post()
     create(@Body() createTransaksiPembelianDto: CreateTransaksiPembelianDto) {
         return this.service.create(createTransaksiPembelianDto);
     }
 
-    @UseGuards(AuthGuard)
     @Get(":id")
     async findOne(@Param("id") id: string): Promise<TransaksiPembelian | null> {
         let data: TransaksiPembelian | null;

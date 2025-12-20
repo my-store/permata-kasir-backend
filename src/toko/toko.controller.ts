@@ -17,11 +17,11 @@ import { AuthGuard } from "src/auth/auth.guard";
 import { ParseUrlQuery } from "src/libs/string";
 import { Toko } from "models";
 
+@UseGuards(AuthGuard)
 @Controller("api/toko")
 export class TokoController {
     constructor(private readonly service: TokoService) {}
 
-    @UseGuards(AuthGuard)
     @Get()
     async findAll(@Query() query: any): Promise<Toko[]> {
         const args: any = ParseUrlQuery(query);
@@ -36,13 +36,11 @@ export class TokoController {
         return data;
     }
 
-    @UseGuards(AuthGuard)
     @Post()
     create(@Body() createTokoDto: CreateTokoDto) {
         return this.service.create(createTokoDto);
     }
 
-    @UseGuards(AuthGuard)
     @Get(":id")
     async findOne(@Param("id") id: string): Promise<Toko | null> {
         let data: Toko | null;

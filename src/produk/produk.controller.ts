@@ -17,11 +17,11 @@ import { AuthGuard } from "src/auth/auth.guard";
 import { ParseUrlQuery } from "src/libs/string";
 import { Produk } from "models";
 
+@UseGuards(AuthGuard)
 @Controller("api/produk")
 export class ProdukController {
     constructor(private readonly service: ProdukService) {}
 
-    @UseGuards(AuthGuard)
     @Get()
     async findAll(@Query() query: any): Promise<Produk[]> {
         const args: any = ParseUrlQuery(query);
@@ -36,7 +36,6 @@ export class ProdukController {
         return data;
     }
 
-    @UseGuards(AuthGuard)
     @Post()
     async create(@Body() createProdukDto: CreateProdukDto): Promise<Produk> {
         let produk: Produk;
@@ -48,7 +47,6 @@ export class ProdukController {
         return produk;
     }
 
-    @UseGuards(AuthGuard)
     @Get(":id")
     async findOne(@Param("id") id: string): Promise<Produk | null> {
         let data: Produk | null;

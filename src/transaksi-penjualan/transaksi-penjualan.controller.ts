@@ -1,3 +1,9 @@
+import { CreateTransaksiPenjualanDto } from "./dto/create-transaksi-penjualan.dto";
+import { UpdateTransaksiPenjualanDto } from "./dto/update-transaksi-penjualan.dto";
+import { TransaksiPenjualanService } from "./transaksi-penjualan.service";
+import { ParseUrlQuery } from "src/libs/string";
+import { AuthGuard } from "src/auth/auth.guard";
+import { TransaksiPenjualan } from "models";
 import {
     InternalServerErrorException,
     Controller,
@@ -10,18 +16,12 @@ import {
     Body,
     Get,
 } from "@nestjs/common";
-import { CreateTransaksiPenjualanDto } from "./dto/create-transaksi-penjualan.dto";
-import { UpdateTransaksiPenjualanDto } from "./dto/update-transaksi-penjualan.dto";
-import { TransaksiPenjualanService } from "./transaksi-penjualan.service";
-import { AuthGuard } from "src/auth/auth.guard";
-import { ParseUrlQuery } from "src/libs/string";
-import { TransaksiPenjualan } from "models";
 
+@UseGuards(AuthGuard)
 @Controller("transaksi-penjualan")
 export class TransaksiPenjualanController {
     constructor(private readonly service: TransaksiPenjualanService) {}
 
-    @UseGuards(AuthGuard)
     @Get()
     async findAll(@Query() query: any): Promise<TransaksiPenjualan[]> {
         const args: any = ParseUrlQuery(query);
@@ -36,13 +36,11 @@ export class TransaksiPenjualanController {
         return data;
     }
 
-    @UseGuards(AuthGuard)
     @Post()
     create(@Body() createTransaksiPenjualanDto: CreateTransaksiPenjualanDto) {
         return this.service.create(createTransaksiPenjualanDto);
     }
 
-    @UseGuards(AuthGuard)
     @Get(":id")
     async findOne(@Param("id") id: string): Promise<TransaksiPenjualan | null> {
         let data: TransaksiPenjualan | null;

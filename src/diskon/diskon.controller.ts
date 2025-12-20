@@ -1,3 +1,9 @@
+import { CreateDiskonDto } from "./dto/create-diskon.dto";
+import { UpdateDiskonDto } from "./dto/update-diskon.dto";
+import { DiskonService } from "./diskon.service";
+import { AuthGuard } from "src/auth/auth.guard";
+import { ParseUrlQuery } from "src/libs/string";
+import { Diskon } from "models";
 import {
     InternalServerErrorException,
     Controller,
@@ -10,18 +16,12 @@ import {
     Body,
     Get,
 } from "@nestjs/common";
-import { CreateDiskonDto } from "./dto/create-diskon.dto";
-import { UpdateDiskonDto } from "./dto/update-diskon.dto";
-import { DiskonService } from "./diskon.service";
-import { AuthGuard } from "src/auth/auth.guard";
-import { ParseUrlQuery } from "src/libs/string";
-import { Diskon } from "models";
 
+@UseGuards(AuthGuard)
 @Controller("diskon")
 export class DiskonController {
     constructor(private readonly service: DiskonService) {}
 
-    @UseGuards(AuthGuard)
     @Get()
     async findAll(@Query() query: any): Promise<Diskon[]> {
         const args: any = ParseUrlQuery(query);
@@ -36,13 +36,11 @@ export class DiskonController {
         return data;
     }
 
-    @UseGuards(AuthGuard)
     @Post()
     create(@Body() createDiskonDto: CreateDiskonDto) {
         return this.service.create(createDiskonDto);
     }
 
-    @UseGuards(AuthGuard)
     @Get(":id")
     async findOne(@Param("id") id: string): Promise<Diskon | null> {
         let data: Diskon | null;

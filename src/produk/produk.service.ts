@@ -48,6 +48,14 @@ export class ProdukService {
                 },
             },
         },
+
+        diskon: {
+            select: {
+                id: true,
+                keterangan: true,
+                createdAt: true,
+            },
+        },
     };
 
     constructor(private readonly prisma: PrismaService) {}
