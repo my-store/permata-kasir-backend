@@ -18,7 +18,7 @@ import {
 } from "@nestjs/common";
 
 @UseGuards(AuthGuard)
-@Controller("transaksi-pembelian")
+@Controller("api/transaksi-pembelian")
 export class TransaksiPembelianController {
     constructor(private readonly service: TransaksiPembelianService) {}
 

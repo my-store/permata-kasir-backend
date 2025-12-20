@@ -18,7 +18,7 @@ import {
 } from "@nestjs/common";
 
 @UseGuards(AuthGuard)
-@Controller("member")
+@Controller("api/member")
 export class MemberController {
     constructor(private readonly service: MemberService) {}
 

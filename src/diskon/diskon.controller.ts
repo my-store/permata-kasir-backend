@@ -18,7 +18,7 @@ import {
 } from "@nestjs/common";
 
 @UseGuards(AuthGuard)
-@Controller("diskon")
+@Controller("api/diskon")
 export class DiskonController {
     constructor(private readonly service: DiskonService) {}
 

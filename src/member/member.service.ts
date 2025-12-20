@@ -19,7 +19,13 @@ export class MemberService {
     constructor(private readonly prisma: PrismaService) {}
 
     async create(data: any): Promise<Member> {
-        let newData: Prisma.MemberCreateInput = { ...data };
+        let newData: Prisma.MemberCreateInput = {
+            ...data,
+
+            // Parse to integer
+            tokoId: parseInt(data.tokoId),
+            memberRankingId: data.memberRankingId ?? null,
+        };
 
         // Konfigurasi timestamp
         const thisTime = new Date().toISOString();

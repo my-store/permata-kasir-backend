@@ -19,7 +19,12 @@ export class TransaksiPembelianService {
     constructor(private readonly prisma: PrismaService) {}
 
     async create(data: any): Promise<TransaksiPembelian> {
-        let newData: Prisma.TransaksiPembelianCreateInput = { ...data };
+        let newData: Prisma.TransaksiPembelianCreateInput = {
+            ...data,
+
+            // Parse to integer
+            tokoId: parseInt(data.tokoId),
+        };
 
         // Konfigurasi timestamp
         const thisTime = new Date().toISOString();

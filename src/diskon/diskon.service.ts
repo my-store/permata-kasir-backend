@@ -21,7 +21,12 @@ export class DiskonService {
     constructor(private readonly prisma: PrismaService) {}
 
     async create(data: any): Promise<Diskon> {
-        let newData: Prisma.DiskonCreateInput = { ...data };
+        let newData: Prisma.DiskonCreateInput = {
+            ...data,
+
+            // Parse to integer
+            tokoId: parseInt(data.tokoId),
+        };
 
         // Konfigurasi timestamp
         const thisTime = new Date().toISOString();

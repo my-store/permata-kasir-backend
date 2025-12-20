@@ -19,7 +19,12 @@ export class TransaksiPenjualanService {
     constructor(private readonly prisma: PrismaService) {}
 
     async create(data: any): Promise<TransaksiPenjualan> {
-        let newData: Prisma.TransaksiPenjualanCreateInput = { ...data };
+        let newData: Prisma.TransaksiPenjualanCreateInput = {
+            ...data,
+
+            // Parse to integer
+            tokoId: parseInt(data.tokoId),
+        };
 
         // Konfigurasi timestamp
         const thisTime = new Date().toISOString();
