@@ -1,5 +1,8 @@
 #!/bin/bash
 
+# Make sure this file is executable on linux
+# $ chmod +x update-server.sh
+
 # For to terminate PM2 process
 pm2 stop permata-kasir-backend
 
