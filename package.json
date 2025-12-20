@@ -21,7 +21,9 @@
         "db:deploy": "prisma migrate deploy",
         "db:migrate": "prisma migrate dev --skip-generate",
         "db:generate": "prisma generate",
-        "db:studio": "prisma studio"
+        "db:studio": "prisma studio",
+        "git:commit": "git add . && git commit -m",
+        "git:push": "git push -u origin main"
     },
     "dependencies": {
         "@nestjs/common": "^11.0.1",
