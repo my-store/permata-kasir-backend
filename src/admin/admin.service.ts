@@ -30,19 +30,24 @@ export class AdminService {
 
     constructor(private readonly prisma: PrismaService) {}
 
-    async create(data: any): Promise<Admin> {
-        let newData: Prisma.AdminCreateInput = { ...data };
-
+    async create(newData: any): Promise<Admin> {
         // Konfigurasi timestamp
         const thisTime = new Date().toISOString();
-        newData.createdAt = thisTime;
-        newData.updatedAt = thisTime;
 
-        // Enkripsi password
-        newData.password = encryptPassword(newData.password);
+        // Prepare data
+        const data: Prisma.AdminCreateInput = {
+            ...newData,
 
-        // Save a new data
-        return this.prisma.admin.create({ data: newData });
+            // Enkripsi password
+            password: encryptPassword(newData.password),
+
+            // Timestamp
+            createdAt: thisTime,
+            updatedAt: thisTime,
+        };
+
+        // Insert data
+        return this.prisma.admin.create({ data });
     }
 
     async update(

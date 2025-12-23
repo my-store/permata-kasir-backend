@@ -196,15 +196,12 @@ export class AdminController {
     @UseGuards(AuthGuard)
     @Get()
     async findAll(@Query() query: any): Promise<Admin[]> {
-        const args: any = ParseUrlQuery(query);
         let data: Admin[];
-
         try {
-            data = await this.adminService.findAll(args);
+            data = await this.adminService.findAll(ParseUrlQuery(query));
         } catch (e) {
             throw new InternalServerErrorException(e);
         }
-
         return data;
     }
 

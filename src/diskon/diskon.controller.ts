@@ -3,9 +3,10 @@ import { UpdateDiskonDto } from "./dto/update-diskon.dto";
 import { DiskonService } from "./diskon.service";
 import { AuthGuard } from "src/auth/auth.guard";
 import { ParseUrlQuery } from "src/libs/string";
-import { Diskon } from "models";
+import { Diskon, Prisma } from "models";
 import {
     InternalServerErrorException,
+    BadRequestException,
     Controller,
     UseGuards,
     Delete,
@@ -24,55 +25,79 @@ export class DiskonController {
 
     @Get()
     async findAll(@Query() query: any): Promise<Diskon[]> {
-        const args: any = ParseUrlQuery(query);
         let data: Diskon[];
-
         try {
-            data = await this.service.findAll(args);
+            data = await this.service.findAll(ParseUrlQuery(query));
         } catch (e) {
             throw new InternalServerErrorException(e);
         }
-
         return data;
     }
 
     @Post()
-    create(@Body() createDiskonDto: CreateDiskonDto) {
+    async create(@Body() createDiskonDto: CreateDiskonDto): Promise<Diskon> {
+        let diskon: Diskon;
         try {
-            return this.service.create(createDiskonDto);
+            diskon = await this.service.create(createDiskonDto);
         } catch (error) {
-            throw new InternalServerErrorException(error);
+            // Prisma error
+            if (error instanceof Prisma.PrismaClientKnownRequestError) {
+                // The `code` property is the Prisma error code.
+                if (error.code === "P2003") {
+                    throw new BadRequestException(
+                        "Foreign key constraint failed. The specified author does not exist.",
+                    );
+                } else {
+                    // Handle other Prisma errors
+                    throw new InternalServerErrorException(error);
+                }
+            }
+            // Other error
+            else {
+                // Handle non-Prisma errors
+                throw new InternalServerErrorException(error);
+            }
         }
+        return diskon;
     }
 
+    // Getone method will return Admin object or nul, so set return type as any.
     @Get(":id")
-    async findOne(@Param("id") id: string): Promise<Diskon | null> {
-        let data: Diskon | null;
-
+    async findOne(@Param("id") id: string): Promise<any> {
+        let data: any;
         try {
             data = await this.service.findOne({ where: { id: parseInt(id) } });
         } catch (e) {
             throw new InternalServerErrorException(e);
         }
-
         return data;
     }
 
     @Patch(":id")
-    update(@Param("id") id: string, @Body() updateDiskonDto: UpdateDiskonDto) {
+    async update(
+        @Param("id") id: string,
+        @Body() updateDiskonDto: UpdateDiskonDto,
+    ): Promise<Diskon> {
+        let diskon: Diskon;
         try {
-            return this.service.update({ id: parseInt(id) }, updateDiskonDto);
+            diskon = await this.service.update(
+                { id: parseInt(id) },
+                updateDiskonDto,
+            );
         } catch (error) {
             throw new InternalServerErrorException(error);
         }
+        return diskon;
     }
 
     @Delete(":id")
-    remove(@Param("id") id: string) {
+    async remove(@Param("id") id: string): Promise<Diskon> {
+        let diskon: Diskon;
         try {
-            return this.service.remove({ id: parseInt(id) });
+            diskon = await this.service.remove({ id: parseInt(id) });
         } catch (error) {
             throw new InternalServerErrorException(error);
         }
+        return diskon;
     }
 }

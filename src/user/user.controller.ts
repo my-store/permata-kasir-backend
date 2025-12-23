@@ -262,15 +262,12 @@ export class UserController {
     @UseGuards(AuthGuard)
     @Get()
     async findAll(@Query() query: any): Promise<User[]> {
-        const args: any = ParseUrlQuery(query);
         let data: User[];
-
         try {
-            data = await this.userService.findAll(args);
+            data = await this.userService.findAll(ParseUrlQuery(query));
         } catch (e) {
             throw new InternalServerErrorException(e);
         }
-
         return data;
     }
 

@@ -7,6 +7,7 @@ export class DiskonService {
     private readonly findAllKeys: Prisma.DiskonSelect = {
         id: true,
         keterangan: true,
+        nilai: true,
         createdAt: true,
         updatedAt: true,
     };
@@ -14,27 +15,39 @@ export class DiskonService {
     private readonly findOneKeys: Prisma.DiskonSelect = {
         id: true,
         keterangan: true,
+        nilai: true,
         createdAt: true,
         updatedAt: true,
+
+        toko: {
+            select: {
+                id: true,
+                nama: true,
+                alamat: true,
+            },
+        },
     };
 
     constructor(private readonly prisma: PrismaService) {}
 
-    async create(data: any): Promise<Diskon> {
-        let newData: Prisma.DiskonCreateInput = {
-            ...data,
-
-            // Parse to integer
-            tokoId: parseInt(data.tokoId),
-        };
-
+    async create(newData: any): Promise<Diskon> {
         // Konfigurasi timestamp
         const thisTime = new Date().toISOString();
-        newData.createdAt = thisTime;
-        newData.updatedAt = thisTime;
 
-        // Save a new data
-        return this.prisma.diskon.create({ data: newData });
+        // Prepare data
+        const data: Prisma.DiskonCreateInput = {
+            ...newData,
+
+            // Parse to integer
+            tokoId: parseInt(newData.tokoId),
+
+            // Timestamp
+            createdAt: thisTime,
+            updatedAt: thisTime,
+        };
+
+        // Insert data
+        return this.prisma.diskon.create({ data });
     }
 
     async findAll(params: {

@@ -1,11 +1,12 @@
 import { CreateTransaksiPembelianDto } from "./dto/create-transaksi-pembelian.dto";
 import { UpdateTransaksiPembelianDto } from "./dto/update-transaksi-pembelian.dto";
 import { TransaksiPembelianService } from "./transaksi-pembelian.service";
+import { Prisma, TransaksiPembelian } from "models";
 import { AuthGuard } from "src/auth/auth.guard";
 import { ParseUrlQuery } from "src/libs/string";
-import { TransaksiPembelian } from "models";
 import {
     InternalServerErrorException,
+    BadRequestException,
     Controller,
     UseGuards,
     Delete,
@@ -24,61 +25,81 @@ export class TransaksiPembelianController {
 
     @Get()
     async findAll(@Query() query: any): Promise<TransaksiPembelian[]> {
-        const args: any = ParseUrlQuery(query);
         let data: TransaksiPembelian[];
-
         try {
-            data = await this.service.findAll(args);
+            data = await this.service.findAll(ParseUrlQuery(query));
         } catch (e) {
             throw new InternalServerErrorException(e);
         }
-
         return data;
     }
 
     @Post()
-    create(@Body() createTransaksiPembelianDto: CreateTransaksiPembelianDto) {
+    async create(
+        @Body() createTransaksiPembelianDto: CreateTransaksiPembelianDto,
+    ): Promise<TransaksiPembelian> {
+        let data: TransaksiPembelian;
         try {
-            return this.service.create(createTransaksiPembelianDto);
+            data = await this.service.create(createTransaksiPembelianDto);
         } catch (error) {
-            throw new InternalServerErrorException(error);
+            // Prisma error
+            if (error instanceof Prisma.PrismaClientKnownRequestError) {
+                // The `code` property is the Prisma error code.
+                if (error.code === "P2003") {
+                    throw new BadRequestException(
+                        "Foreign key constraint failed. The specified author does not exist.",
+                    );
+                } else {
+                    // Handle other Prisma errors
+                    throw new InternalServerErrorException(error);
+                }
+            }
+            // Other error
+            else {
+                // Handle non-Prisma errors
+                throw new InternalServerErrorException(error);
+            }
         }
+        return data;
     }
 
+    // Getone method will return Admin object or nul, so set return type as any.
     @Get(":id")
-    async findOne(@Param("id") id: string): Promise<TransaksiPembelian | null> {
-        let data: TransaksiPembelian | null;
-
+    async findOne(@Param("id") id: string): Promise<any> {
+        let data: any;
         try {
             data = await this.service.findOne({ where: { id: parseInt(id) } });
         } catch (e) {
             throw new InternalServerErrorException(e);
         }
-
         return data;
     }
 
     @Patch(":id")
-    update(
+    async update(
         @Param("id") id: string,
         @Body() updateTransaksiPembelianDto: UpdateTransaksiPembelianDto,
-    ) {
+    ): Promise<TransaksiPembelian> {
+        let data: TransaksiPembelian;
         try {
-            return this.service.update(
+            data = await this.service.update(
                 { id: parseInt(id) },
                 updateTransaksiPembelianDto,
             );
         } catch (error) {
             throw new InternalServerErrorException(error);
         }
+        return data;
     }
 
     @Delete(":id")
-    remove(@Param("id") id: string) {
+    async remove(@Param("id") id: string): Promise<TransaksiPembelian> {
+        let data: TransaksiPembelian;
         try {
-            return this.service.remove({ id: parseInt(id) });
+            data = await this.service.remove({ id: parseInt(id) });
         } catch (error) {
             throw new InternalServerErrorException(error);
         }
+        return data;
     }
 }

@@ -9,13 +9,14 @@ import {
     Post,
     Body,
     Get,
+    BadRequestException,
 } from "@nestjs/common";
 import { CreateTokoDto } from "./dto/create-toko.dto";
 import { UpdateTokoDto } from "./dto/update-toko.dto";
 import { TokoService } from "./toko.service";
 import { AuthGuard } from "src/auth/auth.guard";
 import { ParseUrlQuery } from "src/libs/string";
-import { Toko } from "models";
+import { Prisma, Toko } from "models";
 
 @UseGuards(AuthGuard)
 @Controller("api/toko")
@@ -24,55 +25,79 @@ export class TokoController {
 
     @Get()
     async findAll(@Query() query: any): Promise<Toko[]> {
-        const args: any = ParseUrlQuery(query);
         let data: Toko[];
-
         try {
-            data = await this.service.findAll(args);
+            data = await this.service.findAll(ParseUrlQuery(query));
         } catch (e) {
             throw new InternalServerErrorException(e);
         }
-
         return data;
     }
 
     @Post()
-    create(@Body() createTokoDto: CreateTokoDto) {
+    async create(@Body() createTokoDto: CreateTokoDto): Promise<Toko> {
+        let toko: Toko;
         try {
-            return this.service.create(createTokoDto);
+            toko = await this.service.create(createTokoDto);
         } catch (error) {
-            throw new InternalServerErrorException(error);
+            // Prisma error
+            if (error instanceof Prisma.PrismaClientKnownRequestError) {
+                // The `code` property is the Prisma error code.
+                if (error.code === "P2003") {
+                    throw new BadRequestException(
+                        "Foreign key constraint failed. The specified author does not exist.",
+                    );
+                } else {
+                    // Handle other Prisma errors
+                    throw new InternalServerErrorException(error);
+                }
+            }
+            // Other error
+            else {
+                // Handle non-Prisma errors
+                throw new InternalServerErrorException(error);
+            }
         }
+        return toko;
     }
 
+    // Getone method will return Admin object or nul, so set return type as any.
     @Get(":id")
-    async findOne(@Param("id") id: string): Promise<Toko | null> {
-        let data: Toko | null;
-
+    async findOne(@Param("id") id: string): Promise<any> {
+        let data: any;
         try {
             data = await this.service.findOne({ where: { id: parseInt(id) } });
         } catch (e) {
             throw new InternalServerErrorException(e);
         }
-
         return data;
     }
 
     @Patch(":id")
-    update(@Param("id") id: string, @Body() updateTokoDto: UpdateTokoDto) {
+    async update(
+        @Param("id") id: string,
+        @Body() updateTokoDto: UpdateTokoDto,
+    ): Promise<Toko> {
+        let toko: Toko;
         try {
-            return this.service.update({ id: parseInt(id) }, updateTokoDto);
+            toko = await this.service.update(
+                { id: parseInt(id) },
+                updateTokoDto,
+            );
         } catch (error) {
             throw new InternalServerErrorException(error);
         }
+        return toko;
     }
 
     @Delete(":id")
-    remove(@Param("id") id: string) {
+    async remove(@Param("id") id: string): Promise<Toko> {
+        let toko: Toko;
         try {
-            return this.service.remove({ id: parseInt(id) });
+            toko = await this.service.remove({ id: parseInt(id) });
         } catch (error) {
             throw new InternalServerErrorException(error);
         }
+        return toko;
     }
 }

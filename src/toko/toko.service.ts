@@ -34,21 +34,24 @@ export class TokoService {
 
     constructor(private readonly prisma: PrismaService) {}
 
-    async create(data: any): Promise<Toko> {
-        let newData: Prisma.TokoCreateInput = {
-            ...data,
-
-            // Parse to integer
-            userId: parseInt(data.userId),
-        };
-
+    async create(newData: any): Promise<Toko> {
         // Konfigurasi timestamp
         const thisTime = new Date().toISOString();
-        newData.createdAt = thisTime;
-        newData.updatedAt = thisTime;
 
-        // Save a new data
-        return this.prisma.toko.create({ data: newData });
+        // Prepare data
+        const data: Prisma.TokoCreateInput = {
+            ...newData,
+
+            // Parse to integer
+            userId: parseInt(newData.userId),
+
+            // Timestamp
+            createdAt: thisTime,
+            updatedAt: thisTime,
+        };
+
+        // Insert data
+        return this.prisma.toko.create({ data });
     }
 
     async findAll(params: {

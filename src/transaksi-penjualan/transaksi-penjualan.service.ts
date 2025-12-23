@@ -18,21 +18,23 @@ export class TransaksiPenjualanService {
 
     constructor(private readonly prisma: PrismaService) {}
 
-    async create(data: any): Promise<TransaksiPenjualan> {
-        let newData: Prisma.TransaksiPenjualanCreateInput = {
-            ...data,
-
-            // Parse to integer
-            tokoId: parseInt(data.tokoId),
-        };
-
+    async create(newData: any): Promise<TransaksiPenjualan> {
         // Konfigurasi timestamp
         const thisTime = new Date().toISOString();
-        newData.createdAt = thisTime;
-        newData.updatedAt = thisTime;
+
+        const data: Prisma.TransaksiPenjualanCreateInput = {
+            ...newData,
+
+            // Parse to integer
+            tokoId: parseInt(newData.tokoId),
+
+            // Timestamp
+            createdAt: thisTime,
+            updatedAt: thisTime,
+        };
 
         // Save a new data
-        return this.prisma.transaksiPenjualan.create({ data: newData });
+        return this.prisma.transaksiPenjualan.create({ data });
     }
 
     async findAll(params: {

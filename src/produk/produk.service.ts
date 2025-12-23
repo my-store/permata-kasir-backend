@@ -1,9 +1,5 @@
 import { PrismaService } from "src/prisma.service";
-import {
-    BadRequestException,
-    Injectable,
-    InternalServerErrorException,
-} from "@nestjs/common";
+import { Injectable } from "@nestjs/common";
 import { Prisma, Produk } from "models";
 
 @Injectable()
@@ -15,14 +11,6 @@ export class ProdukService {
         hargaJual: true,
         createdAt: true,
         updatedAt: true,
-
-        // toko: {
-        //     select: {
-        //         nama: true,
-        //         alamat: true,
-        //         tlp: true,
-        //     },
-        // },
     };
 
     private readonly findOneKeys: Prisma.ProdukSelect = {
@@ -34,53 +22,37 @@ export class ProdukService {
         createdAt: true,
         updatedAt: true,
 
-        toko: {
-            select: {
-                id: true,
-                nama: true,
-                alamat: true,
-                tlp: true,
-                createdAt: true,
-                user: {
-                    select: {
-                        id: true,
-                        nama: true,
-                        tlp: true,
-                        alamat: true,
-                        createdAt: true,
-                    },
-                },
-            },
-        },
-
         diskon: {
             select: {
                 id: true,
                 keterangan: true,
+                nilai: true,
                 createdAt: true,
+                updatedAt: true,
             },
         },
     };
 
     constructor(private readonly prisma: PrismaService) {}
 
-    async create(data: any): Promise<Produk> {
+    async create(newData: any): Promise<Produk> {
         // Konfigurasi timestamp
         const thisTime = new Date().toISOString();
 
+        // Prepare data
+        const data: Prisma.ProdukCreateInput = {
+            ...newData,
+
+            // Force parse to integer
+            tokoId: parseInt(newData.tokoId),
+
+            // Timestamp
+            createdAt: thisTime,
+            updatedAt: thisTime,
+        };
+
         // Insert data
-        return this.prisma.produk.create({
-            data: {
-                ...data,
-
-                // Force parse to integer
-                tokoId: parseInt(data.tokoId),
-
-                // Timestamp
-                createdAt: thisTime,
-                updatedAt: thisTime,
-            },
-        });
+        return this.prisma.produk.create({ data });
     }
 
     async findAll(params: {

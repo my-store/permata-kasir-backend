@@ -21,26 +21,32 @@ export class UserService {
 
     constructor(private readonly prisma: PrismaService) {}
 
-    async create(data: any): Promise<User> {
-        let newData: any = { ...data };
-
+    async create(newData: any): Promise<User> {
         // Konfigurasi timestamp
         const thisTime = new Date().toISOString();
-        newData.createdAt = thisTime;
-        newData.updatedAt = thisTime;
 
-        // Enkripsi password
-        newData.password = encryptPassword(newData.password);
+        // Prepare data
+        let data: any = {
+            ...newData,
+
+            // Enkripsi password
+            password: encryptPassword(newData.password),
+
+            // Timestamp
+            createdAt: thisTime,
+            updatedAt: thisTime,
+        };
 
         // Fix active value (if client send through FormData)
-        if (newData.active) {
-            if (typeof newData.active == "string") {
-                newData.active = newData.active == "1" ? true : false;
+        // JSON form will not need this.
+        if (data.active) {
+            if (typeof data.active == "string") {
+                data.active = data.active == "1" ? true : false;
             }
         }
 
-        // Save a new data
-        return this.prisma.user.create({ data: newData });
+        // Insert data
+        return this.prisma.user.create({ data });
     }
 
     async update(where: Prisma.UserWhereUniqueInput, data: any): Promise<User> {

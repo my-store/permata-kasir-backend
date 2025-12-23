@@ -6,34 +6,70 @@ import { Member, Prisma } from "models";
 export class MemberService {
     private readonly findAllKeys: Prisma.MemberSelect = {
         id: true,
+        nama: true,
+        alamat: true,
+        tlp: true,
         createdAt: true,
         updatedAt: true,
     };
 
     private readonly findOneKeys: Prisma.MemberSelect = {
         id: true,
+        nama: true,
+        alamat: true,
+        tlp: true,
         createdAt: true,
         updatedAt: true,
+
+        toko: {
+            select: {
+                id: true,
+                nama: true,
+                alamat: true,
+                createdAt: true,
+                updatedAt: true,
+
+                user: {
+                    select: {
+                        id: true,
+                        nama: true,
+                        alamat: true,
+                        createdAt: true,
+                        updatedAt: true,
+                    },
+                },
+            },
+        },
+
+        memberRanking: {
+            select: {
+                id: true,
+                nama: true,
+                potonganBelanja: true,
+            },
+        },
     };
 
     constructor(private readonly prisma: PrismaService) {}
 
-    async create(data: any): Promise<Member> {
-        let newData: Prisma.MemberCreateInput = {
-            ...data,
-
-            // Parse to integer
-            tokoId: parseInt(data.tokoId),
-            memberRankingId: data.memberRankingId ?? null,
-        };
-
+    async create(newData: any): Promise<Member> {
         // Konfigurasi timestamp
         const thisTime = new Date().toISOString();
-        newData.createdAt = thisTime;
-        newData.updatedAt = thisTime;
 
-        // Save a new data
-        return this.prisma.member.create({ data: newData });
+        const data: Prisma.MemberCreateInput = {
+            ...newData,
+
+            // Parse to integer
+            tokoId: parseInt(newData.tokoId),
+            memberRankingId: parseInt(newData.memberRankingId) ?? null,
+
+            // Timestamp
+            createdAt: thisTime,
+            updatedAt: thisTime,
+        };
+
+        // Insert data
+        return this.prisma.member.create({ data });
     }
 
     async findAll(params: {
