@@ -62,11 +62,11 @@ export class MemberController {
     }
 
     // Getone method will return Admin object or nul, so set return type as any.
-    @Get(":id")
-    async findOne(@Param("id") id: string): Promise<any> {
+    @Get(":tlp")
+    async findOne(@Param("tlp") tlp: string): Promise<any> {
         let data: any;
         try {
-            data = await this.service.findOne({ where: { id: parseInt(id) } });
+            data = await this.service.findOne({ where: { tlp } });
         } catch (e) {
             throw new InternalServerErrorException(e);
         }
