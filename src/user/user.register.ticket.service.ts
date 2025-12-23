@@ -10,6 +10,15 @@ export class UserRegisterTicketService {
     private readonly findOneKeys: Prisma.UserRegisterTicketSelect = {
         id: true,
         code: true,
+
+        admin: {
+            select: {
+                id: true,
+                nama: true,
+                createdAt: true,
+                updatedAt: true,
+            },
+        },
     };
 
     constructor(private readonly prisma: PrismaService) {}

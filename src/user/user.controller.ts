@@ -87,7 +87,7 @@ export class UserController {
             ...newData,
 
             // Admin or parent data
-            adminId: parseInt(ticket.adminId),
+            adminId: parseInt(ticket.admin.id),
         };
 
         return this.create(data, foto, ticket_code);

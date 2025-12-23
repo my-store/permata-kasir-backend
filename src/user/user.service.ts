@@ -57,7 +57,7 @@ export class UserService {
         }
 
         // Insert data
-        return this.prisma.user.create({ data });
+        return this.prisma.user.create({ data, select: this.findOneKeys });
     }
 
     async update(where: Prisma.UserWhereUniqueInput, data: any): Promise<User> {
