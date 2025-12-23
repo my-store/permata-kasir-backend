@@ -10,6 +10,7 @@ export class UserService {
         nama: true,
         tlp: true,
         password: true,
+        alamat: true,
         foto: true,
         online: true,
         lastOnline: true,
@@ -17,6 +18,15 @@ export class UserService {
         deactivatedAt: true,
         createdAt: true,
         updatedAt: true,
+
+        admin: {
+            select: {
+                nama: true,
+                alamat: true,
+                createdAt: true,
+                updatedAt: true,
+            },
+        },
     };
 
     constructor(private readonly prisma: PrismaService) {}
@@ -41,7 +51,8 @@ export class UserService {
         // JSON form will not need this.
         if (data.active) {
             if (typeof data.active == "string") {
-                data.active = data.active == "1" ? true : false;
+                data.active =
+                    data.active == "1" || data.active == "true" ? true : false;
             }
         }
 
