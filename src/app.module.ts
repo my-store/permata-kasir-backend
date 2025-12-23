@@ -16,6 +16,7 @@ import { AppGateway } from "./app.gateway";
 import { AppService } from "./app.service";
 import { Module } from "@nestjs/common";
 import { join } from "path";
+import { MemberRankingModule } from './member-ranking/member-ranking.module';
 
 @Module({
     imports: [
@@ -33,6 +34,7 @@ import { join } from "path";
         TransaksiPembelianModule,
         DiskonModule,
         TokoModule,
+        MemberRankingModule,
     ],
 
     controllers: [AppController],

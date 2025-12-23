@@ -79,13 +79,13 @@ export class ProdukController {
     @Patch(":id")
     async update(
         @Param("id") id: string,
-        @Body() updateProdukDto: UpdateProdukDto,
+        @Body() updatedData: UpdateProdukDto,
     ): Promise<Produk> {
         let produk: Produk;
         try {
             produk = await this.service.update(
                 { id: parseInt(id) },
-                updateProdukDto,
+                updatedData,
             );
         } catch (error) {
             throw new InternalServerErrorException(error);

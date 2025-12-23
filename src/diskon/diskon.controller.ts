@@ -36,9 +36,9 @@ export class DiskonController {
 
     @Post()
     async create(@Body() createDiskonDto: CreateDiskonDto): Promise<Diskon> {
-        let diskon: Diskon;
+        let data: Diskon;
         try {
-            diskon = await this.service.create(createDiskonDto);
+            data = await this.service.create(createDiskonDto);
         } catch (error) {
             // Prisma error
             if (error instanceof Prisma.PrismaClientKnownRequestError) {
@@ -58,7 +58,7 @@ export class DiskonController {
                 throw new InternalServerErrorException(error);
             }
         }
-        return diskon;
+        return data;
     }
 
     // Getone method will return Admin object or nul, so set return type as any.
@@ -76,28 +76,25 @@ export class DiskonController {
     @Patch(":id")
     async update(
         @Param("id") id: string,
-        @Body() updateDiskonDto: UpdateDiskonDto,
+        @Body() updatedData: UpdateDiskonDto,
     ): Promise<Diskon> {
-        let diskon: Diskon;
+        let data: Diskon;
         try {
-            diskon = await this.service.update(
-                { id: parseInt(id) },
-                updateDiskonDto,
-            );
+            data = await this.service.update({ id: parseInt(id) }, updatedData);
         } catch (error) {
             throw new InternalServerErrorException(error);
         }
-        return diskon;
+        return data;
     }
 
     @Delete(":id")
     async remove(@Param("id") id: string): Promise<Diskon> {
-        let diskon: Diskon;
+        let data: Diskon;
         try {
-            diskon = await this.service.remove({ id: parseInt(id) });
+            data = await this.service.remove({ id: parseInt(id) });
         } catch (error) {
             throw new InternalServerErrorException(error);
         }
-        return diskon;
+        return data;
     }
 }

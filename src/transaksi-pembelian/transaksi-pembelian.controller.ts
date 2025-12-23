@@ -78,14 +78,11 @@ export class TransaksiPembelianController {
     @Patch(":id")
     async update(
         @Param("id") id: string,
-        @Body() updateTransaksiPembelianDto: UpdateTransaksiPembelianDto,
+        @Body() updatedData: UpdateTransaksiPembelianDto,
     ): Promise<TransaksiPembelian> {
         let data: TransaksiPembelian;
         try {
-            data = await this.service.update(
-                { id: parseInt(id) },
-                updateTransaksiPembelianDto,
-            );
+            data = await this.service.update({ id: parseInt(id) }, updatedData);
         } catch (error) {
             throw new InternalServerErrorException(error);
         }

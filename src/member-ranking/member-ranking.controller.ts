@@ -1,46 +1,32 @@
-import { CreateTransaksiPenjualanDto } from "./dto/create-transaksi-penjualan.dto";
-import { UpdateTransaksiPenjualanDto } from "./dto/update-transaksi-penjualan.dto";
-import { TransaksiPenjualanService } from "./transaksi-penjualan.service";
-import { Prisma, TransaksiPenjualan } from "models";
-import { ParseUrlQuery } from "src/libs/string";
-import { AuthGuard } from "src/auth/auth.guard";
+import { CreateMemberRankingDto } from "./dto/create-member-ranking.dto";
+import { UpdateMemberRankingDto } from "./dto/update-member-ranking.dto";
+import { MemberRankingService } from "./member-ranking.service";
+import { MemberRanking, Prisma } from "models";
 import {
     InternalServerErrorException,
     BadRequestException,
     Controller,
-    UseGuards,
     Delete,
+    Query,
     Param,
     Patch,
-    Query,
-    Post,
     Body,
+    Post,
     Get,
 } from "@nestjs/common";
+import { ParseUrlQuery } from "src/libs/string";
 
-@UseGuards(AuthGuard)
-@Controller("api/transaksi-penjualan")
-export class TransaksiPenjualanController {
-    constructor(private readonly service: TransaksiPenjualanService) {}
-
-    @Get()
-    async findAll(@Query() query: any): Promise<TransaksiPenjualan[]> {
-        let data: TransaksiPenjualan[];
-        try {
-            data = await this.service.findAll(ParseUrlQuery(query));
-        } catch (e) {
-            throw new InternalServerErrorException(e);
-        }
-        return data;
-    }
+@Controller("member-ranking")
+export class MemberRankingController {
+    constructor(private readonly service: MemberRankingService) {}
 
     @Post()
     async create(
-        @Body() createTransaksiPenjualanDto: CreateTransaksiPenjualanDto,
-    ): Promise<TransaksiPenjualan> {
-        let data: TransaksiPenjualan;
+        @Body() createMemberRankingDto: CreateMemberRankingDto,
+    ): Promise<MemberRanking> {
+        let data: MemberRanking;
         try {
-            data = await this.service.create(createTransaksiPenjualanDto);
+            data = await this.service.create(createMemberRankingDto);
         } catch (error) {
             // Prisma error
             if (error instanceof Prisma.PrismaClientKnownRequestError) {
@@ -63,6 +49,17 @@ export class TransaksiPenjualanController {
         return data;
     }
 
+    @Get()
+    async findAll(@Query() query: any): Promise<MemberRanking[]> {
+        let data: MemberRanking[];
+        try {
+            data = await this.service.findAll(ParseUrlQuery(query));
+        } catch (e) {
+            throw new InternalServerErrorException(e);
+        }
+        return data;
+    }
+
     // Getone method will return Admin object or nul, so set return type as any.
     @Get(":id")
     async findOne(@Param("id") id: string): Promise<any> {
@@ -78,9 +75,9 @@ export class TransaksiPenjualanController {
     @Patch(":id")
     async update(
         @Param("id") id: string,
-        @Body() updatedData: UpdateTransaksiPenjualanDto,
-    ): Promise<TransaksiPenjualan> {
-        let data: TransaksiPenjualan;
+        @Body() updatedData: UpdateMemberRankingDto,
+    ): Promise<MemberRanking> {
+        let data: MemberRanking;
         try {
             data = await this.service.update({ id: parseInt(id) }, updatedData);
         } catch (error) {
@@ -90,8 +87,8 @@ export class TransaksiPenjualanController {
     }
 
     @Delete(":id")
-    async remove(@Param("id") id: string): Promise<TransaksiPenjualan> {
-        let data: TransaksiPenjualan;
+    async remove(@Param("id") id: string): Promise<MemberRanking> {
+        let data: MemberRanking;
         try {
             data = await this.service.remove({ id: parseInt(id) });
         } catch (error) {

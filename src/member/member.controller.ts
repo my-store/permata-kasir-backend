@@ -76,13 +76,13 @@ export class MemberController {
     @Patch(":id")
     async update(
         @Param("id") id: string,
-        @Body() updateMemberDto: UpdateMemberDto,
+        @Body() updatedData: UpdateMemberDto,
     ): Promise<Member> {
         let member: Member;
         try {
             member = await this.service.update(
                 { id: parseInt(id) },
-                updateMemberDto,
+                updatedData,
             );
         } catch (error) {
             throw new InternalServerErrorException(error);

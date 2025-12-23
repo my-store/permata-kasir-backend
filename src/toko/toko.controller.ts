@@ -76,14 +76,11 @@ export class TokoController {
     @Patch(":id")
     async update(
         @Param("id") id: string,
-        @Body() updateTokoDto: UpdateTokoDto,
+        @Body() updatedData: UpdateTokoDto,
     ): Promise<Toko> {
         let toko: Toko;
         try {
-            toko = await this.service.update(
-                { id: parseInt(id) },
-                updateTokoDto,
-            );
+            toko = await this.service.update({ id: parseInt(id) }, updatedData);
         } catch (error) {
             throw new InternalServerErrorException(error);
         }
