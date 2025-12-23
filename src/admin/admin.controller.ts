@@ -355,7 +355,7 @@ export class AdminController {
     @UseGuards(AuthGuard)
     @Delete(":tlp")
     async remove(@Param("tlp") tlp: string): Promise<Admin> {
-        let deletedData: Admin;
+        let deletedData: any;
 
         // Delete data from database
         try {

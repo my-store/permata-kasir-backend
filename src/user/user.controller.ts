@@ -420,7 +420,7 @@ export class UserController {
     @UseGuards(AuthGuard)
     @Delete(":tlp")
     async remove(@Param("tlp") tlp: string): Promise<User> {
-        let deletedData: User;
+        let deletedData: any;
 
         // Delete data from database
         try {
