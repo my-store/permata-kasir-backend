@@ -1,5 +1,6 @@
 import { TransaksiPenjualanModule } from "./transaksi-penjualan/transaksi-penjualan.module";
 import { TransaksiPembelianModule } from "./transaksi-pembelian/transaksi-pembelian.module";
+import { MemberRankingModule } from "./member-ranking/member-ranking.module";
 import { ServeStaticModule } from "@nestjs/serve-static";
 import { AppTasksService } from "./app.tasks.service";
 import { ProdukModule } from "./produk/produk.module";
@@ -16,7 +17,6 @@ import { AppGateway } from "./app.gateway";
 import { AppService } from "./app.service";
 import { Module } from "@nestjs/common";
 import { join } from "path";
-import { MemberRankingModule } from './member-ranking/member-ranking.module';
 
 @Module({
     imports: [

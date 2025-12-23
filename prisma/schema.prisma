@@ -25,11 +25,11 @@ model Admin {
   lastOnline String?
 
   // Child tables
-  userRanking        UserRanking[]
   userRegisterTicket UserRegisterTicket[]
 
   createdAt DateTime
   updatedAt DateTime
+  users     User[]
 }
 
 model User {
@@ -56,26 +56,11 @@ model User {
   deactivatedReason String?
 
   // Parent table
-  userRanking   UserRanking? @relation(fields: [userRankingId], references: [id])
-  userRankingId Int?
+  admin   Admin? @relation(fields: [adminId], references: [id])
+  adminId Int?
 
   // Child tables
   toko Toko[]
-
-  createdAt DateTime
-  updatedAt DateTime
-}
-
-model UserRanking {
-  id   Int    @id @default(autoincrement())
-  nama String
-
-  // Parent table
-  admin   Admin @relation(fields: [adminId], references: [id])
-  adminId Int
-
-  // Child tables
-  user User[]
 
   createdAt DateTime
   updatedAt DateTime
@@ -86,9 +71,9 @@ model UserRanking {
  * |  REGISTER SECURITY TABLE
  * |  =====================================================
  * |  Hanya dapat digunakan dalam waktu beberapa menit saja
- * |  jika batas waktu telah habis, tidak dapat digunakan
- * |  untuk registrasi lagi.
- * |  Menggunakan metode scheduling (nestjs-schedule).
+ * |  jika batas waktu telah habis, atau telah digunakan
+ * |  oleh orang lain, otomatis kode dihapus dan
+ * |  tidak dapat digunakan untuk registrasi lagi.
  */
 model UserRegisterTicket {
   id   Int    @id @default(autoincrement())

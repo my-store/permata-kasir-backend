@@ -26,7 +26,7 @@ export class UserService {
         const thisTime = new Date().toISOString();
 
         // Prepare data
-        let data: any = {
+        let data: Prisma.UserCreateInput = {
             ...newData,
 
             // Enkripsi password

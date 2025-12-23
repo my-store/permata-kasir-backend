@@ -62,7 +62,7 @@ export class UserController {
     @UseInterceptors(FileInterceptor("foto"))
     async register(
         @Param("ticket_code") ticket_code: string,
-        @Body() data: CreateUserDto,
+        @Body() newData: CreateUserDto,
         @UploadedFile()
         foto: Express.Multer.File,
     ): Promise<any> {
@@ -81,6 +81,14 @@ export class UserController {
             // Terminate task
             throw new UnauthorizedException();
         }
+
+        // Prepare data
+        const data: any = {
+            ...newData,
+
+            // Admin or parent data
+            adminId: parseInt(ticket.adminId),
+        };
 
         return this.create(data, foto, ticket_code);
     }
@@ -246,7 +254,13 @@ export class UserController {
             throw new InternalServerErrorException(e);
         }
 
-        // Delete ticket code (disable re-using the code)
+        /* ------------------ HAPUS TIKET REGISTRASI ------------------
+        |  Setelah data berhasil disimpan, dan berhasil menghubungkan
+        |  antara user dengan admin pembuatnya (pembuat tiket),
+        |  tugas selanjutnya adalah menghapus tiket tersebut.
+        |  ------------------------------------------------------------
+        |  Agar tidak dapat digunakan lagi oleh orang lain.
+        */
         try {
             await this.userRegisterTicketService.remove({ code: ticket_code });
         } catch {}
