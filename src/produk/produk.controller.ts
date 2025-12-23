@@ -60,11 +60,19 @@ export class ProdukController {
 
     @Patch(":id")
     update(@Param("id") id: string, @Body() updateProdukDto: UpdateProdukDto) {
-        return this.service.update({ id: parseInt(id) }, updateProdukDto);
+        try {
+            return this.service.update({ id: parseInt(id) }, updateProdukDto);
+        } catch (error) {
+            throw new InternalServerErrorException(error);
+        }
     }
 
     @Delete(":id")
     remove(@Param("id") id: string) {
-        return this.service.remove({ id: parseInt(id) });
+        try {
+            return this.service.remove({ id: parseInt(id) });
+        } catch (error) {
+            throw new InternalServerErrorException(error);
+        }
     }
 }

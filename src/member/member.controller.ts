@@ -60,11 +60,19 @@ export class MemberController {
 
     @Patch(":id")
     update(@Param("id") id: string, @Body() updateMemberDto: UpdateMemberDto) {
-        return this.service.update({ id: parseInt(id) }, updateMemberDto);
+        try {
+            return this.service.update({ id: parseInt(id) }, updateMemberDto);
+        } catch (error) {
+            throw new InternalServerErrorException(error);
+        }
     }
 
     @Delete(":id")
     remove(@Param("id") id: string) {
-        return this.service.remove({ id: parseInt(id) });
+        try {
+            return this.service.remove({ id: parseInt(id) });
+        } catch (error) {
+            throw new InternalServerErrorException(error);
+        }
     }
 }

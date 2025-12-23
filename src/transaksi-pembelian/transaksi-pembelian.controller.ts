@@ -63,14 +63,22 @@ export class TransaksiPembelianController {
         @Param("id") id: string,
         @Body() updateTransaksiPembelianDto: UpdateTransaksiPembelianDto,
     ) {
-        return this.service.update(
-            { id: parseInt(id) },
-            updateTransaksiPembelianDto,
-        );
+        try {
+            return this.service.update(
+                { id: parseInt(id) },
+                updateTransaksiPembelianDto,
+            );
+        } catch (error) {
+            throw new InternalServerErrorException(error);
+        }
     }
 
     @Delete(":id")
     remove(@Param("id") id: string) {
-        return this.service.remove({ id: parseInt(id) });
+        try {
+            return this.service.remove({ id: parseInt(id) });
+        } catch (error) {
+            throw new InternalServerErrorException(error);
+        }
     }
 }

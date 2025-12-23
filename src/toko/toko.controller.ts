@@ -60,11 +60,19 @@ export class TokoController {
 
     @Patch(":id")
     update(@Param("id") id: string, @Body() updateTokoDto: UpdateTokoDto) {
-        return this.service.update({ id: parseInt(id) }, updateTokoDto);
+        try {
+            return this.service.update({ id: parseInt(id) }, updateTokoDto);
+        } catch (error) {
+            throw new InternalServerErrorException(error);
+        }
     }
 
     @Delete(":id")
     remove(@Param("id") id: string) {
-        return this.service.remove({ id: parseInt(id) });
+        try {
+            return this.service.remove({ id: parseInt(id) });
+        } catch (error) {
+            throw new InternalServerErrorException(error);
+        }
     }
 }

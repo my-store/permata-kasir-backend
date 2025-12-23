@@ -60,11 +60,19 @@ export class DiskonController {
 
     @Patch(":id")
     update(@Param("id") id: string, @Body() updateDiskonDto: UpdateDiskonDto) {
-        return this.service.update({ id: parseInt(id) }, updateDiskonDto);
+        try {
+            return this.service.update({ id: parseInt(id) }, updateDiskonDto);
+        } catch (error) {
+            throw new InternalServerErrorException(error);
+        }
     }
 
     @Delete(":id")
     remove(@Param("id") id: string) {
-        return this.service.remove({ id: parseInt(id) });
+        try {
+            return this.service.remove({ id: parseInt(id) });
+        } catch (error) {
+            throw new InternalServerErrorException(error);
+        }
     }
 }
