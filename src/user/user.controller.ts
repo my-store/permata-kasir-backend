@@ -274,17 +274,16 @@ export class UserController {
         return data;
     }
 
+    // Getone method will return Admin object or nul, so set return type as any.
     @UseGuards(AuthGuard)
     @Get(":tlp")
-    async findOne(@Param("tlp") tlp: string): Promise<User | null> {
-        let data: User | null;
-
+    async findOne(@Param("tlp") tlp: string): Promise<any> {
+        let data: any;
         try {
             data = await this.userService.findOne({ where: { tlp } });
         } catch (e) {
             throw new InternalServerErrorException(e);
         }
-
         return data;
     }
 

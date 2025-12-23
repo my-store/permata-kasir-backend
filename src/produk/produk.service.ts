@@ -1,5 +1,9 @@
 import { PrismaService } from "src/prisma.service";
-import { Injectable } from "@nestjs/common";
+import {
+    BadRequestException,
+    Injectable,
+    InternalServerErrorException,
+} from "@nestjs/common";
 import { Prisma, Produk } from "models";
 
 @Injectable()
@@ -61,15 +65,22 @@ export class ProdukService {
     constructor(private readonly prisma: PrismaService) {}
 
     async create(data: any): Promise<Produk> {
-        let newData: Prisma.ProdukCreateInput = { ...data };
-
         // Konfigurasi timestamp
         const thisTime = new Date().toISOString();
-        newData.createdAt = thisTime;
-        newData.updatedAt = thisTime;
 
-        // Save a new data
-        return this.prisma.produk.create({ data: newData });
+        // Insert data
+        return this.prisma.produk.create({
+            data: {
+                ...data,
+
+                // Force parse to integer
+                tokoId: parseInt(data.tokoId),
+
+                // Timestamp
+                createdAt: thisTime,
+                updatedAt: thisTime,
+            },
+        });
     }
 
     async findAll(params: {

@@ -1,5 +1,6 @@
 import {
     InternalServerErrorException,
+    BadRequestException,
     Controller,
     UseGuards,
     Delete,
@@ -15,7 +16,7 @@ import { UpdateProdukDto } from "./dto/update-produk.dto";
 import { ProdukService } from "./produk.service";
 import { AuthGuard } from "src/auth/auth.guard";
 import { ParseUrlQuery } from "src/libs/string";
-import { Produk } from "models";
+import { Prisma, Produk } from "models";
 
 @UseGuards(AuthGuard)
 @Controller("api/produk")
@@ -24,55 +25,82 @@ export class ProdukController {
 
     @Get()
     async findAll(@Query() query: any): Promise<Produk[]> {
-        const args: any = ParseUrlQuery(query);
-        let data: Produk[];
-
+        let produk: Produk[];
         try {
-            data = await this.service.findAll(args);
+            produk = await this.service.findAll(ParseUrlQuery(query));
         } catch (e) {
             throw new InternalServerErrorException(e);
         }
-
-        return data;
+        return produk;
     }
 
     @Post()
     async create(@Body() createProdukDto: CreateProdukDto): Promise<Produk> {
+        // Save inserted data into a variable, if not the server will shutdown when error occured.
+        let produk: Produk;
         try {
-            return this.service.create(createProdukDto);
+            produk = await this.service.create(createProdukDto);
         } catch (error) {
-            throw new InternalServerErrorException(error);
+            // Prisma error
+            if (error instanceof Prisma.PrismaClientKnownRequestError) {
+                // The `code` property is the Prisma error code.
+                if (error.code === "P2003") {
+                    throw new BadRequestException(
+                        "Foreign key constraint failed. The specified author does not exist.",
+                    );
+                } else {
+                    // Handle other Prisma errors
+                    throw new InternalServerErrorException(error);
+                }
+            }
+            // Other error
+            else {
+                // Handle non-Prisma errors
+                throw new InternalServerErrorException(error);
+            }
         }
+        return produk;
     }
 
+    // Getone method will return Produk object or nul, so set return type as any.
     @Get(":id")
-    async findOne(@Param("id") id: string): Promise<Produk | null> {
-        let data: Produk | null;
-
+    async findOne(@Param("id") id: string): Promise<any> {
+        let produk: any;
         try {
-            data = await this.service.findOne({ where: { id: parseInt(id) } });
+            produk = await this.service.findOne({
+                where: { id: parseInt(id) },
+            });
         } catch (e) {
             throw new InternalServerErrorException(e);
         }
-
-        return data;
+        return produk;
     }
 
     @Patch(":id")
-    update(@Param("id") id: string, @Body() updateProdukDto: UpdateProdukDto) {
+    async update(
+        @Param("id") id: string,
+        @Body() updateProdukDto: UpdateProdukDto,
+    ): Promise<Produk> {
+        let produk: Produk;
         try {
-            return this.service.update({ id: parseInt(id) }, updateProdukDto);
+            produk = await this.service.update(
+                { id: parseInt(id) },
+                updateProdukDto,
+            );
         } catch (error) {
             throw new InternalServerErrorException(error);
         }
+        return produk;
     }
 
     @Delete(":id")
-    remove(@Param("id") id: string) {
+    async remove(@Param("id") id: string): Promise<Produk> {
+        let produk: Produk;
         try {
-            return this.service.remove({ id: parseInt(id) });
+            produk = await this.service.remove({ id: parseInt(id) });
         } catch (error) {
             throw new InternalServerErrorException(error);
         }
+        return produk;
     }
 }
