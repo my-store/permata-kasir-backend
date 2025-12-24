@@ -3,30 +3,41 @@ import { encryptPassword } from "../libs/bcrypt";
 import { Prisma, User } from "models/client";
 import { Injectable } from "@nestjs/common";
 
+// Placeholder | Short type name purpose only
+interface DefaultKeysInterface extends Prisma.UserSelect {}
+
+const defaultKeys: DefaultKeysInterface = {
+    id: true,
+    nama: true,
+    tlp: true,
+    password: true,
+    alamat: true,
+    foto: true,
+    online: true,
+    lastOnline: true,
+    active: true,
+    deactivatedAt: true,
+    createdAt: true,
+    updatedAt: true,
+
+    // Parent table data
+    adminId: true,
+};
+
 @Injectable()
 export class UserService {
-    private readonly findOneKeys: Prisma.UserSelect = {
-        id: true,
-        nama: true,
-        tlp: true,
-        password: true,
-        alamat: true,
-        foto: true,
-        online: true,
-        lastOnline: true,
-        active: true,
-        deactivatedAt: true,
-        createdAt: true,
-        updatedAt: true,
+    private readonly findAllKeys: DefaultKeysInterface = {
+        // Default keys
+        ...defaultKeys,
 
-        admin: {
-            select: {
-                nama: true,
-                alamat: true,
-                createdAt: true,
-                updatedAt: true,
-            },
-        },
+        // Another keys
+    };
+
+    private readonly findOneKeys: DefaultKeysInterface = {
+        // Default keys
+        ...defaultKeys,
+
+        // Another keys
     };
 
     constructor(private readonly prisma: PrismaService) {}
@@ -68,7 +79,11 @@ export class UserService {
         updatedData.updatedAt = thisTime;
 
         // Save updated data
-        return this.prisma.user.update({ where, data: updatedData });
+        return this.prisma.user.update({
+            where,
+            data: updatedData,
+            select: this.findOneKeys,
+        });
     }
 
     async findAll(params: {
@@ -77,29 +92,43 @@ export class UserService {
         cursor?: Prisma.UserWhereUniqueInput;
         where?: Prisma.UserWhereInput;
         orderBy?: Prisma.UserOrderByWithRelationInput;
+        select?: DefaultKeysInterface;
     }): Promise<User[]> {
-        const { skip, take, cursor, where, orderBy } = params;
+        const { skip, take, cursor, where, orderBy, select } = params;
         return this.prisma.user.findMany({
             skip,
             take,
             cursor,
             where,
             orderBy,
+            select: {
+                // Default keys to display
+                ...this.findAllKeys,
+
+                // User specified keys to display
+                ...select,
+            },
         });
     }
 
     async findOne(params: {
-        select?: Prisma.UserSelect;
+        select?: DefaultKeysInterface;
         where: Prisma.UserWhereUniqueInput;
     }): Promise<User | null> {
         const { select, where } = params;
         return this.prisma.user.findUnique({
-            select: { ...this.findOneKeys, ...select },
+            select: {
+                // Default keys to display
+                ...this.findOneKeys,
+
+                // User specified keys to display
+                ...select,
+            },
             where,
         });
     }
 
     async remove(where: Prisma.UserWhereUniqueInput): Promise<User> {
-        return this.prisma.user.delete({ where });
+        return this.prisma.user.delete({ where, select: this.findOneKeys });
     }
 }

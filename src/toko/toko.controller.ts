@@ -61,7 +61,7 @@ export class TokoController {
         return toko;
     }
 
-    // Getone method will return Admin object or nul, so set return type as any.
+    // Getone method will return Toko object or nul, so set return type as any.
     @Get(":tlp")
     async findOne(@Param("tlp") tlp: string): Promise<any> {
         let data: any;

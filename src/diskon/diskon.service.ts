@@ -2,23 +2,31 @@ import { PrismaService } from "src/prisma.service";
 import { Injectable } from "@nestjs/common";
 import { Diskon, Prisma } from "models";
 
+// Placeholder | Short type name purpose only
+interface DefaultKeysInterface extends Prisma.DiskonSelect {}
+
+const defaultKeys: DefaultKeysInterface = {
+    id: true,
+    keterangan: true,
+    nilai: true,
+    createdAt: true,
+    updatedAt: true,
+};
+
 @Injectable()
 export class DiskonService {
-    private readonly findAllKeys: Prisma.DiskonSelect = {
-        id: true,
-        keterangan: true,
-        nilai: true,
-        createdAt: true,
-        updatedAt: true,
+    private readonly findAllKeys: DefaultKeysInterface = {
+        // Default keys
+        ...defaultKeys,
+
+        // Another keys
     };
 
-    private readonly findOneKeys: Prisma.DiskonSelect = {
-        id: true,
-        keterangan: true,
-        nilai: true,
-        createdAt: true,
-        updatedAt: true,
+    private readonly findOneKeys: DefaultKeysInterface = {
+        // Default keys
+        ...defaultKeys,
 
+        // Another keys
         toko: {
             select: {
                 id: true,
@@ -53,7 +61,7 @@ export class DiskonService {
     async findAll(params: {
         skip?: number;
         take?: number;
-        select?: Prisma.DiskonSelect;
+        select?: DefaultKeysInterface;
         cursor?: Prisma.DiskonWhereUniqueInput;
         where?: Prisma.DiskonWhereInput;
         orderBy?: Prisma.DiskonOrderByWithRelationInput;
@@ -62,23 +70,32 @@ export class DiskonService {
         return this.prisma.diskon.findMany({
             skip,
             take,
-            select: {
-                ...this.findAllKeys,
-                ...select,
-            },
             cursor,
             where,
             orderBy,
+            select: {
+                // Default keys to display
+                ...this.findAllKeys,
+
+                // User specified keys to display
+                ...select,
+            },
         });
     }
 
     async findOne(params: {
-        select?: Prisma.DiskonSelect;
+        select?: DefaultKeysInterface;
         where: Prisma.DiskonWhereUniqueInput;
     }): Promise<Diskon | null> {
         const { select, where } = params;
         return this.prisma.diskon.findUnique({
-            select: { ...this.findOneKeys, ...select },
+            select: {
+                // Default keys to display
+                ...this.findOneKeys,
+
+                // User specified keys to display
+                ...select,
+            },
             where,
         });
     }

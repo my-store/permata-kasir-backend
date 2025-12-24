@@ -60,7 +60,7 @@ export class MemberRankingController {
         return data;
     }
 
-    // Getone method will return Admin object or nul, so set return type as any.
+    // Getone method will return MemberRanking object or nul, so set return type as any.
     @Get(":id")
     async findOne(@Param("id") id: string): Promise<any> {
         let data: any;

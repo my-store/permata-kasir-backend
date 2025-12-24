@@ -25,11 +25,11 @@ model Admin {
   lastOnline String?
 
   // Child tables
+  users              User[]
   userRegisterTicket UserRegisterTicket[]
 
   createdAt DateTime
   updatedAt DateTime
-  users     User[]
 }
 
 model User {

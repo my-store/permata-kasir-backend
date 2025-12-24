@@ -3,22 +3,33 @@ import { Injectable, Logger } from "@nestjs/common";
 import { PrismaService } from "../prisma.service";
 import { generateId } from "src/libs/string";
 
+// Placeholder | Short type name purpose only
+interface DefaultKeysInterface extends Prisma.UserRegisterTicketSelect {}
+
+const defaultKeys: DefaultKeysInterface = {
+    id: true,
+    code: true,
+
+    // Parent table data
+    adminId: true,
+};
+
 @Injectable()
 export class UserRegisterTicketService {
     private readonly log: Logger = new Logger(UserRegisterTicketService.name);
 
-    private readonly findOneKeys: Prisma.UserRegisterTicketSelect = {
-        id: true,
-        code: true,
+    private readonly findAllKeys: DefaultKeysInterface = {
+        // Default keys
+        ...defaultKeys,
 
-        admin: {
-            select: {
-                id: true,
-                nama: true,
-                createdAt: true,
-                updatedAt: true,
-            },
-        },
+        // Another keys
+    };
+
+    private readonly findOneKeys: DefaultKeysInterface = {
+        // Default keys
+        ...defaultKeys,
+
+        // Another keys
     };
 
     constructor(private readonly prisma: PrismaService) {}
@@ -80,24 +91,38 @@ export class UserRegisterTicketService {
         cursor?: Prisma.UserRegisterTicketWhereUniqueInput;
         where?: Prisma.UserRegisterTicketWhereInput;
         orderBy?: Prisma.UserRegisterTicketOrderByWithRelationInput;
+        select?: DefaultKeysInterface;
     }): Promise<UserRegisterTicket[]> {
-        const { skip, take, cursor, where, orderBy } = params;
+        const { skip, take, cursor, where, orderBy, select } = params;
         return this.prisma.userRegisterTicket.findMany({
             skip,
             take,
             cursor,
             where,
             orderBy,
+            select: {
+                // Default keys to display
+                ...this.findAllKeys,
+
+                // User specified keys to display
+                ...select,
+            },
         });
     }
 
     async findOne(params: {
-        select?: Prisma.UserRegisterTicketSelect;
+        select?: DefaultKeysInterface;
         where: Prisma.UserRegisterTicketWhereUniqueInput;
     }): Promise<UserRegisterTicket | null> {
         const { select, where } = params;
         return this.prisma.userRegisterTicket.findUnique({
-            select: { ...this.findOneKeys, ...select },
+            select: {
+                // Default keys to display
+                ...this.findOneKeys,
+
+                // User specified keys to display
+                ...select,
+            },
             where,
         });
     }

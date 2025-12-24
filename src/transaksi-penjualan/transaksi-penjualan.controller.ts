@@ -63,7 +63,7 @@ export class TransaksiPenjualanController {
         return data;
     }
 
-    // Getone method will return Admin object or nul, so set return type as any.
+    // Getone method will return TransaksiPenjualan object or nul, so set return type as any.
     @Get(":id")
     async findOne(@Param("id") id: string): Promise<any> {
         let data: any;

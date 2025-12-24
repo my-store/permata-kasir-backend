@@ -87,7 +87,7 @@ export class UserController {
             ...newData,
 
             // Admin or parent data
-            adminId: parseInt(ticket.admin.id),
+            adminId: parseInt(ticket.adminId),
         };
 
         return this.create(data, foto, ticket_code);
@@ -285,7 +285,7 @@ export class UserController {
         return data;
     }
 
-    // Getone method will return Admin object or nul, so set return type as any.
+    // Getone method will return User object or nul, so set return type as any.
     @UseGuards(AuthGuard)
     @Get(":tlp")
     async findOne(@Param("tlp") tlp: string): Promise<any> {

@@ -3,29 +3,35 @@ import { encryptPassword } from "src/libs/bcrypt";
 import { Admin, Prisma } from "models/client";
 import { Injectable } from "@nestjs/common";
 
+// Placeholder | Short type name purpose only
+interface DefaultKeysInterface extends Prisma.AdminSelect {}
+
+const defaultKeys: DefaultKeysInterface = {
+    id: true,
+    nama: true,
+    tlp: true,
+    foto: true,
+    online: true,
+    lastOnline: true,
+    createdAt: true,
+    updatedAt: true,
+};
+
 @Injectable()
 export class AdminService {
-    private readonly findAllKeys: Prisma.AdminSelect = {
-        id: true,
-        nama: true,
-        tlp: true,
-        foto: true,
-        online: true,
-        lastOnline: true,
-        createdAt: true,
-        updatedAt: true,
+    private readonly findAllKeys: DefaultKeysInterface = {
+        // Default keys
+        ...defaultKeys,
+
+        // Another keys
     };
 
-    private readonly findOneKeys: Prisma.AdminSelect = {
-        id: true,
-        nama: true,
-        tlp: true,
+    private readonly findOneKeys: DefaultKeysInterface = {
+        // Default keys
+        ...defaultKeys,
+
+        // Another keys
         password: true,
-        foto: true,
-        online: true,
-        lastOnline: true,
-        createdAt: true,
-        updatedAt: true,
     };
 
     constructor(private readonly prisma: PrismaService) {}
@@ -67,7 +73,7 @@ export class AdminService {
     async findAll(params: {
         skip?: number;
         take?: number;
-        select?: Prisma.AdminSelect;
+        select?: DefaultKeysInterface;
         cursor?: Prisma.AdminWhereUniqueInput;
         where?: Prisma.AdminWhereInput;
         orderBy?: Prisma.AdminOrderByWithRelationInput;
@@ -76,23 +82,32 @@ export class AdminService {
         return this.prisma.admin.findMany({
             skip,
             take,
-            select: {
-                ...this.findAllKeys,
-                ...select,
-            },
             cursor,
             where,
             orderBy,
+            select: {
+                // Default keys to display
+                ...this.findAllKeys,
+
+                // User specified keys to display
+                ...select,
+            },
         });
     }
 
     async findOne(params: {
-        select?: Prisma.AdminSelect;
+        select?: DefaultKeysInterface;
         where: Prisma.AdminWhereUniqueInput;
     }): Promise<Admin | null> {
         const { select, where } = params;
         return this.prisma.admin.findUnique({
-            select: { ...this.findOneKeys, ...select },
+            select: {
+                // Default keys to display
+                ...this.findOneKeys,
+
+                // User specified keys to display
+                ...select,
+            },
             where,
         });
     }

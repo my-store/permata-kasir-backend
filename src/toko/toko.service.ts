@@ -2,34 +2,35 @@ import { PrismaService } from "src/prisma.service";
 import { Injectable } from "@nestjs/common";
 import { Toko, Prisma } from "models";
 
+// Placeholder | Short type name purpose only
+interface DefaultKeysInterface extends Prisma.TokoSelect {}
+
+const defaultKeys: DefaultKeysInterface = {
+    id: true,
+    nama: true,
+    alamat: true,
+    tlp: true,
+    createdAt: true,
+    updatedAt: true,
+
+    // Parent table data keys
+    userId: true,
+};
+
 @Injectable()
 export class TokoService {
-    private readonly findAllKeys: Prisma.TokoSelect = {
-        id: true,
-        nama: true,
-        alamat: true,
-        tlp: true,
-        createdAt: true,
-        updatedAt: true,
+    private readonly findAllKeys: DefaultKeysInterface = {
+        // Default keys
+        ...defaultKeys,
+
+        // Another keys
     };
 
-    private readonly findOneKeys: Prisma.TokoSelect = {
-        id: true,
-        nama: true,
-        alamat: true,
-        tlp: true,
-        createdAt: true,
-        updatedAt: true,
+    private readonly findOneKeys: DefaultKeysInterface = {
+        // Default keys
+        ...defaultKeys,
 
-        user: {
-            select: {
-                id: true,
-                nama: true,
-                tlp: true,
-                alamat: true,
-                createdAt: true,
-            },
-        },
+        // Another keys
     };
 
     constructor(private readonly prisma: PrismaService) {}
@@ -57,7 +58,7 @@ export class TokoService {
     async findAll(params: {
         skip?: number;
         take?: number;
-        select?: Prisma.TokoSelect;
+        select?: DefaultKeysInterface;
         cursor?: Prisma.TokoWhereUniqueInput;
         where?: Prisma.TokoWhereInput;
         orderBy?: Prisma.TokoOrderByWithRelationInput;
@@ -66,23 +67,32 @@ export class TokoService {
         return this.prisma.toko.findMany({
             skip,
             take,
-            select: {
-                ...this.findAllKeys,
-                ...select,
-            },
             cursor,
             where,
             orderBy,
+            select: {
+                // Default keys to display
+                ...this.findAllKeys,
+
+                // User specified keys to display
+                ...select,
+            },
         });
     }
 
     async findOne(params: {
-        select?: Prisma.TokoSelect;
+        select?: DefaultKeysInterface;
         where: Prisma.TokoWhereUniqueInput;
     }): Promise<Toko | null> {
         const { select, where } = params;
         return this.prisma.toko.findUnique({
-            select: { ...this.findOneKeys, ...select },
+            select: {
+                // Default keys to display
+                ...this.findOneKeys,
+
+                // User specified keys to display
+                ...select,
+            },
             where,
         });
     }

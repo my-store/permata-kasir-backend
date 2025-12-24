@@ -2,28 +2,38 @@ import { PrismaService } from "src/prisma.service";
 import { Injectable } from "@nestjs/common";
 import { Member, Prisma } from "models";
 
+// Placeholder | Short type name purpose only
+interface DefaultKeysInterface extends Prisma.MemberSelect {}
+
+const defaultKeys: DefaultKeysInterface = {
+    id: true,
+    nama: true,
+    alamat: true,
+    tlp: true,
+    createdAt: true,
+    updatedAt: true,
+
+    // Parent table data keys
+    tokoId: true,
+    memberRankingId: true,
+};
+
 @Injectable()
 export class MemberService {
-    private readonly findAllKeys: Prisma.MemberSelect = {
-        id: true,
-        nama: true,
-        alamat: true,
-        tlp: true,
-        createdAt: true,
-        updatedAt: true,
+    private readonly findAllKeys: DefaultKeysInterface = {
+        // Default keys
+        ...defaultKeys,
+
+        // Another keys
     };
 
-    private readonly findOneKeys: Prisma.MemberSelect = {
-        id: true,
-        nama: true,
-        alamat: true,
-        tlp: true,
-        createdAt: true,
-        updatedAt: true,
+    private readonly findOneKeys: DefaultKeysInterface = {
+        // Default keys
+        ...defaultKeys,
 
+        // Another keys
         toko: {
             select: {
-                id: true,
                 nama: true,
                 alamat: true,
                 createdAt: true,
@@ -43,7 +53,6 @@ export class MemberService {
 
         memberRanking: {
             select: {
-                id: true,
                 nama: true,
                 potonganBelanja: true,
             },
@@ -75,7 +84,7 @@ export class MemberService {
     async findAll(params: {
         skip?: number;
         take?: number;
-        select?: Prisma.MemberSelect;
+        select?: DefaultKeysInterface;
         cursor?: Prisma.MemberWhereUniqueInput;
         where?: Prisma.MemberWhereInput;
         orderBy?: Prisma.MemberOrderByWithRelationInput;
@@ -84,23 +93,32 @@ export class MemberService {
         return this.prisma.member.findMany({
             skip,
             take,
-            select: {
-                ...this.findAllKeys,
-                ...select,
-            },
             cursor,
             where,
             orderBy,
+            select: {
+                // Default keys to display
+                ...this.findAllKeys,
+
+                // User specified keys to display
+                ...select,
+            },
         });
     }
 
     async findOne(params: {
-        select?: Prisma.MemberSelect;
+        select?: DefaultKeysInterface;
         where: Prisma.MemberWhereUniqueInput;
     }): Promise<Member | null> {
         const { select, where } = params;
         return this.prisma.member.findUnique({
-            select: { ...this.findOneKeys, ...select },
+            select: {
+                // Default keys to display
+                ...this.findOneKeys,
+
+                // User specified keys to display
+                ...select,
+            },
             where,
         });
     }

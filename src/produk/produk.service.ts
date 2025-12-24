@@ -2,35 +2,46 @@ import { PrismaService } from "src/prisma.service";
 import { Injectable } from "@nestjs/common";
 import { Prisma, Produk } from "models";
 
+// Placeholder | Short type name purpose only
+interface DefaultKeysInterface extends Prisma.ProdukSelect {}
+
+const defaultKeys: DefaultKeysInterface = {
+    id: true,
+    nama: true,
+    hargaPokok: true,
+    hargaJual: true,
+    createdAt: true,
+    updatedAt: true,
+
+    // Parent table data keys
+    tokoId: true,
+
+    // Many to Many relations
+    diskon: {
+        select: {
+            id: true,
+            keterangan: true,
+            nilai: true,
+            createdAt: true,
+            updatedAt: true,
+        },
+    },
+};
+
 @Injectable()
 export class ProdukService {
-    private readonly findAllKeys: Prisma.ProdukSelect = {
-        id: true,
-        nama: true,
-        hargaPokok: true,
-        hargaJual: true,
-        createdAt: true,
-        updatedAt: true,
+    private readonly findAllKeys: DefaultKeysInterface = {
+        // Default keys
+        ...defaultKeys,
+
+        // Another keys
     };
 
-    private readonly findOneKeys: Prisma.ProdukSelect = {
-        id: true,
-        nama: true,
-        hargaPokok: true,
-        hargaJual: true,
-        stok: true,
-        createdAt: true,
-        updatedAt: true,
+    private readonly findOneKeys: DefaultKeysInterface = {
+        // Default keys
+        ...defaultKeys,
 
-        diskon: {
-            select: {
-                id: true,
-                keterangan: true,
-                nilai: true,
-                createdAt: true,
-                updatedAt: true,
-            },
-        },
+        // Another keys
     };
 
     constructor(private readonly prisma: PrismaService) {}
@@ -58,7 +69,7 @@ export class ProdukService {
     async findAll(params: {
         skip?: number;
         take?: number;
-        select?: Prisma.ProdukSelect;
+        select?: DefaultKeysInterface;
         cursor?: Prisma.ProdukWhereUniqueInput;
         where?: Prisma.ProdukWhereInput;
         orderBy?: Prisma.ProdukOrderByWithRelationInput;
@@ -67,23 +78,32 @@ export class ProdukService {
         return this.prisma.produk.findMany({
             skip,
             take,
-            select: {
-                ...this.findAllKeys,
-                ...select,
-            },
             cursor,
             where,
             orderBy,
+            select: {
+                // Default keys to display
+                ...this.findAllKeys,
+
+                // User specified keys to display
+                ...select,
+            },
         });
     }
 
     async findOne(params: {
-        select?: Prisma.ProdukSelect;
+        select?: DefaultKeysInterface;
         where: Prisma.ProdukWhereUniqueInput;
     }): Promise<Produk | null> {
         const { select, where } = params;
         return this.prisma.produk.findUnique({
-            select: { ...this.findOneKeys, ...select },
+            select: {
+                // Default keys to display
+                ...this.findOneKeys,
+
+                // User specified keys to display
+                ...select,
+            },
             where,
         });
     }

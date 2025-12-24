@@ -1,31 +1,35 @@
 import { PrismaService } from "src/prisma.service";
-import { Injectable } from "@nestjs/common";
 import { MemberRanking, Prisma } from "models";
+import { Injectable } from "@nestjs/common";
+
+// Placeholder | Short type name purpose only
+interface DefaultKeysInterface extends Prisma.MemberRankingSelect {}
+
+const defaultKeys: DefaultKeysInterface = {
+    id: true,
+    nama: true,
+    potonganBelanja: true,
+    createdAt: true,
+    updatedAt: true,
+
+    // Parent table data keys
+    tokoId: true,
+};
 
 @Injectable()
 export class MemberRankingService {
-    private readonly findAllKeys: Prisma.MemberRankingSelect = {
-        id: true,
-        nama: true,
-        potonganBelanja: true,
-        createdAt: true,
-        updatedAt: true,
+    private readonly findAllKeys: DefaultKeysInterface = {
+        // Default keys
+        ...defaultKeys,
+
+        // Another keys
     };
 
-    private readonly findOneKeys: Prisma.MemberRankingSelect = {
-        id: true,
-        nama: true,
-        potonganBelanja: true,
-        createdAt: true,
-        updatedAt: true,
+    private readonly findOneKeys: DefaultKeysInterface = {
+        // Default keys
+        ...defaultKeys,
 
-        toko: {
-            select: {
-                id: true,
-                nama: true,
-                alamat: true,
-            },
-        },
+        // Another keys
     };
 
     constructor(private readonly prisma: PrismaService) {}
@@ -53,7 +57,7 @@ export class MemberRankingService {
     async findAll(params: {
         skip?: number;
         take?: number;
-        select?: Prisma.MemberRankingSelect;
+        select?: DefaultKeysInterface;
         cursor?: Prisma.MemberRankingWhereUniqueInput;
         where?: Prisma.MemberRankingWhereInput;
         orderBy?: Prisma.MemberRankingOrderByWithRelationInput;
@@ -62,23 +66,32 @@ export class MemberRankingService {
         return this.prisma.memberRanking.findMany({
             skip,
             take,
-            select: {
-                ...this.findAllKeys,
-                ...select,
-            },
             cursor,
             where,
             orderBy,
+            select: {
+                // Default keys to display
+                ...this.findAllKeys,
+
+                // User specified keys to display
+                ...select,
+            },
         });
     }
 
     async findOne(params: {
-        select?: Prisma.MemberRankingSelect;
+        select?: DefaultKeysInterface;
         where: Prisma.MemberRankingWhereUniqueInput;
     }): Promise<MemberRanking | null> {
         const { select, where } = params;
         return this.prisma.memberRanking.findUnique({
-            select: { ...this.findOneKeys, ...select },
+            select: {
+                // Default keys to display
+                ...this.findOneKeys,
+
+                // User specified keys to display
+                ...select,
+            },
             where,
         });
     }

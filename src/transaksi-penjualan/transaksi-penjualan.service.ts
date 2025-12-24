@@ -2,18 +2,33 @@ import { Prisma, TransaksiPenjualan } from "models";
 import { PrismaService } from "src/prisma.service";
 import { Injectable } from "@nestjs/common";
 
+// Placeholder | Short type name purpose only
+interface DefaultKeysInterface extends Prisma.TransaksiPenjualanSelect {}
+
+const defaultKeys: DefaultKeysInterface = {
+    id: true,
+    produk: true,
+    createdAt: true,
+    updatedAt: true,
+
+    // Parent table data keys
+    tokoId: true,
+};
+
 @Injectable()
 export class TransaksiPenjualanService {
-    private readonly findAllKeys: Prisma.TransaksiPenjualanSelect = {
-        id: true,
-        createdAt: true,
-        updatedAt: true,
+    private readonly findAllKeys: DefaultKeysInterface = {
+        // Default keys
+        ...defaultKeys,
+
+        // Another keys
     };
 
-    private readonly findOneKeys: Prisma.TransaksiPenjualanSelect = {
-        id: true,
-        createdAt: true,
-        updatedAt: true,
+    private readonly findOneKeys: DefaultKeysInterface = {
+        // Default keys
+        ...defaultKeys,
+
+        // Another keys
     };
 
     constructor(private readonly prisma: PrismaService) {}
@@ -40,7 +55,7 @@ export class TransaksiPenjualanService {
     async findAll(params: {
         skip?: number;
         take?: number;
-        select?: Prisma.TransaksiPenjualanSelect;
+        select?: DefaultKeysInterface;
         cursor?: Prisma.TransaksiPenjualanWhereUniqueInput;
         where?: Prisma.TransaksiPenjualanWhereInput;
         orderBy?: Prisma.TransaksiPenjualanOrderByWithRelationInput;
@@ -49,23 +64,32 @@ export class TransaksiPenjualanService {
         return this.prisma.transaksiPenjualan.findMany({
             skip,
             take,
-            select: {
-                ...this.findAllKeys,
-                ...select,
-            },
             cursor,
             where,
             orderBy,
+            select: {
+                // Default keys to display
+                ...this.findAllKeys,
+
+                // User specified keys to display
+                ...select,
+            },
         });
     }
 
     async findOne(params: {
-        select?: Prisma.TransaksiPenjualanSelect;
+        select?: DefaultKeysInterface;
         where: Prisma.TransaksiPenjualanWhereUniqueInput;
     }): Promise<TransaksiPenjualan | null> {
         const { select, where } = params;
         return this.prisma.transaksiPenjualan.findUnique({
-            select: { ...this.findOneKeys, ...select },
+            select: {
+                // Default keys to display
+                ...this.findOneKeys,
+
+                // User specified keys to display
+                ...select,
+            },
             where,
         });
     }
