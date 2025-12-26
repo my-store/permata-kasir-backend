@@ -1,11 +1,17 @@
 import { CreateMemberRankingDto } from "./dto/create-member-ranking.dto";
 import { UpdateMemberRankingDto } from "./dto/update-member-ranking.dto";
 import { MemberRankingService } from "./member-ranking.service";
+import { UserService } from "src/user/user.service";
+import { ParseUrlQuery } from "src/libs/string";
+import { AuthGuard } from "src/auth/auth.guard";
 import { MemberRanking, Prisma } from "models";
 import {
     InternalServerErrorException,
+    UnauthorizedException,
     BadRequestException,
     Controller,
+    UseGuards,
+    Request,
     Delete,
     Query,
     Param,
@@ -14,19 +20,49 @@ import {
     Post,
     Get,
 } from "@nestjs/common";
-import { ParseUrlQuery } from "src/libs/string";
 
+@UseGuards(AuthGuard)
 @Controller("api/member-ranking")
 export class MemberRankingController {
-    constructor(private readonly service: MemberRankingService) {}
+    constructor(
+        private readonly service: MemberRankingService,
+        private readonly userService: UserService,
+    ) {}
 
     @Post()
     async create(
-        @Body() createMemberRankingDto: CreateMemberRankingDto,
+        @Body() newData: CreateMemberRankingDto,
+        @Request() req: any,
     ): Promise<MemberRanking> {
         let data: MemberRanking;
+
+        // Get the user role and tlp (sub) from Authorization headers.
+        const { sub, role } = req.user;
+
+        // Inputed by admin (block this)
+        if (role == "Admin") throw new UnauthorizedException();
+
+        // Get the user data
         try {
-            data = await this.service.create(createMemberRankingDto);
+            const user: any = await this.userService.findOne({
+                where: { tlp: sub },
+            });
+            // Make this input request is come from the owner
+            if (user.id != newData.userId) {
+                // It it's not, block it!
+                throw new UnauthorizedException();
+            }
+        } catch (error) {
+            // Maybe user is deleted, or something else
+            throw new UnauthorizedException();
+        }
+
+        // Make sure to remove userId before insert, because that is only
+        // for security checking.
+        const { userId, ...fixedNewData } = newData;
+
+        try {
+            data = await this.service.create(fixedNewData);
         } catch (error) {
             // Prisma error
             if (error instanceof Prisma.PrismaClientKnownRequestError) {
