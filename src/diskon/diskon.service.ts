@@ -11,6 +11,9 @@ const defaultKeys: DefaultKeysInterface = {
     nilai: true,
     createdAt: true,
     updatedAt: true,
+
+    // Parent table data
+    tokoId: true,
 };
 
 @Injectable()
@@ -27,13 +30,6 @@ export class DiskonService {
         ...defaultKeys,
 
         // Another keys
-        toko: {
-            select: {
-                id: true,
-                nama: true,
-                alamat: true,
-            },
-        },
     };
 
     constructor(private readonly prisma: PrismaService) {}
