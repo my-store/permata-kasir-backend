@@ -22,8 +22,6 @@ const defaultKeys: DefaultKeysInterface = {
             id: true,
             keterangan: true,
             nilai: true,
-            createdAt: true,
-            updatedAt: true,
         },
     },
 };

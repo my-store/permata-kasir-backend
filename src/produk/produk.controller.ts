@@ -10,9 +10,12 @@ import {
     Body,
     Post,
     Get,
+    Request,
+    UnauthorizedException,
 } from "@nestjs/common";
 import { CreateProdukDto } from "./dto/create-produk.dto";
 import { UpdateProdukDto } from "./dto/update-produk.dto";
+import { UserService } from "src/user/user.service";
 import { ProdukService } from "./produk.service";
 import { AuthGuard } from "src/auth/auth.guard";
 import { ParseUrlQuery } from "src/libs/string";
@@ -21,7 +24,10 @@ import { Prisma, Produk } from "models";
 @UseGuards(AuthGuard)
 @Controller("api/produk")
 export class ProdukController {
-    constructor(private readonly service: ProdukService) {}
+    constructor(
+        private readonly service: ProdukService,
+        private readonly userService: UserService,
+    ) {}
 
     @Get()
     async findAll(@Query() query: any): Promise<Produk[]> {
@@ -81,12 +87,39 @@ export class ProdukController {
     async update(
         @Param("id") id: string,
         @Body() updatedData: UpdateProdukDto,
+        @Request() req: any,
     ): Promise<Produk> {
         let produk: Produk;
+
+        // Get the user role and tlp (sub) from Authorization headers.
+        const { sub, role } = req.user;
+
+        // Inputed by admin (block this)
+        if (role == "Admin") throw new UnauthorizedException();
+
+        // Get the user data
+        try {
+            const user: any = await this.userService.findOne({
+                where: { tlp: sub },
+            });
+            // Make this input request is come from the owner
+            if (user.id != updatedData.userId) {
+                // It it's not, block it!
+                throw new UnauthorizedException();
+            }
+        } catch (error) {
+            // Maybe user is deleted, or something else
+            throw new UnauthorizedException();
+        }
+
+        // Make sure to remove userId before insert, because that is only
+        // for security checking.
+        const { userId, ...fixedupdatedData } = updatedData;
+
         try {
             produk = await this.service.update(
                 { id: parseInt(id) },
-                updatedData,
+                fixedupdatedData,
             );
         } catch (error) {
             throw new InternalServerErrorException(error);

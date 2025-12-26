@@ -14,5 +14,5 @@ export class CreateProdukDto {
     stok: string;
 
     @IsNotEmpty()
-    tokoId: string;
+    tokoId: number;
 }
