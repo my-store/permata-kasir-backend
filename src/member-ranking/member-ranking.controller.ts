@@ -16,7 +16,7 @@ import {
 } from "@nestjs/common";
 import { ParseUrlQuery } from "src/libs/string";
 
-@Controller("member-ranking")
+@Controller("api/member-ranking")
 export class MemberRankingController {
     constructor(private readonly service: MemberRankingService) {}
 
