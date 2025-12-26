@@ -65,10 +65,13 @@ export class TransaksiPembelianController {
 
     // Getone method will return TransaksiPembelian object or nul, so set return type as any.
     @Get(":id")
-    async findOne(@Param("id") id: string): Promise<any> {
+    async findOne(@Param("id") id: string, @Query() query: any): Promise<any> {
         let data: any;
         try {
-            data = await this.service.findOne({ where: { id: parseInt(id) } });
+            data = await this.service.findOne({
+                where: { id: parseInt(id) },
+                ...ParseUrlQuery(query),
+            });
         } catch (e) {
             throw new InternalServerErrorException(e);
         }

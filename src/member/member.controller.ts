@@ -63,10 +63,16 @@ export class MemberController {
 
     // Getone method will return Member object or nul, so set return type as any.
     @Get(":tlp")
-    async findOne(@Param("tlp") tlp: string): Promise<any> {
+    async findOne(
+        @Param("tlp") tlp: string,
+        @Query() query: any,
+    ): Promise<any> {
         let data: any;
         try {
-            data = await this.service.findOne({ where: { tlp } });
+            data = await this.service.findOne({
+                where: { tlp },
+                ...ParseUrlQuery(query),
+            });
         } catch (e) {
             throw new InternalServerErrorException(e);
         }

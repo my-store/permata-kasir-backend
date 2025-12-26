@@ -13,9 +13,9 @@ import {
 } from "@nestjs/common";
 import { CreateTokoDto } from "./dto/create-toko.dto";
 import { UpdateTokoDto } from "./dto/update-toko.dto";
-import { TokoService } from "./toko.service";
 import { AuthGuard } from "src/auth/auth.guard";
 import { ParseUrlQuery } from "src/libs/string";
+import { TokoService } from "./toko.service";
 import { Prisma, Toko } from "models";
 
 @UseGuards(AuthGuard)
@@ -63,10 +63,16 @@ export class TokoController {
 
     // Getone method will return Toko object or nul, so set return type as any.
     @Get(":tlp")
-    async findOne(@Param("tlp") tlp: string): Promise<any> {
+    async findOne(
+        @Param("tlp") tlp: string,
+        @Query() query: any,
+    ): Promise<any> {
         let data: any;
         try {
-            data = await this.service.findOne({ where: { tlp } });
+            data = await this.service.findOne({
+                where: { tlp },
+                ...ParseUrlQuery(query),
+            });
         } catch (e) {
             throw new InternalServerErrorException(e);
         }
