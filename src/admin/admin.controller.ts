@@ -32,14 +32,12 @@ import {
     Get,
 } from "@nestjs/common";
 import { join } from "path";
-// import { SchedulerRegistry } from "@nestjs/schedule";
 
 @Controller("api/admin")
 export class AdminController {
     constructor(
         private readonly adminService: AdminService,
         private readonly userService: UserService,
-        // private readonly scheduleRegistry: SchedulerRegistry,
     ) {}
 
     // Look at .env file
