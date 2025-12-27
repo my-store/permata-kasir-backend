@@ -32,31 +32,6 @@ export class MemberService {
         ...defaultKeys,
 
         // Another keys
-        toko: {
-            select: {
-                nama: true,
-                alamat: true,
-                createdAt: true,
-                updatedAt: true,
-
-                user: {
-                    select: {
-                        id: true,
-                        nama: true,
-                        alamat: true,
-                        createdAt: true,
-                        updatedAt: true,
-                    },
-                },
-            },
-        },
-
-        memberRanking: {
-            select: {
-                nama: true,
-                potonganBelanja: true,
-            },
-        },
     };
 
     constructor(private readonly prisma: PrismaService) {}
@@ -144,7 +119,7 @@ export class MemberService {
         where: Prisma.MemberWhereUniqueInput;
     }): Promise<Member | null> {
         const { select, where } = params;
-        return this.prisma.member.findUnique({
+        return this.prisma.member.findUniqueOrThrow({
             select: {
                 // Default keys to display
                 ...this.findOneKeys,

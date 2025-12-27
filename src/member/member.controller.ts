@@ -8,6 +8,7 @@ import {
     InternalServerErrorException,
     UnauthorizedException,
     BadRequestException,
+    NotFoundException,
     Controller,
     UseGuards,
     Request,
@@ -25,14 +26,41 @@ import {
 export class MemberController {
     constructor(private readonly service: MemberService) {}
 
+    modifyQueryForThisUser(q: any, tlp: string): any {
+        let qx: any = { ...q };
+        qx["where"] = {
+            // If user spesified some where statement
+            ...qx["where"],
+            // For security reason, display onle member that owned by this user (who send the request)
+            toko: {
+                user: {
+                    tlp, // Get by unique key
+                },
+            },
+        };
+        return qx;
+    }
+
     @Get()
-    async findAll(@Query() query: any): Promise<Member[]> {
+    async findAll(@Query() query: any, @Request() req: any): Promise<Member[]> {
         let data: Member[];
+        let q: any = { ...ParseUrlQuery(query) };
+
+        // Hanya tampilkan data milik si user yang sedang login saja
+        const { sub, role } = req.user;
+
+        // Selain admin (siapapun), wajib melewati pengecekan dibawah
+        if (role != "Admin") {
+            // Modify where statement
+            q = this.modifyQueryForThisUser(q, sub);
+        }
+
         try {
-            data = await this.service.findAll(ParseUrlQuery(query));
+            data = await this.service.findAll(q);
         } catch (e) {
             throw new InternalServerErrorException(e);
         }
+
         return data;
     }
 
@@ -79,6 +107,7 @@ export class MemberController {
                 throw new InternalServerErrorException(error);
             }
         }
+
         return member;
     }
 
@@ -87,16 +116,36 @@ export class MemberController {
     async findOne(
         @Param("tlp") tlp: string,
         @Query() query: any,
+        @Request() req: any,
     ): Promise<any> {
         let data: any;
+        let q: any = { ...ParseUrlQuery(query) };
+
+        // Hanya tampilkan data milik si user yang sedang login saja
+        const { sub, role } = req.user;
+
+        // Selain admin (siapapun), wajib melewati pengecekan dibawah
+        if (role != "Admin") {
+            // Modify where statement
+            q = this.modifyQueryForThisUser(q, sub);
+        }
+
         try {
             data = await this.service.findOne({
-                where: { tlp },
-                ...ParseUrlQuery(query),
+                ...q, // Other arguments (specified by user in URL)
+
+                where: {
+                    // Get one by some tlp (on URL as a parameter)
+                    tlp,
+
+                    // Also show only if this request come from the author
+                    ...q["where"],
+                },
             });
-        } catch (e) {
-            throw new InternalServerErrorException(e);
+        } catch {
+            throw new NotFoundException();
         }
+
         return data;
     }
 
@@ -131,17 +180,20 @@ export class MemberController {
         } catch (error) {
             throw new InternalServerErrorException(error);
         }
+
         return member;
     }
 
     @Delete(":id")
     async remove(@Param("id") id: string): Promise<Member> {
         let member: Member;
+
         try {
             member = await this.service.remove({ id: parseInt(id) });
         } catch (error) {
             throw new InternalServerErrorException(error);
         }
+
         return member;
     }
 }
