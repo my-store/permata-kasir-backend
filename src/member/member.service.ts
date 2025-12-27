@@ -50,7 +50,7 @@ export class MemberService {
         }
 
         // Cari data toko
-        const toko: any = await this.prisma.toko.findUnique({
+        const toko: any = await this.prisma.toko.findUniqueOrThrow({
             where: { id: tokoId },
             select: {
                 user: {

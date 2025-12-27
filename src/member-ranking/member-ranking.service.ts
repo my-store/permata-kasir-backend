@@ -48,7 +48,7 @@ export class MemberRankingService {
         }
 
         // Cari data toko
-        const toko: any = await this.prisma.toko.findUnique({
+        const toko: any = await this.prisma.toko.findUniqueOrThrow({
             where: { id: tokoId },
             select: {
                 user: {
@@ -117,7 +117,7 @@ export class MemberRankingService {
         where: Prisma.MemberRankingWhereUniqueInput;
     }): Promise<MemberRanking | null> {
         const { select, where } = params;
-        return this.prisma.memberRanking.findUnique({
+        return this.prisma.memberRanking.findUniqueOrThrow({
             select: {
                 // Default keys to display
                 ...this.findOneKeys,
