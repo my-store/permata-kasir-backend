@@ -1,5 +1,5 @@
 import { PrismaService } from "src/prisma.service";
-import { Injectable } from "@nestjs/common";
+import { Injectable, UnauthorizedException } from "@nestjs/common";
 import { Toko, Prisma } from "models";
 
 // Placeholder | Short type name purpose only
@@ -34,6 +34,25 @@ export class TokoService {
     };
 
     constructor(private readonly prisma: PrismaService) {}
+
+    async ownerCheck(params: {
+        sub: string;
+        role: string;
+        userId: number;
+    }): Promise<any> {
+        const { role, sub, userId } = params;
+
+        // Bypass this security for admin (developer)
+        if (role == "Admin") {
+            return;
+        }
+
+        const matchedUser: any = await this.prisma.user.findUnique({
+            where: { id: userId, tlp: sub },
+        });
+
+        if (!matchedUser) throw new UnauthorizedException();
+    }
 
     async create(newData: any): Promise<Toko> {
         // Konfigurasi timestamp

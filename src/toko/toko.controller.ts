@@ -1,8 +1,16 @@
+import { CreateTokoDto } from "./dto/create-toko.dto";
+import { UpdateTokoDto } from "./dto/update-toko.dto";
+import { AuthGuard } from "src/auth/auth.guard";
+import { ParseUrlQuery } from "src/libs/string";
+import { TokoService } from "./toko.service";
+import { Prisma, Toko } from "models";
 import {
     InternalServerErrorException,
+    UnauthorizedException,
     BadRequestException,
     Controller,
     UseGuards,
+    Request,
     Delete,
     Param,
     Query,
@@ -11,12 +19,6 @@ import {
     Body,
     Get,
 } from "@nestjs/common";
-import { CreateTokoDto } from "./dto/create-toko.dto";
-import { UpdateTokoDto } from "./dto/update-toko.dto";
-import { AuthGuard } from "src/auth/auth.guard";
-import { ParseUrlQuery } from "src/libs/string";
-import { TokoService } from "./toko.service";
-import { Prisma, Toko } from "models";
 
 @UseGuards(AuthGuard)
 @Controller("api/toko")
@@ -35,10 +37,28 @@ export class TokoController {
     }
 
     @Post()
-    async create(@Body() createTokoDto: CreateTokoDto): Promise<Toko> {
+    async create(
+        @Body() newData: CreateTokoDto,
+        @Request() req: any,
+    ): Promise<Toko> {
         let toko: Toko;
+
+        // Check if this request is come from the owner, if not, block the request.
         try {
-            toko = await this.service.create(createTokoDto);
+            await this.service.ownerCheck({
+                ...req.user,
+                userId: newData.userId,
+            });
+        } catch {
+            throw new UnauthorizedException();
+        }
+
+        // Make sure to remove userId before insert, because that is only
+        // for security checking.
+        const { userId, ...fixedNewData } = newData;
+
+        try {
+            toko = await this.service.create(fixedNewData);
         } catch (error) {
             // Prisma error
             if (error instanceof Prisma.PrismaClientKnownRequestError) {
@@ -83,10 +103,29 @@ export class TokoController {
     async update(
         @Param("id") id: string,
         @Body() updatedData: UpdateTokoDto,
+        @Request() req: any,
     ): Promise<Toko> {
         let toko: Toko;
+
+        // Check if this request is come from the owner, if not, block the request.
         try {
-            toko = await this.service.update({ id: parseInt(id) }, updatedData);
+            await this.service.ownerCheck({
+                ...req.user,
+                userId: updatedData.userId,
+            });
+        } catch {
+            throw new UnauthorizedException();
+        }
+
+        // Make sure to remove userId before insert, because that is only
+        // for security checking.
+        const { userId, ...fixedupdatedData } = updatedData;
+
+        try {
+            toko = await this.service.update(
+                { id: parseInt(id) },
+                fixedupdatedData,
+            );
         } catch (error) {
             throw new InternalServerErrorException(error);
         }

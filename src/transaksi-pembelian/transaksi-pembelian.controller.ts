@@ -6,9 +6,11 @@ import { AuthGuard } from "src/auth/auth.guard";
 import { ParseUrlQuery } from "src/libs/string";
 import {
     InternalServerErrorException,
+    UnauthorizedException,
     BadRequestException,
     Controller,
     UseGuards,
+    Request,
     Delete,
     Query,
     Patch,
@@ -23,24 +25,30 @@ import {
 export class TransaksiPembelianController {
     constructor(private readonly service: TransaksiPembelianService) {}
 
-    @Get()
-    async findAll(@Query() query: any): Promise<TransaksiPembelian[]> {
-        let data: TransaksiPembelian[];
-        try {
-            data = await this.service.findAll(ParseUrlQuery(query));
-        } catch (e) {
-            throw new InternalServerErrorException(e);
-        }
-        return data;
-    }
-
     @Post()
     async create(
-        @Body() createTransaksiPembelianDto: CreateTransaksiPembelianDto,
+        @Body() newData: CreateTransaksiPembelianDto,
+        @Request() req: any,
     ): Promise<TransaksiPembelian> {
         let data: TransaksiPembelian;
+
+        // Check if this request is come from the owner, if not, block the request.
         try {
-            data = await this.service.create(createTransaksiPembelianDto);
+            await this.service.ownerCheck({
+                ...req.user,
+                userId: newData.userId,
+                tokoId: newData.tokoId,
+            });
+        } catch {
+            throw new UnauthorizedException();
+        }
+
+        // Make sure to remove userId before insert, because that is only
+        // for security checking.
+        const { userId, ...fixedNewData } = newData;
+
+        try {
+            data = await this.service.create(fixedNewData);
         } catch (error) {
             // Prisma error
             if (error instanceof Prisma.PrismaClientKnownRequestError) {
@@ -59,6 +67,17 @@ export class TransaksiPembelianController {
                 // Handle non-Prisma errors
                 throw new InternalServerErrorException(error);
             }
+        }
+        return data;
+    }
+
+    @Get()
+    async findAll(@Query() query: any): Promise<TransaksiPembelian[]> {
+        let data: TransaksiPembelian[];
+        try {
+            data = await this.service.findAll(ParseUrlQuery(query));
+        } catch (e) {
+            throw new InternalServerErrorException(e);
         }
         return data;
     }
@@ -82,10 +101,30 @@ export class TransaksiPembelianController {
     async update(
         @Param("id") id: string,
         @Body() updatedData: UpdateTransaksiPembelianDto,
+        @Request() req: any,
     ): Promise<TransaksiPembelian> {
         let data: TransaksiPembelian;
+
+        // Check if this request is come from the owner, if not, block the request.
         try {
-            data = await this.service.update({ id: parseInt(id) }, updatedData);
+            await this.service.ownerCheck({
+                ...req.user,
+                userId: updatedData.userId,
+                tokoId: updatedData.tokoId,
+            });
+        } catch {
+            throw new UnauthorizedException();
+        }
+
+        // Make sure to remove userId before insert, because that is only
+        // for security checking.
+        const { userId, ...fixedupdatedData } = updatedData;
+
+        try {
+            data = await this.service.update(
+                { id: parseInt(id) },
+                fixedupdatedData,
+            );
         } catch (error) {
             throw new InternalServerErrorException(error);
         }

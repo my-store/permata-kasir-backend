@@ -6,9 +6,11 @@ import { ParseUrlQuery } from "src/libs/string";
 import { Member, Prisma } from "models";
 import {
     InternalServerErrorException,
+    UnauthorizedException,
     BadRequestException,
     Controller,
     UseGuards,
+    Request,
     Delete,
     Param,
     Patch,
@@ -35,10 +37,29 @@ export class MemberController {
     }
 
     @Post()
-    async create(@Body() createMemberDto: CreateMemberDto): Promise<Member> {
+    async create(
+        @Body() newData: CreateMemberDto,
+        @Request() req: any,
+    ): Promise<Member> {
         let member: Member;
+
+        // Check if this request is come from the owner, if not, block the request.
         try {
-            member = await this.service.create(createMemberDto);
+            await this.service.ownerCheck({
+                ...req.user,
+                userId: newData.userId,
+                tokoId: newData.tokoId,
+            });
+        } catch {
+            throw new UnauthorizedException();
+        }
+
+        // Make sure to remove userId before insert, because that is only
+        // for security checking.
+        const { userId, ...fixedNewData } = newData;
+
+        try {
+            member = await this.service.create(fixedNewData);
         } catch (error) {
             // Prisma error
             if (error instanceof Prisma.PrismaClientKnownRequestError) {
@@ -83,12 +104,29 @@ export class MemberController {
     async update(
         @Param("id") id: string,
         @Body() updatedData: UpdateMemberDto,
+        @Request() req: any,
     ): Promise<Member> {
         let member: Member;
+
+        // Check if this request is come from the owner, if not, block the request.
+        try {
+            await this.service.ownerCheck({
+                ...req.user,
+                userId: updatedData.userId,
+                tokoId: updatedData.tokoId,
+            });
+        } catch {
+            throw new UnauthorizedException();
+        }
+
+        // Make sure to remove userId before insert, because that is only
+        // for security checking.
+        const { userId, ...fixedupdatedData } = updatedData;
+
         try {
             member = await this.service.update(
                 { id: parseInt(id) },
-                updatedData,
+                fixedupdatedData,
             );
         } catch (error) {
             throw new InternalServerErrorException(error);

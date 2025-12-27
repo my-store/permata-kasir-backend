@@ -11,5 +11,9 @@ export class CreateMemberDto {
     tlp: string;
 
     @IsNotEmpty()
-    tokoId: string;
+    tokoId: number;
+
+    // To verify, make sure this input is by owner (user)
+    @IsNotEmpty()
+    userId: number;
 }

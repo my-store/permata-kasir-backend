@@ -1,8 +1,16 @@
+import { CreateProdukDto } from "./dto/create-produk.dto";
+import { UpdateProdukDto } from "./dto/update-produk.dto";
+import { ProdukService } from "./produk.service";
+import { AuthGuard } from "src/auth/auth.guard";
+import { ParseUrlQuery } from "src/libs/string";
+import { Prisma, Produk } from "models";
 import {
     InternalServerErrorException,
+    UnauthorizedException,
     BadRequestException,
     Controller,
     UseGuards,
+    Request,
     Delete,
     Param,
     Query,
@@ -10,42 +18,38 @@ import {
     Body,
     Post,
     Get,
-    Request,
-    UnauthorizedException,
 } from "@nestjs/common";
-import { CreateProdukDto } from "./dto/create-produk.dto";
-import { UpdateProdukDto } from "./dto/update-produk.dto";
-import { UserService } from "src/user/user.service";
-import { ProdukService } from "./produk.service";
-import { AuthGuard } from "src/auth/auth.guard";
-import { ParseUrlQuery } from "src/libs/string";
-import { Prisma, Produk } from "models";
 
 @UseGuards(AuthGuard)
 @Controller("api/produk")
 export class ProdukController {
-    constructor(
-        private readonly service: ProdukService,
-        private readonly userService: UserService,
-    ) {}
-
-    @Get()
-    async findAll(@Query() query: any): Promise<Produk[]> {
-        let produk: Produk[];
-        try {
-            produk = await this.service.findAll(ParseUrlQuery(query));
-        } catch (e) {
-            throw new InternalServerErrorException(e);
-        }
-        return produk;
-    }
+    constructor(private readonly service: ProdukService) {}
 
     @Post()
-    async create(@Body() createProdukDto: CreateProdukDto): Promise<Produk> {
+    async create(
+        @Body() newData: CreateProdukDto,
+        @Request() req: any,
+    ): Promise<Produk> {
         // Save inserted data into a variable, if not the server will shutdown when error occured.
         let produk: Produk;
+
+        // Check if this request is come from the owner, if not, block the request.
         try {
-            produk = await this.service.create(createProdukDto);
+            await this.service.ownerCheck({
+                ...req.user,
+                userId: newData.userId,
+                tokoId: newData.tokoId,
+            });
+        } catch {
+            throw new UnauthorizedException();
+        }
+
+        // Make sure to remove userId before insert, because that is only
+        // for security checking.
+        const { userId, ...fixedNewData } = newData;
+
+        try {
+            produk = await this.service.create(fixedNewData);
         } catch (error) {
             // Prisma error
             if (error instanceof Prisma.PrismaClientKnownRequestError) {
@@ -64,6 +68,17 @@ export class ProdukController {
                 // Handle non-Prisma errors
                 throw new InternalServerErrorException(error);
             }
+        }
+        return produk;
+    }
+
+    @Get()
+    async findAll(@Query() query: any): Promise<Produk[]> {
+        let produk: Produk[];
+        try {
+            produk = await this.service.findAll(ParseUrlQuery(query));
+        } catch (e) {
+            throw new InternalServerErrorException(e);
         }
         return produk;
     }
@@ -91,24 +106,14 @@ export class ProdukController {
     ): Promise<Produk> {
         let produk: Produk;
 
-        // Get the user role and tlp (sub) from Authorization headers.
-        const { sub, role } = req.user;
-
-        // Inputed by admin (block this)
-        if (role == "Admin") throw new UnauthorizedException();
-
-        // Get the user data
+        // Check if this request is come from the owner, if not, block the request.
         try {
-            const user: any = await this.userService.findOne({
-                where: { tlp: sub },
+            await this.service.ownerCheck({
+                ...req.user,
+                userId: updatedData.userId,
+                tokoId: updatedData.tokoId,
             });
-            // Make this input request is come from the owner
-            if (user.id != updatedData.userId) {
-                // It it's not, block it!
-                throw new UnauthorizedException();
-            }
-        } catch (error) {
-            // Maybe user is deleted, or something else
+        } catch {
             throw new UnauthorizedException();
         }
 

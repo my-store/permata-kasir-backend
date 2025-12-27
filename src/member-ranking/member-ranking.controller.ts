@@ -1,7 +1,6 @@
 import { CreateMemberRankingDto } from "./dto/create-member-ranking.dto";
 import { UpdateMemberRankingDto } from "./dto/update-member-ranking.dto";
 import { MemberRankingService } from "./member-ranking.service";
-import { UserService } from "src/user/user.service";
 import { ParseUrlQuery } from "src/libs/string";
 import { AuthGuard } from "src/auth/auth.guard";
 import { MemberRanking, Prisma } from "models";
@@ -24,10 +23,7 @@ import {
 @UseGuards(AuthGuard)
 @Controller("api/member-ranking")
 export class MemberRankingController {
-    constructor(
-        private readonly service: MemberRankingService,
-        private readonly userService: UserService,
-    ) {}
+    constructor(private readonly service: MemberRankingService) {}
 
     @Post()
     async create(
@@ -36,24 +32,14 @@ export class MemberRankingController {
     ): Promise<MemberRanking> {
         let data: MemberRanking;
 
-        // Get the user role and tlp (sub) from Authorization headers.
-        const { sub, role } = req.user;
-
-        // Inputed by admin (block this)
-        if (role == "Admin") throw new UnauthorizedException();
-
-        // Get the user data
+        // Check if this request is come from the owner, if not, block the request.
         try {
-            const user: any = await this.userService.findOne({
-                where: { tlp: sub },
+            await this.service.ownerCheck({
+                ...req.user,
+                userId: newData.userId,
+                tokoId: newData.tokoId,
             });
-            // Make this input request is come from the owner
-            if (user.id != newData.userId) {
-                // It it's not, block it!
-                throw new UnauthorizedException();
-            }
-        } catch (error) {
-            // Maybe user is deleted, or something else
+        } catch {
             throw new UnauthorizedException();
         }
 
@@ -115,10 +101,30 @@ export class MemberRankingController {
     async update(
         @Param("id") id: string,
         @Body() updatedData: UpdateMemberRankingDto,
+        @Request() req: any,
     ): Promise<MemberRanking> {
         let data: MemberRanking;
+
+        // Check if this request is come from the owner, if not, block the request.
         try {
-            data = await this.service.update({ id: parseInt(id) }, updatedData);
+            await this.service.ownerCheck({
+                ...req.user,
+                userId: updatedData.userId,
+                tokoId: updatedData.tokoId,
+            });
+        } catch {
+            throw new UnauthorizedException();
+        }
+
+        // Make sure to remove userId before insert, because that is only
+        // for security checking.
+        const { userId, ...fixedupdatedData } = updatedData;
+
+        try {
+            data = await this.service.update(
+                { id: parseInt(id) },
+                fixedupdatedData,
+            );
         } catch (error) {
             throw new InternalServerErrorException(error);
         }

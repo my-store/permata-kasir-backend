@@ -1,6 +1,6 @@
+import { Injectable, UnauthorizedException } from "@nestjs/common";
 import { Prisma, TransaksiPenjualan } from "models";
 import { PrismaService } from "src/prisma.service";
-import { Injectable } from "@nestjs/common";
 
 // Placeholder | Short type name purpose only
 interface DefaultKeysInterface extends Prisma.TransaksiPenjualanSelect {}
@@ -32,6 +32,39 @@ export class TransaksiPenjualanService {
     };
 
     constructor(private readonly prisma: PrismaService) {}
+
+    async ownerCheck(params: {
+        sub: string;
+        role: string;
+        userId: number;
+        tokoId: number;
+    }): Promise<any> {
+        const { role, sub, userId, tokoId } = params;
+
+        // Bypass this security for admin (developer)
+        if (role == "Admin") {
+            return;
+        }
+
+        // Cari data toko
+        const toko: any = await this.prisma.toko.findUnique({
+            where: { id: tokoId },
+            select: {
+                user: {
+                    select: {
+                        id: true,
+                        tlp: true,
+                    },
+                },
+            },
+        });
+
+        // Pastikan yang mengirimkan request ini adalah pemilik toko
+        if (toko.user.id != userId || toko.user.tlp != sub) {
+            // Jika bukan, blokir request.
+            throw new UnauthorizedException();
+        }
+    }
 
     async create(newData: any): Promise<TransaksiPenjualan> {
         // Konfigurasi timestamp

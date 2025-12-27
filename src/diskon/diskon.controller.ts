@@ -6,9 +6,11 @@ import { ParseUrlQuery } from "src/libs/string";
 import { Diskon, Prisma } from "models";
 import {
     InternalServerErrorException,
+    UnauthorizedException,
     BadRequestException,
     Controller,
     UseGuards,
+    Request,
     Delete,
     Param,
     Query,
@@ -23,22 +25,30 @@ import {
 export class DiskonController {
     constructor(private readonly service: DiskonService) {}
 
-    @Get()
-    async findAll(@Query() query: any): Promise<Diskon[]> {
-        let data: Diskon[];
-        try {
-            data = await this.service.findAll(ParseUrlQuery(query));
-        } catch (e) {
-            throw new InternalServerErrorException(e);
-        }
-        return data;
-    }
-
     @Post()
-    async create(@Body() createDiskonDto: CreateDiskonDto): Promise<Diskon> {
+    async create(
+        @Body() newData: CreateDiskonDto,
+        @Request() req: any,
+    ): Promise<Diskon> {
         let data: Diskon;
+
+        // Check if this request is come from the owner, if not, block the request.
         try {
-            data = await this.service.create(createDiskonDto);
+            await this.service.ownerCheck({
+                ...req.user,
+                userId: newData.userId,
+                tokoId: newData.tokoId,
+            });
+        } catch {
+            throw new UnauthorizedException();
+        }
+
+        // Make sure to remove userId before insert, because that is only
+        // for security checking.
+        const { userId, ...fixedNewData } = newData;
+
+        try {
+            data = await this.service.create(fixedNewData);
         } catch (error) {
             // Prisma error
             if (error instanceof Prisma.PrismaClientKnownRequestError) {
@@ -57,6 +67,17 @@ export class DiskonController {
                 // Handle non-Prisma errors
                 throw new InternalServerErrorException(error);
             }
+        }
+        return data;
+    }
+
+    @Get()
+    async findAll(@Query() query: any): Promise<Diskon[]> {
+        let data: Diskon[];
+        try {
+            data = await this.service.findAll(ParseUrlQuery(query));
+        } catch (e) {
+            throw new InternalServerErrorException(e);
         }
         return data;
     }
@@ -80,10 +101,30 @@ export class DiskonController {
     async update(
         @Param("id") id: string,
         @Body() updatedData: UpdateDiskonDto,
+        @Request() req: any,
     ): Promise<Diskon> {
         let data: Diskon;
+
+        // Check if this request is come from the owner, if not, block the request.
         try {
-            data = await this.service.update({ id: parseInt(id) }, updatedData);
+            await this.service.ownerCheck({
+                ...req.user,
+                userId: updatedData.userId,
+                tokoId: updatedData.tokoId,
+            });
+        } catch {
+            throw new UnauthorizedException();
+        }
+
+        // Make sure to remove userId before insert, because that is only
+        // for security checking.
+        const { userId, ...fixedupdatedData } = updatedData;
+
+        try {
+            data = await this.service.update(
+                { id: parseInt(id) },
+                fixedupdatedData,
+            );
         } catch (error) {
             throw new InternalServerErrorException(error);
         }
