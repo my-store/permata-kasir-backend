@@ -25,6 +25,21 @@ import {
 export class MemberRankingController {
     constructor(private readonly service: MemberRankingService) {}
 
+    modifyQueryForThisUser(q: any, tlp: string): any {
+        let qx: any = { ...q };
+        qx["where"] = {
+            // If user spesified some where statement
+            ...qx["where"],
+            // For security reason, display onle member that owned by this user (who send the request)
+            toko: {
+                user: {
+                    tlp, // Get by unique key
+                },
+            },
+        };
+        return qx;
+    }
+
     @Post()
     async create(
         @Body() newData: CreateMemberRankingDto,
@@ -72,10 +87,24 @@ export class MemberRankingController {
     }
 
     @Get()
-    async findAll(@Query() query: any): Promise<MemberRanking[]> {
+    async findAll(
+        @Query() query: any,
+        @Request() req: any,
+    ): Promise<MemberRanking[]> {
         let data: MemberRanking[];
+        let q: any = { ...ParseUrlQuery(query) };
+
+        // Hanya tampilkan data milik si user yang sedang login saja
+        const { sub, role } = req.user;
+
+        // Selain admin (siapapun), wajib melewati pengecekan dibawah
+        if (role != "Admin") {
+            // Modify where statement
+            q = this.modifyQueryForThisUser(q, sub);
+        }
+
         try {
-            data = await this.service.findAll(ParseUrlQuery(query));
+            data = await this.service.findAll(q);
         } catch (e) {
             throw new InternalServerErrorException(e);
         }
@@ -84,12 +113,34 @@ export class MemberRankingController {
 
     // Getone method will return MemberRanking object or nul, so set return type as any.
     @Get(":id")
-    async findOne(@Param("id") id: string, @Query() query: any): Promise<any> {
+    async findOne(
+        @Param("id") id: string,
+        @Query() query: any,
+        @Request() req: any,
+    ): Promise<any> {
         let data: any;
+        let q: any = { ...ParseUrlQuery(query) };
+
+        // Hanya tampilkan data milik si user yang sedang login saja
+        const { sub, role } = req.user;
+
+        // Selain admin (siapapun), wajib melewati pengecekan dibawah
+        if (role != "Admin") {
+            // Modify where statement
+            q = this.modifyQueryForThisUser(q, sub);
+        }
+
         try {
             data = await this.service.findOne({
-                where: { id: parseInt(id) },
-                ...ParseUrlQuery(query),
+                ...q, // Other arguments (specified by user in URL)
+
+                where: {
+                    // Get one by some id (on URL as a parameter)
+                    id: parseInt(id),
+
+                    // Also show only if this request come from the author
+                    ...q["where"],
+                },
             });
         } catch (e) {
             throw new InternalServerErrorException(e);

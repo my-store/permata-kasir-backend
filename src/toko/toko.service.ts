@@ -1,5 +1,5 @@
 import { PrismaService } from "src/prisma.service";
-import { Injectable, UnauthorizedException } from "@nestjs/common";
+import { Injectable } from "@nestjs/common";
 import { Toko, Prisma } from "models";
 
 // Placeholder | Short type name purpose only
@@ -47,11 +47,9 @@ export class TokoService {
             return;
         }
 
-        const matchedUser: any = await this.prisma.user.findUnique({
+        return this.prisma.user.findUniqueOrThrow({
             where: { id: userId, tlp: sub },
         });
-
-        if (!matchedUser) throw new UnauthorizedException();
     }
 
     async create(newData: any): Promise<Toko> {
@@ -104,7 +102,7 @@ export class TokoService {
         where: Prisma.TokoWhereUniqueInput;
     }): Promise<Toko | null> {
         const { select, where } = params;
-        return this.prisma.toko.findUnique({
+        return this.prisma.toko.findUniqueOrThrow({
             select: {
                 // Default keys to display
                 ...this.findOneKeys,

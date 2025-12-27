@@ -134,7 +134,7 @@ export class ProdukController {
                 ...q, // Other arguments (specified by user in URL)
 
                 where: {
-                    // Get one by some tlp (on URL as a parameter)
+                    // Get one by some id (on URL as a parameter)
                     id: parseInt(id),
 
                     // Also show only if this request come from the author
