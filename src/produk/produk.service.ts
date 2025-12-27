@@ -127,7 +127,7 @@ export class ProdukService {
         where: Prisma.ProdukWhereUniqueInput;
     }): Promise<Produk | null> {
         const { select, where } = params;
-        return this.prisma.produk.findUnique({
+        return this.prisma.produk.findUniqueOrThrow({
             select: {
                 // Default keys to display
                 ...this.findOneKeys,

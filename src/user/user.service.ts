@@ -116,7 +116,7 @@ export class UserService {
         where: Prisma.UserWhereUniqueInput;
     }): Promise<User | null> {
         const { select, where } = params;
-        return this.prisma.user.findUnique({
+        return this.prisma.user.findUniqueOrThrow({
             select: {
                 // Default keys to display
                 ...this.findOneKeys,

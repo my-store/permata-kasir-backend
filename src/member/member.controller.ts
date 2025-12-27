@@ -41,29 +41,6 @@ export class MemberController {
         return qx;
     }
 
-    @Get()
-    async findAll(@Query() query: any, @Request() req: any): Promise<Member[]> {
-        let data: Member[];
-        let q: any = { ...ParseUrlQuery(query) };
-
-        // Hanya tampilkan data milik si user yang sedang login saja
-        const { sub, role } = req.user;
-
-        // Selain admin (siapapun), wajib melewati pengecekan dibawah
-        if (role != "Admin") {
-            // Modify where statement
-            q = this.modifyQueryForThisUser(q, sub);
-        }
-
-        try {
-            data = await this.service.findAll(q);
-        } catch (e) {
-            throw new InternalServerErrorException(e);
-        }
-
-        return data;
-    }
-
     @Post()
     async create(
         @Body() newData: CreateMemberDto,
@@ -109,6 +86,29 @@ export class MemberController {
         }
 
         return member;
+    }
+
+    @Get()
+    async findAll(@Query() query: any, @Request() req: any): Promise<Member[]> {
+        let data: Member[];
+        let q: any = { ...ParseUrlQuery(query) };
+
+        // Hanya tampilkan data milik si user yang sedang login saja
+        const { sub, role } = req.user;
+
+        // Selain admin (siapapun), wajib melewati pengecekan dibawah
+        if (role != "Admin") {
+            // Modify where statement
+            q = this.modifyQueryForThisUser(q, sub);
+        }
+
+        try {
+            data = await this.service.findAll(q);
+        } catch (e) {
+            throw new InternalServerErrorException(e);
+        }
+
+        return data;
     }
 
     // Getone method will return Member object or nul, so set return type as any.

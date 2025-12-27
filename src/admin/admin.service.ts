@@ -100,7 +100,7 @@ export class AdminService {
         where: Prisma.AdminWhereUniqueInput;
     }): Promise<Admin | null> {
         const { select, where } = params;
-        return this.prisma.admin.findUnique({
+        return this.prisma.admin.findUniqueOrThrow({
             select: {
                 // Default keys to display
                 ...this.findOneKeys,

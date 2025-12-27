@@ -26,14 +26,17 @@ export class AuthService {
         try {
             data = await this.admin.findOne({ where: { tlp } });
             role = "Admin";
-        } catch (error) {}
+        } catch {}
 
         // Admin not found, try find User
         if (!data) {
             try {
                 data = await this.user.findOne({ where: { tlp } });
                 role = "User";
-            } catch (error) {}
+            } catch {
+                // The user also not found, terminate task
+                throw new UnauthorizedException();
+            }
         }
 
         return { data, role };
