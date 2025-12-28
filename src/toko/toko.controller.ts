@@ -178,7 +178,7 @@ export class TokoController {
     ): Promise<Toko> {
         let newData: Toko;
 
-        // Hanya tampilkan data milik si user yang sedang login saja
+        // Data admin/ user yang sedang login
         const { sub, role } = req.user;
 
         // Database update where statement
@@ -200,7 +200,7 @@ export class TokoController {
             newData = await this.service.update({
                 where,
 
-                // Clean data before update
+                // Data yang telah dibersihkan dari kolom2 yang memang tidak boleh diubah.
                 data: this.cleanUpdateData(data),
             });
         } catch {

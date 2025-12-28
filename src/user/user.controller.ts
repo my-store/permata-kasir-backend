@@ -324,11 +324,43 @@ export class UserController {
     async update(
         @Param("tlp") tlp: string,
         @Body() data: UpdateUserDto,
+        @Request() req: any,
         @UploadedFile() foto?: Express.Multer.File,
     ): Promise<User> {
         let updatedData: User;
 
-        /* ------------------ MENGAMBIL DATA LAMA ------------------ */
+        /* ----------------------------------------------------------
+        |  ATURAN PERUBAHAN DATA USER - 28 DESEMBER 2025
+        |  ----------------------------------------------------------
+        |  Pastikan hanya admin dan user sediri lah yang dapat
+        |  merubah datanya, bukan user lain.
+        |  ----------------------------------------------------------
+        |  Metode pengecekan:
+        |  1. Bandingkan nomor tlp yang ada di parameter yang mana
+        |  itu akan digunakan untuk menemukan data user mana
+        |  yang akan diubah.
+        |  2. Jia nomor tlp pada parameter tidak sama dengan sub
+        |  atau nomor tlp yang sekarang sedang aktif login,
+        |  maka permintaan update di hentikan paksa.
+        */
+
+        // Data admin/ user yang sedang login
+        const { sub, role } = req.user;
+
+        // Selain admin (siapapun), wajib melewati pengecekan dibawah
+        if (role != "Admin") {
+            // Jika tlp dan sub tidak sama, blokir permintaan update
+            if (tlp != sub) {
+                throw new UnauthorizedException();
+            }
+        }
+
+        /* ----------------------------------------------------------
+        |  MENGAMBIL DATA LAMA
+        |  ----------------------------------------------------------
+        |  Jika data lama tidak ditemukan atau telah dihapus,
+        |  maka permintaan ubah data dihentikan paksa.
+        */
         let oldData: User | null;
         try {
             oldData = await this.userService.findOne({ where: { tlp } });
@@ -336,7 +368,9 @@ export class UserController {
             throw new BadRequestException("User tidak ditemukan!");
         }
 
-        /* ------------------ USER MERUBAH NO. TLP ------------------
+        /* ----------------------------------------------------------
+        |  USER MERUBAH NO. TLP
+        |  ----------------------------------------------------------
         |  Pastikan No. Tlp belum ada yang menggunakan, jika ada
         |  user ataupun admin yang menggunakan No. Tlp tersebut,
         |  permintaan input data ditolak.
@@ -380,63 +414,88 @@ export class UserController {
             }
         }
 
-        /* ------------------ USER MERUBAH PASSWORD ------------------ */
+        /* ----------------------------------------------------------
+        |  USER MERUBAH PASSWORD
+        |  ----------------------------------------------------------
+        |  Jika user melakukan perubahan pada password nya, maka
+        |  maka akan dilakukan enkripsi ulang.
+        */
         if (data.password) {
-            // Enkripsi password
+            // Enkripsi password baru
             data.password = encryptPassword(data.password);
         }
 
-        /* ------------------ USER MERUBAH FOTO ------------------ */
+        /* ----------------------------------------------------------
+        |  USER MERUBAH FOTO
+        |  ----------------------------------------------------------
+        |  Akan dilakukan pengecekan format dan ukuran
+        |  pada foto baru.
+        |  ----------------------------------------------------------
+        |  Format yang dibolehkan: JPG, JPEG dan PNG
+        |  Ukuran yang dibolehkan: 2 Megabyte
+        |  ----------------------------------------------------------
+        |  setelah berhasil diubah data URL foto pada database,
+        |  barulah dilakukan upload foto.
+        |  Penamaan foto akan disesuaikan dengan nomor tlp user.
+        |  ----------------------------------------------------------
+        |  Selengkapnya dapat dilihat di:
+        |  libs/upload-file-handler.ts/ProfileImageValidator()
+        */
         if (foto) {
-            /* --------------------- PENGECEKAN FORMAT DAN UKURAN FOTO ---------------------
-            |  Format foto yang dibolehkan adalah: JPG, JPEG dan PNG
-            |  Lihat selengkapnya di: libs/upload-file-handler.ts/ProfileImageValidator()
-            */
+            // Pengecekan format dan ukuran foto
             const { status, message } = ProfileImageValidator(foto);
+            // Format atau ukuran tidak sesuai aturan
             if (!status) {
+                // Hentikan paksa
                 throw new BadRequestException(message);
             }
 
-            /* ------------------ NAMA FOTO ------------------
-            |  Nama foto berasal dari No. Tlp user
-            */
+            // Nama foto, sesuai nomor tlp user
             const img_path = `${upload_img_dir}/user/profile`;
             const img_name = tlp;
+            // Mendapatkan URL foto dimana foto tersebut akan di upload,
+            // untuk disimpan di database.
             data.foto = GetFileDestBeforeUpload(foto, img_path, img_name);
         }
 
-        /* ------------------ MENYIMPAN DATA ------------------ */
+        // Menyimpan data
         try {
             updatedData = await this.userService.update(
                 { tlp },
                 {
-                    // Cleaned data
+                    // Data yang telah dibersihkan dari kolom2 yang memang tidak boleh diubah.
                     ...this.cleanUpdateData(data),
 
-                    // Remove 'public' from image directory
+                    // Menghapush "public" pada URL foto baru.
                     foto: data.foto?.replace("public", ""),
                 },
             );
         } catch (e) {
+            // Terjadi error saat melakukan perubahan data
             throw new InternalServerErrorException(e);
         }
 
-        /* ------------------ MENGUNGGAH FOTO (JIKA ADA) ------------------
-        |  Setelah data berhasil disimpan, proses selanjutnya
-        |  adalah mengunggah foto.
+        /* ----------------------------------------------------------
+        |  UPLOAD FOTO BARU
+        |  ----------------------------------------------------------
+        |  Jika user melakukan perubahan foto, maka akan dilakukan
+        |  penghapusan foto lama terlebih dahulu, setelah itu akan
+        |  dilakukan upload pada foto baru nya.
         */
         if (foto) {
-            // Hapus foto lama dulu
+            // Menghapus foto lama
             try {
                 DeleteFileOrDir(join(__dirname, "public", `${oldData?.foto}`));
             } catch (e) {
+                // Terjadi error saat melakukan penghapusan foto lama
                 throw new InternalServerErrorException(e);
             }
 
-            // Mengunggah foto baru
+            // Upload foto baru
             try {
                 UploadFile(foto, "public" + updatedData.foto);
             } catch (e) {
+                // Terjadi error saat melakukan upload foto baru
                 throw new InternalServerErrorException(e);
             }
         }
@@ -451,12 +510,32 @@ export class UserController {
 
     @UseGuards(AuthGuard)
     @Delete(":tlp")
-    async remove(@Param("tlp") tlp: string): Promise<User> {
+    async remove(
+        @Param("tlp") tlp: string,
+        @Request() req: any,
+    ): Promise<User> {
         let deletedData: any;
+
+        // Delete where statement
+        let where: Prisma.UserWhereUniqueInput = {
+            tlp,
+        };
+
+        // Hanya tampilkan data milik si user yang sedang login saja
+        const { sub, role } = req.user;
+
+        // Selain admin (siapapun), wajib melewati pengecekan dibawah
+        if (role != "Admin") {
+            // Block request, if this request come from other user
+            // but not this user (to be deleted) itself.
+            if (sub != tlp) {
+                throw new UnauthorizedException();
+            }
+        }
 
         // Delete data from database
         try {
-            deletedData = await this.userService.remove({ tlp });
+            deletedData = await this.userService.remove(where);
         } catch (e) {
             throw new InternalServerErrorException(e);
         }
