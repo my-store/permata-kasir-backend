@@ -213,14 +213,32 @@ export class TokoController {
     @Delete(":uuid")
     async remove(
         @Param("uuid") uuid: string,
-        // @Request() req: any,
+        @Request() req: any,
     ): Promise<Toko> {
         let deletedToko: Toko;
 
+        // Data admin/ user yang sedang login
+        const { sub, role } = req.user;
+
+        // Database update where statement
+        let where: Prisma.TokoWhereUniqueInput = {
+            // No uuid toko yang akan di update datanya
+            uuid,
+        };
+
+        // Selain admin (siapapun), wajib melewati pengecekan dibawah
+        if (role != "Admin") {
+            // Modify where statement
+            where.user = {
+                // No tlp user yang terdeteksi pada headers
+                tlp: sub,
+            };
+        }
+
         try {
-            deletedToko = await this.service.remove({ uuid });
-        } catch (error) {
-            throw new InternalServerErrorException(error);
+            deletedToko = await this.service.remove(where);
+        } catch {
+            throw new NotFoundException();
         }
 
         return deletedToko;
