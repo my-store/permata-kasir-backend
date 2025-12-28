@@ -7,7 +7,6 @@ export class CreateTransaksiPembelianDto {
     @IsNotEmpty()
     tokoId: number;
 
-    // To verify, make sure this input is by owner (user)
     @IsNotEmpty()
     userId: number;
 }

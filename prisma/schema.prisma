@@ -16,6 +16,7 @@ datasource db {
 
 model Admin {
   id         Int     @id @default(autoincrement())
+  uuid       String  @unique
   nama       String
   tlp        String  @unique
   password   String
@@ -34,6 +35,7 @@ model Admin {
 
 model User {
   id       Int     @id @default(autoincrement())
+  uuid     String  @unique
   nama     String
   tlp      String  @unique
   password String
@@ -86,6 +88,7 @@ model UserRegisterTicket {
 
 model Toko {
   id     Int    @id @default(autoincrement())
+  uuid   String @unique
   nama   String
   alamat String
   tlp    String @unique
@@ -109,6 +112,7 @@ model Toko {
 
 model Produk {
   id         Int    @id @default(autoincrement())
+  uuid       String @unique
   nama       String
   hargaPokok Int
   hargaJual  Int
@@ -127,6 +131,7 @@ model Produk {
 
 model Jasa {
   id    Int    @id @default(autoincrement())
+  uuid  String @unique
   nama  String
   biaya Int
 
@@ -143,6 +148,7 @@ model Jasa {
 
 model Diskon {
   id         Int    @id @default(autoincrement())
+  uuid       String @unique
   keterangan String // Misal Jum'at berkah
   nilai      Int // Persentase potongan
 
@@ -160,6 +166,7 @@ model Diskon {
 
 model Member {
   id     Int    @id @default(autoincrement())
+  uuid   String @unique
   nama   String
   alamat String
   tlp    String @unique
@@ -177,6 +184,7 @@ model Member {
 
 model MemberRanking {
   id   Int    @id @default(autoincrement())
+  uuid String @unique
   nama String
 
   // Potongan spesial member, tidak mempengaruhi diskon pada produk
@@ -195,7 +203,8 @@ model MemberRanking {
 }
 
 model TransaksiPembelian {
-  id Int @id @default(autoincrement())
+  id   Int    @id @default(autoincrement())
+  uuid String @unique
 
   // Parent table
   toko   Toko @relation(fields: [tokoId], references: [id])
@@ -215,7 +224,8 @@ model TransaksiPembelian {
 }
 
 model TransaksiPenjualan {
-  id Int @id @default(autoincrement())
+  id   Int    @id @default(autoincrement())
+  uuid String @unique
 
   // Parent table
   toko   Toko? @relation(fields: [tokoId], references: [id])

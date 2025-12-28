@@ -7,6 +7,7 @@ interface DefaultKeysInterface extends Prisma.TokoSelect {}
 
 const defaultKeys: DefaultKeysInterface = {
     id: true,
+    uuid: true,
     nama: true,
     alamat: true,
     tlp: true,
@@ -34,23 +35,6 @@ export class TokoService {
     };
 
     constructor(private readonly prisma: PrismaService) {}
-
-    async ownerCheck(params: {
-        sub: string;
-        role: string;
-        userId: number;
-    }): Promise<any> {
-        const { role, sub, userId } = params;
-
-        // Bypass this security for admin (developer)
-        if (role == "Admin") {
-            return;
-        }
-
-        return this.prisma.user.findUniqueOrThrow({
-            where: { id: userId, tlp: sub },
-        });
-    }
 
     async create(newData: any): Promise<Toko> {
         // Konfigurasi timestamp
@@ -114,15 +98,20 @@ export class TokoService {
         });
     }
 
-    async update(where: Prisma.TokoWhereUniqueInput, data: any): Promise<Toko> {
-        let updatedData: Prisma.TokoUpdateInput = { ...data };
+    async update(params: {
+        where: Prisma.TokoWhereUniqueInput;
+        data: any;
+    }): Promise<Toko> {
+        const { where, data } = params;
+        return this.prisma.toko.update({
+            where,
+            data: {
+                ...data,
 
-        // Konfigurasi timestamp
-        const thisTime = new Date().toISOString();
-        updatedData.updatedAt = thisTime;
-
-        // Save updated data
-        return this.prisma.toko.update({ where, data: updatedData });
+                // Update timestamp
+                updatedAt: new Date().toISOString(),
+            },
+        });
     }
 
     async remove(where: Prisma.TokoWhereUniqueInput): Promise<Toko> {

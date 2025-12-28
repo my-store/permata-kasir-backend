@@ -8,6 +8,7 @@ import {
     InternalServerErrorException,
     UnauthorizedException,
     BadRequestException,
+    NotFoundException,
     Controller,
     UseGuards,
     Request,
@@ -45,19 +46,30 @@ export class TokoController {
     ): Promise<Toko> {
         let toko: Toko;
 
-        // Check if this request is come from the owner, if not, block the request.
-        try {
-            await this.service.ownerCheck({
-                ...req.user,
-                userId: newData.userId,
-            });
-        } catch {
-            throw new UnauthorizedException();
-        }
+        // Hanya tampilkan data milik si user yang sedang login saja
+        const { sub, role } = req.user;
 
-        // Make sure to remove userId before insert, because that is only
-        // for security checking.
-        const { userId, ...fixedNewData } = newData;
+        // Data baru yang akan di inputkan
+        let fixedNewData: any = {
+            ...newData,
+        };
+
+        // Selain admin (siapapun), wajib melewati pengecekan dibawah
+        if (role != "Admin") {
+            // Ubah argument pada data yang akan di inputkan
+            fixedNewData.user = {
+                // Hubungkan dengan user yang saat ini login dan mengirim request input ini
+                connect: {
+                    // Nomor telepon sebagaimana terdeteksi pada headers (sub)
+                    tlp: sub,
+
+                    // Pastikan juga user yang saat ini memiliki ID yang sama dengan userId yang di inputkan
+                    // jika tidak sama, blokir request.
+                    // Ini berguna supaya tidak sembarangan user membuat toko meng-atasnamakan user lain.
+                    id: newData.userId,
+                },
+            };
+        }
 
         try {
             toko = await this.service.create(fixedNewData);
@@ -106,13 +118,13 @@ export class TokoController {
     }
 
     // Getone method will return Toko object or nul, so set return type as any.
-    @Get(":tlp")
+    @Get(":uuid")
     async findOne(
-        @Param("tlp") tlp: string,
+        @Param("uuid") uuid: string,
         @Query() query: any,
         @Request() req: any,
     ): Promise<any> {
-        let data: any;
+        let getOneData: any;
         let q: any = { ...ParseUrlQuery(query) };
 
         // Hanya tampilkan data milik si user yang sedang login saja
@@ -125,64 +137,72 @@ export class TokoController {
         }
 
         try {
-            data = await this.service.findOne({
+            getOneData = await this.service.findOne({
                 ...q, // Other arguments (specified by user in URL)
 
                 where: {
-                    // Get one by some tlp (on URL as a parameter)
-                    tlp,
+                    // Get one by some uuid (on URL as a parameter)
+                    uuid,
 
                     // Also show only if this request come from the author
                     ...q["where"],
                 },
             });
-        } catch (e) {
-            throw new InternalServerErrorException(e);
+        } catch {
+            throw new NotFoundException();
         }
-        return data;
+
+        return getOneData;
     }
 
-    @Patch(":id")
+    @Patch(":uuid")
     async update(
-        @Param("id") id: string,
-        @Body() updatedData: UpdateTokoDto,
+        @Param("uuid") uuid: string,
+        @Body() data: UpdateTokoDto,
         @Request() req: any,
     ): Promise<Toko> {
-        let toko: Toko;
+        let newData: Toko;
 
-        // Check if this request is come from the owner, if not, block the request.
+        // Hanya tampilkan data milik si user yang sedang login saja
+        const { sub, role } = req.user;
+
+        // Database update where statement
+        let where: Prisma.TokoWhereUniqueInput = {
+            // No uuid toko yang akan di update datanya
+            uuid,
+        };
+
+        // Selain admin (siapapun), wajib melewati pengecekan dibawah
+        if (role != "Admin") {
+            // Modify where statement
+            where.user = {
+                // No tlp user yang terdeteksi pada headers
+                tlp: sub,
+            };
+        }
+
         try {
-            await this.service.ownerCheck({
-                ...req.user,
-                userId: updatedData.userId,
-            });
+            newData = await this.service.update({ where, data });
         } catch {
-            throw new UnauthorizedException();
+            throw new NotFoundException();
         }
 
-        // Make sure to remove userId before insert, because that is only
-        // for security checking.
-        const { userId, ...fixedupdatedData } = updatedData;
-
-        try {
-            toko = await this.service.update(
-                { id: parseInt(id) },
-                fixedupdatedData,
-            );
-        } catch (error) {
-            throw new InternalServerErrorException(error);
-        }
-        return toko;
+        return newData;
     }
 
-    @Delete(":id")
-    async remove(@Param("id") id: string): Promise<Toko> {
-        let toko: Toko;
+    @Delete(":uuid")
+    async remove(
+        @Param("uuid") uuid: string,
+        // @Request() req: any,
+    ): Promise<Toko> {
+        let deletedToko: Toko;
+
         try {
-            toko = await this.service.remove({ id: parseInt(id) });
+            deletedToko = await this.service.remove({ uuid });
         } catch (error) {
             throw new InternalServerErrorException(error);
         }
-        return toko;
+
+        return deletedToko;
     }
 }
