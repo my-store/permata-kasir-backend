@@ -1,6 +1,7 @@
 import { Injectable, UnauthorizedException } from "@nestjs/common";
 import { Prisma, TransaksiPembelian } from "models";
 import { PrismaService } from "src/prisma.service";
+import { generateId } from "src/libs/string";
 
 // Placeholder | Short type name purpose only
 interface DefaultKeysInterface extends Prisma.TransaksiPembelianSelect {}
@@ -70,8 +71,25 @@ export class TransaksiPembelianService {
         // Konfigurasi timestamp
         const thisTime = new Date().toISOString();
 
+        // UUID
+        const uuid: string = generateId(10);
+
+        // Pastikan uuid belum pernah digunakan
+        try {
+            // Jika tidak ditemukan, akan langsung ke input method dibawah
+            await this.prisma.transaksiPembelian.findUniqueOrThrow({
+                where: { uuid },
+            });
+
+            // Jika ditemukan, buat ulang uuid dengan memanggil ulang method ini
+            return this.create(newData);
+        } catch {}
+
         const data: Prisma.TransaksiPembelianCreateInput = {
             ...newData,
+
+            // UUID
+            uuid,
 
             // Parse to integer
             tokoId: parseInt(newData.tokoId),

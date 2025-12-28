@@ -12,4 +12,6 @@ export class CreateTokoDto {
 
     @IsNotEmpty()
     userId: number;
+
+    uuid?: number;
 }

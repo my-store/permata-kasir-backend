@@ -6,7 +6,6 @@ import { TokoService } from "./toko.service";
 import { Prisma, Toko } from "models";
 import {
     InternalServerErrorException,
-    UnauthorizedException,
     BadRequestException,
     NotFoundException,
     Controller,
@@ -26,7 +25,7 @@ import {
 export class TokoController {
     constructor(private readonly service: TokoService) {}
 
-    modifyQueryForThisUser(q: any, tlp: string): any {
+    userGetQuery(q: any, tlp: string): any {
         let qx: any = { ...q };
         qx["where"] = {
             // If user spesified some where statement
@@ -37,6 +36,21 @@ export class TokoController {
             },
         };
         return qx;
+    }
+
+    cleanUpdateData(d: any): any {
+        const {
+            // Disabled data to be updated
+            id,
+            uuid,
+            userId,
+            createdAt,
+            updatedAt,
+
+            // Fixed | Now data update will be save
+            ...cleanedData
+        } = d;
+        return cleanedData;
     }
 
     @Post()
@@ -106,7 +120,7 @@ export class TokoController {
         // Selain admin (siapapun), wajib melewati pengecekan dibawah
         if (role != "Admin") {
             // Modify where statement
-            q = this.modifyQueryForThisUser(q, sub);
+            q = this.userGetQuery(q, sub);
         }
 
         try {
@@ -114,6 +128,7 @@ export class TokoController {
         } catch (e) {
             throw new InternalServerErrorException(e);
         }
+
         return data;
     }
 
@@ -124,7 +139,7 @@ export class TokoController {
         @Query() query: any,
         @Request() req: any,
     ): Promise<any> {
-        let getOneData: any;
+        let data: any;
         let q: any = { ...ParseUrlQuery(query) };
 
         // Hanya tampilkan data milik si user yang sedang login saja
@@ -133,11 +148,11 @@ export class TokoController {
         // Selain admin (siapapun), wajib melewati pengecekan dibawah
         if (role != "Admin") {
             // Modify where statement
-            q = this.modifyQueryForThisUser(q, sub);
+            q = this.userGetQuery(q, sub);
         }
 
         try {
-            getOneData = await this.service.findOne({
+            data = await this.service.findOne({
                 ...q, // Other arguments (specified by user in URL)
 
                 where: {
@@ -152,7 +167,7 @@ export class TokoController {
             throw new NotFoundException();
         }
 
-        return getOneData;
+        return data;
     }
 
     @Patch(":uuid")
@@ -182,7 +197,12 @@ export class TokoController {
         }
 
         try {
-            newData = await this.service.update({ where, data });
+            newData = await this.service.update({
+                where,
+
+                // Clean data before update
+                data: this.cleanUpdateData(data),
+            });
         } catch {
             throw new NotFoundException();
         }

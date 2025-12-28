@@ -1,6 +1,7 @@
 import { Injectable, UnauthorizedException } from "@nestjs/common";
 import { PrismaService } from "src/prisma.service";
 import { Diskon, Prisma } from "models";
+import { generateId } from "src/libs/string";
 
 // Placeholder | Short type name purpose only
 interface DefaultKeysInterface extends Prisma.DiskonSelect {}
@@ -71,9 +72,24 @@ export class DiskonService {
         // Konfigurasi timestamp
         const thisTime = new Date().toISOString();
 
+        // UUID
+        const uuid: string = generateId(10);
+
+        // Pastikan uuid belum pernah digunakan
+        try {
+            // Jika tidak ditemukan, akan langsung ke input method dibawah
+            await this.prisma.diskon.findUniqueOrThrow({ where: { uuid } });
+
+            // Jika ditemukan, buat ulang uuid dengan memanggil ulang method ini
+            return this.create(newData);
+        } catch {}
+
         // Prepare data
         const data: Prisma.DiskonCreateInput = {
             ...newData,
+
+            // UUID
+            uuid,
 
             // Parse to integer
             tokoId: parseInt(newData.tokoId),

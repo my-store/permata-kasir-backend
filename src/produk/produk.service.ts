@@ -1,6 +1,7 @@
 import { Injectable, UnauthorizedException } from "@nestjs/common";
 import { PrismaService } from "src/prisma.service";
 import { Prisma, Produk } from "models";
+import { generateId } from "src/libs/string";
 
 // Placeholder | Short type name purpose only
 interface DefaultKeysInterface extends Prisma.ProdukSelect {}
@@ -81,9 +82,24 @@ export class ProdukService {
         // Konfigurasi timestamp
         const thisTime = new Date().toISOString();
 
+        // UUID
+        const uuid: string = generateId(10);
+
+        // Pastikan uuid belum pernah digunakan
+        try {
+            // Jika tidak ditemukan, akan langsung ke input method dibawah
+            await this.prisma.produk.findUniqueOrThrow({ where: { uuid } });
+
+            // Jika ditemukan, buat ulang uuid dengan memanggil ulang method ini
+            return this.create(newData);
+        } catch {}
+
         // Prepare data
         const data: Prisma.ProdukCreateInput = {
             ...newData,
+
+            // UUID
+            uuid,
 
             // Force parse to integer
             tokoId: parseInt(newData.tokoId),

@@ -41,10 +41,25 @@ import {
 @Controller("api/user")
 export class UserController {
     constructor(
-        private readonly userService: UserService,
-        private readonly userRegisterTicketService: UserRegisterTicketService,
+        private readonly registerTicketService: UserRegisterTicketService,
         private readonly adminService: AdminService,
+        private readonly userService: UserService,
     ) {}
+
+    cleanUpdateData(d: any): any {
+        const {
+            // Disabled data to be updated
+            id,
+            uuid,
+            adminId,
+            createdAt,
+            updatedAt,
+
+            // Fixed | Now data update will be save
+            ...cleanedData
+        }: any = d;
+        return cleanedData;
+    }
 
     /* =====================================================
     |  REGISTRASI
@@ -69,7 +84,7 @@ export class UserController {
         // Pencarian tiket pada database
         let ticket: any = null;
         try {
-            ticket = await this.userRegisterTicketService.findOne({
+            ticket = await this.registerTicketService.findOne({
                 where: {
                     code: ticket_code,
                 },
@@ -113,7 +128,7 @@ export class UserController {
         }
         let newRegisterCode: UserRegisterTicket;
         try {
-            newRegisterCode = await this.userRegisterTicketService.create(data);
+            newRegisterCode = await this.registerTicketService.create(data);
         } catch (error) {
             throw new InternalServerErrorException(error);
         }
@@ -262,7 +277,7 @@ export class UserController {
         |  Agar tidak dapat digunakan lagi oleh orang lain.
         */
         try {
-            await this.userRegisterTicketService.remove({ code: ticket_code });
+            await this.registerTicketService.remove({ code: ticket_code });
         } catch {}
 
         /* ------------------ SELESAI ------------------
@@ -287,15 +302,15 @@ export class UserController {
 
     // Getone method will return User object or nul, so set return type as any.
     @UseGuards(AuthGuard)
-    @Get(":tlp")
+    @Get(":uuid")
     async findOne(
-        @Param("tlp") tlp: string,
+        @Param("uuid") uuid: string,
         @Query() query: any,
     ): Promise<any> {
         let data: any;
         try {
             data = await this.userService.findOne({
-                where: { tlp },
+                where: { uuid },
                 ...ParseUrlQuery(query),
             });
         } catch (e) {
@@ -395,7 +410,8 @@ export class UserController {
             updatedData = await this.userService.update(
                 { tlp },
                 {
-                    ...data,
+                    // Cleaned data
+                    ...this.cleanUpdateData(data),
 
                     // Remove 'public' from image directory
                     foto: data.foto?.replace("public", ""),
