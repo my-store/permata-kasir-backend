@@ -10,6 +10,7 @@ interface DefaultKeysInterface extends Prisma.AdminSelect {}
 const defaultKeys: DefaultKeysInterface = {
     id: true,
     nama: true,
+    uuid: true,
     tlp: true,
     foto: true,
     online: true,

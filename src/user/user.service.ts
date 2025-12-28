@@ -10,6 +10,7 @@ interface DefaultKeysInterface extends Prisma.UserSelect {}
 const defaultKeys: DefaultKeysInterface = {
     id: true,
     nama: true,
+    uuid: true,
     tlp: true,
     password: true,
     alamat: true,
