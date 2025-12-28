@@ -373,7 +373,7 @@ export class UserController {
         |  ----------------------------------------------------------
         |  Pastikan No. Tlp belum ada yang menggunakan, jika ada
         |  user ataupun admin yang menggunakan No. Tlp tersebut,
-        |  permintaan input data ditolak.
+        |  permintaan ubah data ditolak.
         */
         if (data.tlp) {
             // Pastikan No. Tlp baru tidak sama dengan No. Tlp lama
@@ -500,7 +500,9 @@ export class UserController {
             }
         }
 
-        /* --------------------- SELESAI ---------------------
+        /* ----------------------------------------------------------
+        |  SELESAI
+        |  ----------------------------------------------------------
         |  Setelah data berhasil disimpan, dan foto (jika ada)
         |  berhasil di unggah, proses selanjutnya adalah
         |  mengembalikan data baru tersebut kepada client.
@@ -516,12 +518,7 @@ export class UserController {
     ): Promise<User> {
         let deletedData: any;
 
-        // Delete where statement
-        let where: Prisma.UserWhereUniqueInput = {
-            tlp,
-        };
-
-        // Hanya tampilkan data milik si user yang sedang login saja
+        // Data admin/ user yang sedang login
         const { sub, role } = req.user;
 
         // Selain admin (siapapun), wajib melewati pengecekan dibawah
@@ -535,7 +532,7 @@ export class UserController {
 
         // Delete data from database
         try {
-            deletedData = await this.userService.remove(where);
+            deletedData = await this.userService.remove({ tlp });
         } catch (e) {
             throw new InternalServerErrorException(e);
         }

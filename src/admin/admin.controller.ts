@@ -23,6 +23,7 @@ import {
     UploadedFile,
     Controller,
     UseGuards,
+    Request,
     Delete,
     Patch,
     Param,
@@ -39,6 +40,20 @@ export class AdminController {
         private readonly adminService: AdminService,
         private readonly userService: UserService,
     ) {}
+
+    cleanUpdateData(d: any): any {
+        const {
+            // Disabled data to be updated
+            id,
+            uuid,
+            createdAt,
+            updatedAt,
+
+            // Fixed | Now data update will be save
+            ...cleanedData
+        }: any = d;
+        return cleanedData;
+    }
 
     // Look at .env file
     // The URL should be '/api/admin/register/APP_ADMIN_REGISTER_DEVCODE'
@@ -228,11 +243,46 @@ export class AdminController {
     async update(
         @Param("tlp") tlp: string,
         @Body() data: UpdateAdminDto,
+        @Request() req: any,
         @UploadedFile() foto?: Express.Multer.File,
     ): Promise<Admin> {
         let updatedData: Admin;
 
-        /* ------------------ MENGAMBIL DATA LAMA ------------------ */
+        /* ----------------------------------------------------------
+        |  ATURAN PERUBAHAN DATA ADMIN - 28 DESEMBER 2025
+        |  ----------------------------------------------------------
+        |  Pastikan hanya admin sendiri lah yang dapat
+        |  merubah datanya, bukan admin lain apalagi user.
+        |  ----------------------------------------------------------
+        |  Metode pengecekan:
+        |  1. Bandingkan nomor tlp yang ada di parameter yang mana
+        |  itu akan digunakan untuk menemukan data admin mana
+        |  yang akan diubah.
+        |  2. Jia nomor tlp pada parameter tidak sama dengan sub
+        |  atau nomor tlp yang sekarang sedang aktif login,
+        |  maka permintaan update di hentikan paksa.
+        */
+
+        // Data admin/ user yang sedang login
+        const { sub, role } = req.user;
+
+        // Selain admin (siapapun), wajib melewati pengecekan dibawah
+        if (
+            // User ingin merubah data admin
+            role != "Admin" ||
+            // Atau admin lain ingin merubah data seorang admin (bukan data dia sendiri)
+            tlp != sub
+        ) {
+            // Blokir permintaan update
+            throw new UnauthorizedException();
+        }
+
+        /* ----------------------------------------------------------
+        |  MENGAMBIL DATA LAMA
+        |  ----------------------------------------------------------
+        |  Jika data lama tidak ditemukan atau telah dihapus,
+        |  maka permintaan ubah data dihentikan paksa.
+        */
         let oldData: Admin | null;
         try {
             oldData = await this.adminService.findOne({ where: { tlp } });
@@ -240,11 +290,13 @@ export class AdminController {
             throw new BadRequestException("Admin tidak ditemukan!");
         }
 
-        /* ------------------ ADMIN MERUBAH NO. TLP ------------------
-    |  Pastikan No. Tlp belum ada yang menggunakan, jika ada
-    |  admin ataupun user yang menggunakan No. Tlp tersebut,
-    |  permintaan input data ditolak.
-    */
+        /* ----------------------------------------------------------
+        |  ADMIN MERUBAH NO. TLP
+        |  ----------------------------------------------------------
+        |  Pastikan No. Tlp belum ada yang menggunakan, jika ada
+        |  admin ataupun user yang menggunakan No. Tlp tersebut,
+        |  permintaan ubah data ditolak.
+        */
         if (data.tlp) {
             // Pastikan No. Tlp baru tidak sama dengan No. Tlp lama
             if (data.tlp != oldData?.tlp) {
@@ -284,39 +336,59 @@ export class AdminController {
             }
         }
 
-        /* ------------------ ADMIN MERUBAH PASSWORD ------------------ */
+        /* ----------------------------------------------------------
+        |  ADMIN MERUBAH PASSWORD
+        |  ----------------------------------------------------------
+        |  Jika admin melakukan perubahan pada password nya, maka
+        |  maka akan dilakukan enkripsi ulang.
+        */
         if (data.password) {
-            // Enkripsi password
+            // Enkripsi password baru
             data.password = encryptPassword(data.password);
         }
 
-        /* ------------------ ADMIN MERUBAH FOTO ------------------ */
+        /* ----------------------------------------------------------
+        |  ADMIN MERUBAH FOTO
+        |  ----------------------------------------------------------
+        |  Akan dilakukan pengecekan format dan ukuran
+        |  pada foto baru.
+        |  ----------------------------------------------------------
+        |  Format yang dibolehkan: JPG, JPEG dan PNG
+        |  Ukuran yang dibolehkan: 2 Megabyte
+        |  ----------------------------------------------------------
+        |  setelah berhasil diubah data URL foto pada database,
+        |  barulah dilakukan upload foto.
+        |  Penamaan foto akan disesuaikan dengan nomor tlp admin.
+        |  ----------------------------------------------------------
+        |  Selengkapnya dapat dilihat di:
+        |  libs/upload-file-handler.ts/ProfileImageValidator()
+        */
         if (foto) {
-            /* --------------------- PENGECEKAN FORMAT DAN UKURAN FOTO ---------------------
-      |  Format foto yang dibolehkan adalah: JPG, JPEG dan PNG
-      |  Lihat selengkapnya di: libs/upload-file-handler.ts/ProfileImageValidator()
-      */
+            // Pengecekan format dan ukuran foto
             const { status, message } = ProfileImageValidator(foto);
+            // Format atau ukuran tidak sesuai aturan
             if (!status) {
+                // Hentikan paksa
                 throw new BadRequestException(message);
             }
 
-            /* ------------------ NAMA FOTO ------------------
-      |  Nama foto berasal dari No. Tlp admin
-      */
+            // Nama foto, sesuai nomor tlp admin
             const img_path = `${upload_img_dir}/admin/profile`;
             const img_name = tlp;
+            // Mendapatkan URL foto dimana foto tersebut akan di upload,
+            // untuk disimpan di database.
             data.foto = GetFileDestBeforeUpload(foto, img_path, img_name);
         }
 
-        /* ------------------ MENYIMPAN DATA ------------------ */
+        // Menyimpan data
         try {
             updatedData = await this.adminService.update(
                 { tlp },
                 {
-                    ...data,
+                    // Data yang telah dibersihkan dari kolom2 yang memang tidak boleh diubah.
+                    ...this.cleanUpdateData(data),
 
-                    // Remove 'public' from image directory
+                    // Menghapush "public" pada URL foto baru.
                     foto: data.foto?.replace("public", ""),
                 },
             );
@@ -324,38 +396,62 @@ export class AdminController {
             throw new InternalServerErrorException(e);
         }
 
-        /* ------------------ MENGUNGGAH FOTO (JIKA ADA) ------------------
-    |  Setelah data berhasil disimpan, proses selanjutnya
-    |  adalah mengunggah foto.
-    */
+        /* ----------------------------------------------------------
+        |  UPLOAD FOTO BARU
+        |  ----------------------------------------------------------
+        |  Jika admin melakukan perubahan foto, maka akan dilakukan
+        |  penghapusan foto lama terlebih dahulu, setelah itu akan
+        |  dilakukan upload pada foto baru nya.
+        */
         if (foto) {
-            // Hapus foto lama dulu
+            // Menghapus foto lama
             try {
                 DeleteFileOrDir(join(__dirname, "public", `${oldData?.foto}`));
             } catch (e) {
+                // Terjadi error saat melakukan penghapusan foto lama
                 throw new InternalServerErrorException(e);
             }
 
-            // Mengunggah foto baru
+            // Upload foto baru
             try {
                 UploadFile(foto, "public" + updatedData.foto);
             } catch (e) {
+                // Terjadi error saat melakukan upload foto baru
                 throw new InternalServerErrorException(e);
             }
         }
 
-        /* --------------------- SELESAI ---------------------
-    |  Setelah data berhasil disimpan, dan foto (jika ada)
-    |  berhasil di unggah, proses selanjutnya adalah
-    |  mengembalikan data baru tersebut kepada client.
-    */
+        /* ----------------------------------------------------------
+        |  SELESAI
+        |  ----------------------------------------------------------
+        |  Setelah data berhasil disimpan, dan foto (jika ada)
+        |  berhasil di unggah, proses selanjutnya adalah
+        |  mengembalikan data baru tersebut kepada client.
+        */
         return updatedData;
     }
 
     @UseGuards(AuthGuard)
     @Delete(":tlp")
-    async remove(@Param("tlp") tlp: string): Promise<Admin> {
+    async remove(
+        @Param("tlp") tlp: string,
+        @Request() req: any,
+    ): Promise<Admin> {
         let deletedData: any;
+
+        // Data admin/ user yang sedang login
+        const { sub, role } = req.user;
+
+        // Selain admin (siapapun), wajib melewati pengecekan dibawah
+        if (
+            // User ingin menghapus data admin
+            role != "Admin" ||
+            // Atau admin lain ingin menghapus data seorang admin (bukan data dia sendiri)
+            tlp != sub
+        ) {
+            // Blokir permintaan hapus
+            throw new UnauthorizedException();
+        }
 
         // Delete data from database
         try {
