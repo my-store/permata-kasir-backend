@@ -70,7 +70,7 @@ export class AdminService {
         };
 
         // Insert data
-        return this.prisma.admin.create({ data });
+        return this.prisma.admin.create({ data, select: this.findOneKeys });
     }
 
     async update(
@@ -84,7 +84,11 @@ export class AdminService {
         updatedData.updatedAt = thisTime;
 
         // Save updated data
-        return this.prisma.admin.update({ where, data: updatedData });
+        return this.prisma.admin.update({
+            where,
+            data: updatedData,
+            select: this.findOneKeys,
+        });
     }
 
     async findAll(params: {
@@ -130,6 +134,6 @@ export class AdminService {
     }
 
     async remove(where: Prisma.AdminWhereUniqueInput): Promise<Admin> {
-        return this.prisma.admin.delete({ where });
+        return this.prisma.admin.delete({ where, select: this.findOneKeys });
     }
 }
