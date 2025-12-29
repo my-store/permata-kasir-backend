@@ -112,9 +112,9 @@ export class MemberRankingController {
     }
 
     // Getone method will return MemberRanking object or nul, so set return type as any.
-    @Get(":id")
+    @Get(":uuid")
     async findOne(
-        @Param("id") id: string,
+        @Param("uuid") uuid: string,
         @Query() query: any,
         @Request() req: any,
     ): Promise<any> {
@@ -135,8 +135,8 @@ export class MemberRankingController {
                 ...q, // Other arguments (specified by user in URL)
 
                 where: {
-                    // Get one by some id (on URL as a parameter)
-                    id: parseInt(id),
+                    // Get one by some uuid (on URL as a parameter)
+                    uuid,
 
                     // Also show only if this request come from the author
                     ...q["where"],
@@ -148,9 +148,9 @@ export class MemberRankingController {
         return data;
     }
 
-    @Patch(":id")
+    @Patch(":uuid")
     async update(
-        @Param("id") id: string,
+        @Param("uuid") uuid: string,
         @Body() updatedData: UpdateMemberRankingDto,
         @Request() req: any,
     ): Promise<MemberRanking> {
@@ -172,21 +172,18 @@ export class MemberRankingController {
         const { userId, ...fixedupdatedData } = updatedData;
 
         try {
-            data = await this.service.update(
-                { id: parseInt(id) },
-                fixedupdatedData,
-            );
+            data = await this.service.update({ uuid }, fixedupdatedData);
         } catch (error) {
             throw new InternalServerErrorException(error);
         }
         return data;
     }
 
-    @Delete(":id")
-    async remove(@Param("id") id: string): Promise<MemberRanking> {
+    @Delete(":uuid")
+    async remove(@Param("uuid") uuid: string): Promise<MemberRanking> {
         let data: MemberRanking;
         try {
-            data = await this.service.remove({ id: parseInt(id) });
+            data = await this.service.remove({ uuid });
         } catch (error) {
             throw new InternalServerErrorException(error);
         }

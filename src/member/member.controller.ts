@@ -114,9 +114,9 @@ export class MemberController {
     }
 
     // Getone method will return Member object or nul, so set return type as any.
-    @Get(":tlp")
+    @Get(":uuid")
     async findOne(
-        @Param("tlp") tlp: string,
+        @Param("uuid") uuid: string,
         @Query() query: any,
         @Request() req: any,
     ): Promise<any> {
@@ -138,8 +138,8 @@ export class MemberController {
 
                 // Override user where statement (if exist)
                 where: {
-                    // Get one by some tlp (on URL as a parameter)
-                    tlp,
+                    // Get one by some uuid (on URL as a parameter)
+                    uuid,
 
                     // Also show only if this request come from the author
                     ...q["where"],

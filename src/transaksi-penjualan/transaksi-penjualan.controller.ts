@@ -83,12 +83,15 @@ export class TransaksiPenjualanController {
     }
 
     // Getone method will return TransaksiPenjualan object or nul, so set return type as any.
-    @Get(":id")
-    async findOne(@Param("id") id: string, @Query() query: any): Promise<any> {
+    @Get(":uuid")
+    async findOne(
+        @Param("uuid") uuid: string,
+        @Query() query: any,
+    ): Promise<any> {
         let data: any;
         try {
             data = await this.service.findOne({
-                where: { id: parseInt(id) },
+                where: { uuid },
                 ...ParseUrlQuery(query),
             });
         } catch (e) {
@@ -97,9 +100,9 @@ export class TransaksiPenjualanController {
         return data;
     }
 
-    @Patch(":id")
+    @Patch(":uuid")
     async update(
-        @Param("id") id: string,
+        @Param("uuid") uuid: string,
         @Body() updatedData: UpdateTransaksiPenjualanDto,
         @Request() req: any,
     ): Promise<TransaksiPenjualan> {
@@ -121,21 +124,18 @@ export class TransaksiPenjualanController {
         const { userId, ...fixedupdatedData } = updatedData;
 
         try {
-            data = await this.service.update(
-                { id: parseInt(id) },
-                fixedupdatedData,
-            );
+            data = await this.service.update({ uuid }, fixedupdatedData);
         } catch (error) {
             throw new InternalServerErrorException(error);
         }
         return data;
     }
 
-    @Delete(":id")
-    async remove(@Param("id") id: string): Promise<TransaksiPenjualan> {
+    @Delete(":uuid")
+    async remove(@Param("uuid") uuid: string): Promise<TransaksiPenjualan> {
         let data: TransaksiPenjualan;
         try {
-            data = await this.service.remove({ id: parseInt(id) });
+            data = await this.service.remove({ uuid });
         } catch (error) {
             throw new InternalServerErrorException(error);
         }
