@@ -64,7 +64,7 @@ export class AuthService {
             // Blocked | banned account | not activated yet
             if (!data.active) {
                 // Blocked or banned
-                if (data.deactivatedAt.length > 0) {
+                if (data.deactivatedAt && data.deactivatedAt.length > 0) {
                     // Terminate task
                     throw new UnauthorizedException(
                         "Akun anda telah di blokir!",

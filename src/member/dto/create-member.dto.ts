@@ -15,4 +15,6 @@ export class CreateMemberDto {
 
     @IsNotEmpty()
     userId: number;
+
+    memberRankingId?: number;
 }

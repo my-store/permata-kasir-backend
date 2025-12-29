@@ -37,6 +37,32 @@ export class TokoService {
 
     constructor(private readonly prisma: PrismaService) {}
 
+    async inputOwnerCheck(params: {
+        sub: string;
+        role: string;
+        userId: number;
+    }): Promise<any> {
+        const { role, sub, userId } = params;
+
+        // Bypass this security for admin (developer)
+        if (role == "Admin") {
+            return;
+        }
+
+        // Cari data user
+        return this.prisma.user.findUniqueOrThrow({
+            // Antara tlp login dengan ID yang di inputkan harus saling terhubung
+            // untuk memastikan kepemilikan.
+            where: {
+                // Nomor tlp pada data login
+                tlp: sub,
+
+                // ID user yang di inputkan
+                id: userId,
+            },
+        });
+    }
+
     async create(newData: any): Promise<Toko> {
         // Konfigurasi timestamp
         const thisTime = new Date().toISOString();
@@ -59,9 +85,6 @@ export class TokoService {
 
             // UUID
             uuid,
-
-            // Parse to integer
-            userId: parseInt(newData.userId),
 
             // Timestamp
             createdAt: thisTime,

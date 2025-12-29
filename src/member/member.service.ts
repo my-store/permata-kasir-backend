@@ -1,7 +1,7 @@
-import { Injectable, UnauthorizedException } from "@nestjs/common";
 import { PrismaService } from "src/prisma.service";
-import { Member, Prisma } from "models";
 import { generateId } from "src/libs/string";
+import { Injectable } from "@nestjs/common";
+import { Member, Prisma } from "models";
 
 // Placeholder | Short type name purpose only
 interface DefaultKeysInterface extends Prisma.MemberSelect {}
@@ -50,24 +50,18 @@ export class MemberService {
             return;
         }
 
-        // Cari data toko
-        const toko: any = await this.prisma.toko.findUniqueOrThrow({
-            where: { id: tokoId },
-            select: {
+        // Cari data toko, pastikan pemiliknya adalah yang sekarang mengirim request.
+        return this.prisma.toko.findUniqueOrThrow({
+            where: {
+                id: tokoId,
+
+                // Pastikan user pengirim request ini adalah pemilik toko
                 user: {
-                    select: {
-                        id: true,
-                        tlp: true,
-                    },
+                    id: userId,
+                    tlp: sub,
                 },
             },
         });
-
-        // Pastikan yang mengirimkan request ini adalah pemilik toko
-        if (toko.user.id != userId || toko.user.tlp != sub) {
-            // Jika bukan, blokir request.
-            throw new UnauthorizedException();
-        }
     }
 
     async create(newData: any): Promise<Member> {
@@ -91,10 +85,6 @@ export class MemberService {
 
             // UUID
             uuid,
-
-            // Parse to integer
-            tokoId: parseInt(newData.tokoId),
-            memberRankingId: parseInt(newData.memberRankingId) ?? null,
 
             // Timestamp
             createdAt: thisTime,

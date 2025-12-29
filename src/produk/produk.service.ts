@@ -1,7 +1,7 @@
 import { Injectable, UnauthorizedException } from "@nestjs/common";
 import { PrismaService } from "src/prisma.service";
-import { Prisma, Produk } from "models";
 import { generateId } from "src/libs/string";
+import { Prisma, Produk } from "models";
 
 // Placeholder | Short type name purpose only
 interface DefaultKeysInterface extends Prisma.ProdukSelect {}
@@ -100,9 +100,6 @@ export class ProdukService {
 
             // UUID
             uuid,
-
-            // Force parse to integer
-            tokoId: parseInt(newData.tokoId),
 
             // Timestamp
             createdAt: thisTime,

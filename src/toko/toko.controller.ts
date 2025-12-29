@@ -6,6 +6,7 @@ import { TokoService } from "./toko.service";
 import { Prisma, Toko } from "models";
 import {
     InternalServerErrorException,
+    UnauthorizedException,
     BadRequestException,
     NotFoundException,
     Controller,
@@ -60,49 +61,36 @@ export class TokoController {
     ): Promise<Toko> {
         let toko: Toko;
 
-        // Hanya tampilkan data milik si user yang sedang login saja
-        const { sub, role } = req.user;
-
-        // Data baru yang akan di inputkan
-        let fixedNewData: any = {
-            ...newData,
-        };
-
-        // Selain admin (siapapun), wajib melewati pengecekan dibawah
-        if (role != "Admin") {
-            // Ubah argument pada data yang akan di inputkan
-            fixedNewData.user = {
-                // Hubungkan dengan user yang saat ini login dan mengirim request input ini
-                connect: {
-                    // Nomor telepon sebagaimana terdeteksi pada headers (sub)
-                    tlp: sub,
-
-                    // Pastikan juga user yang saat ini memiliki ID yang sama dengan userId yang di inputkan
-                    // jika tidak sama, blokir request.
-                    // Ini berguna supaya tidak sembarangan user membuat toko meng-atasnamakan user lain.
-                    id: newData.userId,
-                },
-            };
+        // Check if this request is come from the owner, if not, block the request.
+        try {
+            await this.service.inputOwnerCheck({
+                ...req.user,
+                userId: newData.userId,
+            });
+        } catch {
+            throw new UnauthorizedException();
         }
 
         try {
-            toko = await this.service.create(fixedNewData);
+            toko = await this.service.create(newData);
         } catch (error) {
             // Prisma error
             if (error instanceof Prisma.PrismaClientKnownRequestError) {
-                // The `code` property is the Prisma error code.
-                if (error.code === "P2003") {
+                // Unique key error
+                if (error.code === "P2002") {
                     throw new BadRequestException(
-                        "Foreign key constraint failed. The specified author does not exist.",
+                        `Nomor tlp ${newData.tlp} telah digunakan`,
                     );
-                } else {
-                    // Handle other Prisma errors
+                }
+
+                // Other Prisma errors
+                else {
                     throw new InternalServerErrorException(error);
                 }
             }
-            // Other error
+
+            // Other non-Prisma error
             else {
-                // Handle non-Prisma errors
                 throw new InternalServerErrorException(error);
             }
         }
@@ -114,7 +102,7 @@ export class TokoController {
         let data: Toko[];
         let q: any = { ...ParseUrlQuery(query) };
 
-        // Hanya tampilkan data milik si user yang sedang login saja
+        // Data login admin/ user
         const { sub, role } = req.user;
 
         // Selain admin (siapapun), wajib melewati pengecekan dibawah
@@ -142,7 +130,7 @@ export class TokoController {
         let data: any;
         let q: any = { ...ParseUrlQuery(query) };
 
-        // Hanya tampilkan data milik si user yang sedang login saja
+        // Data login admin/ user
         const { sub, role } = req.user;
 
         // Selain admin (siapapun), wajib melewati pengecekan dibawah
@@ -155,6 +143,7 @@ export class TokoController {
             data = await this.service.findOne({
                 ...q, // Other arguments (specified by user in URL)
 
+                // Override user where statement (if exist)
                 where: {
                     // Get one by some uuid (on URL as a parameter)
                     uuid,

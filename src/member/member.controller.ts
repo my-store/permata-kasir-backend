@@ -26,7 +26,7 @@ import {
 export class MemberController {
     constructor(private readonly service: MemberService) {}
 
-    modifyQueryForThisUser(q: any, tlp: string): any {
+    userGetQuery(q: any, tlp: string): any {
         let qx: any = { ...q };
         qx["where"] = {
             // If user spesified some where statement
@@ -68,19 +68,21 @@ export class MemberController {
         } catch (error) {
             // Prisma error
             if (error instanceof Prisma.PrismaClientKnownRequestError) {
-                // The `code` property is the Prisma error code.
-                if (error.code === "P2003") {
+                // Unique key error
+                if (error.code === "P2002") {
                     throw new BadRequestException(
-                        "Foreign key constraint failed. The specified author does not exist.",
+                        `Nomor tlp ${newData.tlp} telah digunakan`,
                     );
-                } else {
-                    // Handle other Prisma errors
+                }
+
+                // Other Prisma errors
+                else {
                     throw new InternalServerErrorException(error);
                 }
             }
-            // Other error
+
+            // Other non-Prisma error
             else {
-                // Handle non-Prisma errors
                 throw new InternalServerErrorException(error);
             }
         }
@@ -93,13 +95,13 @@ export class MemberController {
         let data: Member[];
         let q: any = { ...ParseUrlQuery(query) };
 
-        // Hanya tampilkan data milik si user yang sedang login saja
+        // Data login admin/ user
         const { sub, role } = req.user;
 
         // Selain admin (siapapun), wajib melewati pengecekan dibawah
         if (role != "Admin") {
             // Modify where statement
-            q = this.modifyQueryForThisUser(q, sub);
+            q = this.userGetQuery(q, sub);
         }
 
         try {
@@ -121,19 +123,20 @@ export class MemberController {
         let data: any;
         let q: any = { ...ParseUrlQuery(query) };
 
-        // Hanya tampilkan data milik si user yang sedang login saja
+        // Data login admin/ user
         const { sub, role } = req.user;
 
         // Selain admin (siapapun), wajib melewati pengecekan dibawah
         if (role != "Admin") {
             // Modify where statement
-            q = this.modifyQueryForThisUser(q, sub);
+            q = this.userGetQuery(q, sub);
         }
 
         try {
             data = await this.service.findOne({
                 ...q, // Other arguments (specified by user in URL)
 
+                // Override user where statement (if exist)
                 where: {
                     // Get one by some tlp (on URL as a parameter)
                     tlp,
@@ -149,9 +152,9 @@ export class MemberController {
         return data;
     }
 
-    @Patch(":id")
+    @Patch(":uuid")
     async update(
-        @Param("id") id: string,
+        @Param("uuid") uuid: string,
         @Body() updatedData: UpdateMemberDto,
         @Request() req: any,
     ): Promise<Member> {
@@ -173,10 +176,7 @@ export class MemberController {
         const { userId, ...fixedupdatedData } = updatedData;
 
         try {
-            member = await this.service.update(
-                { id: parseInt(id) },
-                fixedupdatedData,
-            );
+            member = await this.service.update({ uuid }, fixedupdatedData);
         } catch (error) {
             throw new InternalServerErrorException(error);
         }
@@ -184,14 +184,37 @@ export class MemberController {
         return member;
     }
 
-    @Delete(":id")
-    async remove(@Param("id") id: string): Promise<Member> {
+    @Delete(":uuid")
+    async remove(
+        @Param("uuid") uuid: string,
+        @Request() req: any,
+    ): Promise<Member> {
         let member: Member;
 
+        // Where statement
+        let where: Prisma.MemberWhereUniqueInput = {
+            uuid,
+        };
+
+        // Data login admin/ user
+        const { sub, role } = req.user;
+
+        // Selain admin (siapapun), wajib melewati pengecekan dibawah
+        if (role != "Admin") {
+            // Modify where statement
+            where.toko = {
+                // Pastikan si pengirim request ini adalah pemilik toko
+                // dimana toko tersebut adalah pemilik member yang akan dihapus.
+                user: {
+                    tlp: sub,
+                },
+            };
+        }
+
         try {
-            member = await this.service.remove({ id: parseInt(id) });
-        } catch (error) {
-            throw new InternalServerErrorException(error);
+            member = await this.service.remove(where);
+        } catch {
+            throw new NotFoundException();
         }
 
         return member;

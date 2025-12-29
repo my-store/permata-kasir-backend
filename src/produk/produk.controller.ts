@@ -26,7 +26,7 @@ import {
 export class ProdukController {
     constructor(private readonly service: ProdukService) {}
 
-    modifyQueryForThisUser(q: any, tlp: string): any {
+    userGetQuery(q: any, tlp: string): any {
         let qx: any = { ...q };
         qx["where"] = {
             // If user spesified some where statement
@@ -62,6 +62,7 @@ export class ProdukController {
 
         // Make sure to remove userId before insert, because that is only
         // for security checking.
+        // If not removed, will cause error.
         const { userId, ...fixedNewData } = newData;
 
         try {
@@ -93,13 +94,13 @@ export class ProdukController {
         let produk: Produk[];
         let q: any = { ...ParseUrlQuery(query) };
 
-        // Hanya tampilkan data milik si user yang sedang login saja
+        // Data login admin/ user
         const { sub, role } = req.user;
 
         // Selain admin (siapapun), wajib melewati pengecekan dibawah
         if (role != "Admin") {
             // Modify where statement
-            q = this.modifyQueryForThisUser(q, sub);
+            q = this.userGetQuery(q, sub);
         }
 
         try {
@@ -111,31 +112,32 @@ export class ProdukController {
     }
 
     // Getone method will return Produk object or nul, so set return type as any.
-    @Get(":id")
+    @Get(":uuid")
     async findOne(
-        @Param("id") id: string,
+        @Param("uuid") uuid: string,
         @Query() query: any,
         @Request() req: any,
     ): Promise<any> {
         let data: any;
         let q: any = { ...ParseUrlQuery(query) };
 
-        // Hanya tampilkan data milik si user yang sedang login saja
+        // Data login admin/ user
         const { sub, role } = req.user;
 
         // Selain admin (siapapun), wajib melewati pengecekan dibawah
         if (role != "Admin") {
             // Modify where statement
-            q = this.modifyQueryForThisUser(q, sub);
+            q = this.userGetQuery(q, sub);
         }
 
         try {
             data = await this.service.findOne({
                 ...q, // Other arguments (specified by user in URL)
 
+                // Override user where statement (if exist)
                 where: {
-                    // Get one by some id (on URL as a parameter)
-                    id: parseInt(id),
+                    // Get one by some uuid (on URL as a parameter)
+                    uuid,
 
                     // Also show only if this request come from the author
                     ...q["where"],
@@ -147,9 +149,9 @@ export class ProdukController {
         return data;
     }
 
-    @Patch(":id")
+    @Patch(":uuid")
     async update(
-        @Param("id") id: string,
+        @Param("uuid") uuid: string,
         @Body() updatedData: UpdateProdukDto,
         @Request() req: any,
     ): Promise<Produk> {
@@ -168,27 +170,50 @@ export class ProdukController {
 
         // Make sure to remove userId before insert, because that is only
         // for security checking.
+        // If not removed, will cause error.
         const { userId, ...fixedupdatedData } = updatedData;
 
         try {
-            produk = await this.service.update(
-                { id: parseInt(id) },
-                fixedupdatedData,
-            );
+            produk = await this.service.update({ uuid }, fixedupdatedData);
         } catch (error) {
             throw new InternalServerErrorException(error);
         }
         return produk;
     }
 
-    @Delete(":id")
-    async remove(@Param("id") id: string): Promise<Produk> {
+    @Delete(":uuid")
+    async remove(
+        @Param("uuid") uuid: string,
+        @Request() req: any,
+    ): Promise<Produk> {
         let produk: Produk;
-        try {
-            produk = await this.service.remove({ id: parseInt(id) });
-        } catch (error) {
-            throw new InternalServerErrorException(error);
+
+        // Where statement
+        let where: Prisma.ProdukWhereUniqueInput = {
+            uuid,
+        };
+
+        // Data login admin/ user
+        const { sub, role } = req.user;
+
+        // Selain admin (siapapun), wajib melewati pengecekan dibawah
+        if (role != "Admin") {
+            // Modify where statement
+            where.toko = {
+                // Pastikan si pengirim request ini adalah pemilik toko
+                // dimana toko tersebut adalah pemilik produk yang akan dihapus.
+                user: {
+                    tlp: sub,
+                },
+            };
         }
+
+        try {
+            produk = await this.service.remove(where);
+        } catch {
+            throw new NotFoundException();
+        }
+
         return produk;
     }
 }
