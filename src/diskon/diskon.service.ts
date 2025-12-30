@@ -1,6 +1,6 @@
-import { Injectable, UnauthorizedException } from "@nestjs/common";
 import { PrismaService } from "src/prisma.service";
 import { generateId } from "src/libs/string";
+import { Injectable } from "@nestjs/common";
 import { Diskon, Prisma } from "models";
 
 // Placeholder | Short type name purpose only

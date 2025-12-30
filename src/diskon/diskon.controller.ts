@@ -7,7 +7,6 @@ import { Diskon, Prisma } from "models";
 import {
     InternalServerErrorException,
     UnauthorizedException,
-    BadRequestException,
     NotFoundException,
     Controller,
     UseGuards,
