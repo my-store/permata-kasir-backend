@@ -59,26 +59,22 @@ export class MemberController {
                         `Nomor tlp ${newData.tlp} telah digunakan`,
                     );
                 }
-
                 // Other Prisma errors
                 else {
                     throw new InternalServerErrorException(error);
                 }
             }
-
             // Other non-Prisma error
             else {
                 throw new InternalServerErrorException(error);
             }
         }
-
         return member;
     }
 
     @Get()
     async findAll(@Query() query: any, @Request() req: any): Promise<Member[]> {
         let data: Member[];
-
         try {
             data = await this.service.findAll(
                 this.service.secureQueries({
@@ -89,7 +85,6 @@ export class MemberController {
         } catch (e) {
             throw new InternalServerErrorException(e);
         }
-
         return data;
     }
 
@@ -102,7 +97,6 @@ export class MemberController {
     ): Promise<any> {
         const parsedQueries: any = ParseUrlQuery(query);
         let data: any;
-
         try {
             data = await this.service.findOne(
                 this.service.secureQueries({
@@ -126,7 +120,6 @@ export class MemberController {
         } catch {
             throw new NotFoundException();
         }
-
         return data;
     }
 
@@ -145,13 +138,11 @@ export class MemberController {
             },
             headers: req.user,
         });
-
         try {
             member = await this.service.update(q.where, data);
         } catch (error) {
             throw new InternalServerErrorException(error);
         }
-
         return member;
     }
 
@@ -169,13 +160,11 @@ export class MemberController {
             },
             headers: req.user,
         });
-
         try {
             member = await this.service.remove(q.where);
         } catch {
             throw new NotFoundException();
         }
-
         return member;
     }
 }
