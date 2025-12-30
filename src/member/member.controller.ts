@@ -26,21 +26,6 @@ import {
 export class MemberController {
     constructor(private readonly service: MemberService) {}
 
-    userGetQuery(q: any, tlp: string): any {
-        let qx: any = { ...q };
-        qx["where"] = {
-            // If user spesified some where statement
-            ...qx["where"],
-            // For security reason, display onle member that owned by this user (who send the request)
-            toko: {
-                user: {
-                    tlp, // Get by unique key
-                },
-            },
-        };
-        return qx;
-    }
-
     @Post()
     async create(
         @Body() newData: CreateMemberDto,
@@ -50,7 +35,7 @@ export class MemberController {
 
         // Check if this request is come from the owner, if not, block the request.
         try {
-            await this.service.ownerCheck({
+            await this.service.inputOwnerCheck({
                 ...req.user,
                 userId: newData.userId,
                 tokoId: newData.tokoId,
@@ -93,19 +78,14 @@ export class MemberController {
     @Get()
     async findAll(@Query() query: any, @Request() req: any): Promise<Member[]> {
         let data: Member[];
-        let q: any = { ...ParseUrlQuery(query) };
-
-        // Data login admin/ user
-        const { sub, role } = req.user;
-
-        // Selain admin (siapapun), wajib melewati pengecekan dibawah
-        if (role != "Admin") {
-            // Modify where statement
-            q = this.userGetQuery(q, sub);
-        }
 
         try {
-            data = await this.service.findAll(q);
+            data = await this.service.findAll(
+                this.service.secureQueries({
+                    queries: ParseUrlQuery(query),
+                    headers: req.user,
+                }),
+            );
         } catch (e) {
             throw new InternalServerErrorException(e);
         }
@@ -120,31 +100,29 @@ export class MemberController {
         @Query() query: any,
         @Request() req: any,
     ): Promise<any> {
+        const parsedQueries: any = ParseUrlQuery(query);
         let data: any;
-        let q: any = { ...ParseUrlQuery(query) };
-
-        // Data login admin/ user
-        const { sub, role } = req.user;
-
-        // Selain admin (siapapun), wajib melewati pengecekan dibawah
-        if (role != "Admin") {
-            // Modify where statement
-            q = this.userGetQuery(q, sub);
-        }
 
         try {
-            data = await this.service.findOne({
-                ...q, // Other arguments (specified by user in URL)
+            data = await this.service.findOne(
+                this.service.secureQueries({
+                    queries: {
+                        // Query database yang dikirm pada URL
+                        ...parsedQueries,
 
-                // Override user where statement (if exist)
-                where: {
-                    // Get one by some uuid (on URL as a parameter)
-                    uuid,
+                        // Where statement
+                        where: {
+                            // Where statement pada query di URL (jika ada)
+                            ...parsedQueries.where,
 
-                    // Also show only if this request come from the author
-                    ...q["where"],
-                },
-            });
+                            // Timpa dengan where.uuid = yang ada pada URL parameter
+                            // jadi, pada query di URL tidak perlu menambahkan where={"uuid": "some_uuid"}.
+                            uuid,
+                        },
+                    },
+                    headers: req.user,
+                }),
+            );
         } catch {
             throw new NotFoundException();
         }
@@ -155,28 +133,21 @@ export class MemberController {
     @Patch(":uuid")
     async update(
         @Param("uuid") uuid: string,
-        @Body() updatedData: UpdateMemberDto,
+        @Body() data: UpdateMemberDto,
         @Request() req: any,
     ): Promise<Member> {
         let member: Member;
-
-        // Check if this request is come from the owner, if not, block the request.
-        try {
-            await this.service.ownerCheck({
-                ...req.user,
-                userId: updatedData.userId,
-                tokoId: updatedData.tokoId,
-            });
-        } catch {
-            throw new UnauthorizedException();
-        }
-
-        // Make sure to remove userId before insert, because that is only
-        // for security checking.
-        const { userId, ...fixedupdatedData } = updatedData;
+        const q: any = this.service.secureQueries({
+            queries: {
+                where: <Prisma.MemberWhereUniqueInput>{
+                    uuid,
+                },
+            },
+            headers: req.user,
+        });
 
         try {
-            member = await this.service.update({ uuid }, fixedupdatedData);
+            member = await this.service.update(q.where, data);
         } catch (error) {
             throw new InternalServerErrorException(error);
         }
@@ -190,29 +161,17 @@ export class MemberController {
         @Request() req: any,
     ): Promise<Member> {
         let member: Member;
-
-        // Where statement
-        let where: Prisma.MemberWhereUniqueInput = {
-            uuid,
-        };
-
-        // Data login admin/ user
-        const { sub, role } = req.user;
-
-        // Selain admin (siapapun), wajib melewati pengecekan dibawah
-        if (role != "Admin") {
-            // Modify where statement
-            where.toko = {
-                // Pastikan si pengirim request ini adalah pemilik toko
-                // dimana toko tersebut adalah pemilik member yang akan dihapus.
-                user: {
-                    tlp: sub,
+        const q: any = this.service.secureQueries({
+            queries: {
+                where: <Prisma.MemberWhereUniqueInput>{
+                    uuid,
                 },
-            };
-        }
+            },
+            headers: req.user,
+        });
 
         try {
-            member = await this.service.remove(where);
+            member = await this.service.remove(q.where);
         } catch {
             throw new NotFoundException();
         }

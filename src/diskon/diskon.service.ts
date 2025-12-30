@@ -1,7 +1,7 @@
 import { Injectable, UnauthorizedException } from "@nestjs/common";
 import { PrismaService } from "src/prisma.service";
-import { Diskon, Prisma } from "models";
 import { generateId } from "src/libs/string";
+import { Diskon, Prisma } from "models";
 
 // Placeholder | Short type name purpose only
 interface DefaultKeysInterface extends Prisma.DiskonSelect {}
@@ -36,37 +36,71 @@ export class DiskonService {
 
     constructor(private readonly prisma: PrismaService) {}
 
+    filterGetQuery(q: any, tlp: string): any {
+        let qx: any = { ...q };
+        qx["where"] = {
+            // If user spesified some where statement
+            ...qx["where"],
+            // For security reason, display onle member that owned by this user (who send the request)
+            toko: {
+                user: {
+                    tlp, // Get by unique key
+                },
+            },
+        };
+        return qx;
+    }
+
+    /* =====================================================
+    |  PENGECEKAN KEPEMILIKAN
+    |  =====================================================
+    |  Hanya admin yang tidak melewati pengecekan ini.
+    |  -----------------------------------------------------
+    |  Semua user yang mengirim request untuk:
+    |  - Menambahkan
+    |  - Merubah
+    |  - Menghapus
+    |  Harus melewati pengecekan ini.
+    |  -----------------------------------------------------
+    |  Metode pengecekan adalah dengan mencari data toko
+    |  yang memiliki informasi:
+    |  - User ID sesuai yang dikirim pada request body
+    |  - No tlp sesuai yang dikirim pada request header
+    */
     async ownerCheck(params: {
         sub: string;
         role: string;
         userId: number;
         tokoId: number;
     }): Promise<any> {
-        const { role, sub, userId, tokoId } = params;
+        const {
+            // Informasi yang dikirim pada header (dibuat saat login)
+            role,
+            sub,
+
+            // Informasi yang dikirim bersamaan dengan data
+            // yang akan di input, diubah atau dihapus.
+            userId,
+            tokoId,
+        } = params;
 
         // Bypass this security for admin (developer)
         if (role == "Admin") {
             return;
         }
 
-        // Cari data toko
-        const toko: any = await this.prisma.toko.findUnique({
-            where: { id: tokoId },
-            select: {
+        // Cari data toko, pastikan pemiliknya adalah yang sekarang mengirim request.
+        return this.prisma.toko.findUniqueOrThrow({
+            where: {
+                id: tokoId,
+
+                // Pastikan user pengirim request ini adalah pemilik toko
                 user: {
-                    select: {
-                        id: true,
-                        tlp: true,
-                    },
+                    id: userId,
+                    tlp: sub,
                 },
             },
         });
-
-        // Pastikan yang mengirimkan request ini adalah pemilik toko
-        if (toko.user.id != userId || toko.user.tlp != sub) {
-            // Jika bukan, blokir request.
-            throw new UnauthorizedException();
-        }
     }
 
     async create(newData: any): Promise<Diskon> {
@@ -91,9 +125,6 @@ export class DiskonService {
 
             // UUID
             uuid,
-
-            // Parse to integer
-            tokoId: parseInt(newData.tokoId),
 
             // Timestamp
             createdAt: thisTime,
@@ -134,7 +165,7 @@ export class DiskonService {
         where: Prisma.DiskonWhereUniqueInput;
     }): Promise<Diskon | null> {
         const { select, where } = params;
-        return this.prisma.diskon.findUnique({
+        return this.prisma.diskon.findUniqueOrThrow({
             select: {
                 // Default keys to display
                 ...this.findOneKeys,
@@ -157,10 +188,14 @@ export class DiskonService {
         updatedData.updatedAt = thisTime;
 
         // Save updated data
-        return this.prisma.diskon.update({ where, data: updatedData });
+        return this.prisma.diskon.update({
+            where,
+            data: updatedData,
+            select: this.findOneKeys,
+        });
     }
 
     async remove(where: Prisma.DiskonWhereUniqueInput): Promise<Diskon> {
-        return this.prisma.diskon.delete({ where });
+        return this.prisma.diskon.delete({ where, select: this.findOneKeys });
     }
 }

@@ -8,6 +8,7 @@ import {
     InternalServerErrorException,
     UnauthorizedException,
     BadRequestException,
+    NotFoundException,
     Controller,
     UseGuards,
     Request,
@@ -72,13 +73,25 @@ export class DiskonController {
     }
 
     @Get()
-    async findAll(@Query() query: any): Promise<Diskon[]> {
+    async findAll(@Query() query: any, @Request() req: any): Promise<Diskon[]> {
         let data: Diskon[];
+        let q: any = { ...ParseUrlQuery(query) };
+
+        // Data login admin/ user
+        const { sub, role } = req.user;
+
+        // Selain admin (siapapun), wajib melewati pengecekan dibawah
+        if (role != "Admin") {
+            // Modify where statement
+            q = this.service.filterGetQuery(q, sub);
+        }
+
         try {
-            data = await this.service.findAll(ParseUrlQuery(query));
+            data = await this.service.findAll(q);
         } catch (e) {
             throw new InternalServerErrorException(e);
         }
+
         return data;
     }
 
@@ -87,16 +100,37 @@ export class DiskonController {
     async findOne(
         @Param("uuid") uuid: string,
         @Query() query: any,
+        @Request() req: any,
     ): Promise<any> {
         let data: any;
+        let q: any = { ...ParseUrlQuery(query) };
+
+        // Data login admin/ user
+        const { sub, role } = req.user;
+
+        // Selain admin (siapapun), wajib melewati pengecekan dibawah
+        if (role != "Admin") {
+            // Modify where statement
+            q = this.service.filterGetQuery(q, sub);
+        }
+
         try {
             data = await this.service.findOne({
-                where: { uuid },
-                ...ParseUrlQuery(query),
+                ...q, // Other arguments (specified by user in URL)
+
+                // Override user where statement (if exist)
+                where: {
+                    // Get one by some uuid (on URL as a parameter)
+                    uuid,
+
+                    // Also show only if this request come from the author
+                    ...q["where"],
+                },
             });
-        } catch (e) {
-            throw new InternalServerErrorException(e);
+        } catch {
+            throw new NotFoundException();
         }
+
         return data;
     }
 

@@ -38,13 +38,90 @@ export class MemberService {
 
     constructor(private readonly prisma: PrismaService) {}
 
-    async ownerCheck(params: {
+    /* -----------------------------------------------------
+    |  SECURE DATABASE QUERIES
+    |  -----------------------------------------------------
+    |  Method ini dapat digunkan untuk mengambil, merubah
+    |  dan menghapus data.
+    */
+    secureQueries(params: {
+        queries: any;
+        headers: {
+            sub: string;
+            role: string;
+        };
+    }): any {
+        const {
+            queries,
+            headers: { sub, role },
+        } = params;
+
+        // Query database sebelum di modifikasi
+        let qx: any = { ...queries };
+
+        /* -----------------------------------------------------
+        |  POSES MODIFIKASI WHERE STATEMENT | USER ONLY
+        |  -----------------------------------------------------
+        */
+        if (role != "Admin") {
+            // Melakukan modifikasi pada where statement
+            qx["where"] = {
+                /* -----------------------------------------------------
+                |  USER WHERE STATEMENTS
+                |  -----------------------------------------------------
+                |  Where statement yang dikirim user
+                */
+                ...qx["where"],
+
+                /* -----------------------------------------------------
+                |  OVERRIDE USER WHERE STATEMENTS
+                |  -----------------------------------------------------
+                |  Hanya menampilkan atau memodifikasi data member
+                |  sesuai dengan toko yang user miliki,
+                |  jika user memiliki banyak toko, akan menampilkan
+                |  seluruh member dari toko-toko tersebut.
+                */
+                toko: {
+                    user: {
+                        tlp: sub,
+                    },
+                },
+            };
+        }
+
+        return qx;
+    }
+
+    /* =====================================================
+    |  PENGECEKAN KEPEMILIKAN SAAT INPUT DATA
+    |  =====================================================
+    |  Hanya admin yang tidak melewati pengecekan ini.
+    |  -----------------------------------------------------
+    |  Metode pengecekan adalah dengan mencari data toko
+    |  yang memiliki informasi:
+    |  - User ID sesuai yang dikirim pada request body
+    |  - No tlp sesuai yang dikirim pada request header
+    |  -----------------------------------------------------
+    |  Jika data tidak ditemukan, request input dibatalkan.
+    |  -----------------------------------------------------
+    |  Method ini hanya untuk pengecekan saat input data.
+    */
+    async inputOwnerCheck(params: {
         sub: string;
         role: string;
         userId: number;
         tokoId: number;
     }): Promise<any> {
-        const { role, sub, userId, tokoId } = params;
+        const {
+            // Informasi yang dikirim pada header (dibuat saat login)
+            role,
+            sub,
+
+            // Informasi yang dikirim bersamaan dengan data
+            // yang akan di input, diubah atau dihapus.
+            userId,
+            tokoId,
+        } = params;
 
         // Bypass this security for admin (developer)
         if (role == "Admin") {
@@ -149,10 +226,14 @@ export class MemberService {
         updatedData.updatedAt = thisTime;
 
         // Save updated data
-        return this.prisma.member.update({ where, data: updatedData });
+        return this.prisma.member.update({
+            where,
+            data: updatedData,
+            select: this.findOneKeys,
+        });
     }
 
     async remove(where: Prisma.MemberWhereUniqueInput): Promise<Member> {
-        return this.prisma.member.delete({ where });
+        return this.prisma.member.delete({ where, select: this.findOneKeys });
     }
 }
