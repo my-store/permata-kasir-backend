@@ -8,6 +8,7 @@ interface DefaultKeysInterface extends Prisma.ProdukSelect {}
 
 const defaultKeys: DefaultKeysInterface = {
     id: true,
+    uuid: true,
     nama: true,
     hargaPokok: true,
     hargaJual: true,

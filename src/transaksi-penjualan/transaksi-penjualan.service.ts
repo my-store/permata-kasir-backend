@@ -8,6 +8,7 @@ interface DefaultKeysInterface extends Prisma.TransaksiPenjualanSelect {}
 
 const defaultKeys: DefaultKeysInterface = {
     id: true,
+    uuid: true,
     produk: true,
     createdAt: true,
     updatedAt: true,

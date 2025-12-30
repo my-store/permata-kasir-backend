@@ -8,6 +8,7 @@ interface DefaultKeysInterface extends Prisma.DiskonSelect {}
 
 const defaultKeys: DefaultKeysInterface = {
     id: true,
+    uuid: true,
     keterangan: true,
     nilai: true,
     createdAt: true,

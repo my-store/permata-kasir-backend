@@ -8,6 +8,7 @@ interface DefaultKeysInterface extends Prisma.MemberSelect {}
 
 const defaultKeys: DefaultKeysInterface = {
     id: true,
+    uuid: true,
     nama: true,
     alamat: true,
     tlp: true,
