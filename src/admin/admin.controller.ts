@@ -73,6 +73,13 @@ export class AdminController {
         return this.create(data, foto);
     }
 
+    /* =====================================================
+    |  VERIFIKASI PASSWORD
+    |  =====================================================
+    |  Sebelum admin berhasil melakukan perubahan password,
+    |  harus dilakukan terlebih dahulu apakah password lama
+    |  betul, jika tidak maka perubahan password dibatalkan.
+    */
     @UseGuards(AuthGuard)
     @Post("verify-password/:tlp")
     async checkPassword(
@@ -92,6 +99,10 @@ export class AdminController {
         return { result };
     }
 
+    /* ----------------------------------------------------------
+    |  INPUT DATA
+    |  ----------------------------------------------------------
+    */
     @UseGuards(AuthGuard)
     @Post()
     @UseInterceptors(FileInterceptor("foto"))
@@ -102,25 +113,35 @@ export class AdminController {
     ): Promise<Admin> {
         let newData: any;
 
-        /* ------------------ ADMIN TIDAK MENGUNGGAH FOTO ------------------ */
+        /* ----------------------------------------------------------
+        |  PENGECEKAN FOTO
+        |  ----------------------------------------------------------
+        |  Jika admin tidak mengunggah foto, permintaan input secara
+        |  otomatis akan ditolak.
+        |  ----------------------------------------------------------
+        |  Format dan ukuran foto akan di cek, format dan ukuran
+        |  yang di izinkan:
+        |  1. Format: JPG, PNG
+        |  2. Ukuran <= 2 Megabyte
+        |  ----------------------------------------------------------
+        |  Lihat selengkapnya di:
+        |  libs/upload-file-handler.ts/ProfileImageValidator()
+        */
         if (!foto) {
             throw new BadRequestException("Wajib mengunggah foto!");
-        } else {
-            /* --------------------- PENGECEKAN FORMAT DAN UKURAN FOTO ---------------------
-    |  Format foto yang dibolehkan adalah: JPG, JPEG dan PNG
-    |  Lihat selengkapnya di: libs/upload-file-handler.ts/ProfileImageValidator()
-    */
-            const { status, message } = ProfileImageValidator(foto);
-            if (!status) {
-                throw new BadRequestException(message);
-            }
+        }
+        const { status, message } = ProfileImageValidator(foto);
+        if (!status) {
+            throw new BadRequestException(message);
         }
 
-        /* ------------------ PENGECEKAN NO. TLP ------------------
-    |  Pastikan No. Tlp belum ada yang menggunakan, jika ada
-    |  admin ataupun user yang menggunakan No. Tlp tersebut,
-    |  permintaan input data ditolak.
-    */
+        /* ----------------------------------------------------------
+        |  PENGECEKAN NO. TLP
+        |  ----------------------------------------------------------
+        |  Pastikan No. Tlp belum ada yang menggunakan, jika ada
+        |  admin ataupun user yang menggunakan No. Tlp tersebut,
+        |  permintaan input data ditolak.
+        */
         let alreadyUsed: boolean = false;
         try {
             // Pengecekan apakah ada admin yang menggunakan No. Tlp tersebut
@@ -155,17 +176,21 @@ export class AdminController {
             );
         }
 
-        /* ------------------ NAMA FOTO ------------------
-    |  Nama foto berasal dari No. Tlp admin
-    */
+        /* ----------------------------------------------------------
+        |  NAMA FOTO
+        |  ----------------------------------------------------------
+        |  Nama foto berasal dari No. Tlp admin
+        */
         const img_path = `${upload_img_dir}/admin/profile`;
         const img_name = data.tlp;
         data.foto = GetFileDestBeforeUpload(foto, img_path, img_name);
 
-        /* ------------------ MENYIMPAN DATA ------------------
-    |  Simpan data dulu, foto hanya URL saja, upload file
-    |  setelah berhasil menyimpan data.
-    */
+        /* ----------------------------------------------------------
+        |  MENYIMPAN DATA
+        |  ----------------------------------------------------------
+        |  Simpan data dulu, foto hanya URL saja, upload file
+        |  setelah berhasil menyimpan data.
+        */
         try {
             newData = await this.adminService.create({
                 ...data,
@@ -174,38 +199,36 @@ export class AdminController {
                 foto: data.foto.replace("public", ""),
             });
         } catch (e) {
-            // Unique constraint error
-            if (e instanceof Prisma.PrismaClientKnownRequestError) {
-                // The .code property can be accessed in a type-safe manner
-                if (e.code === "P2002") {
-                    throw new BadRequestException(
-                        "There is a unique constraint violation.",
-                    );
-                }
-            }
-
-            // Another error
             throw new InternalServerErrorException(e);
         }
 
-        /* ------------------ MENGUNGGAH FOTO ------------------
-    |  Setelah data berhasil disimpan, proses selanjutnya
-    |  adalah mengunggah foto.
-    */
+        /* ----------------------------------------------------------
+        |  MENGUNGGAH FOTO
+        |  ----------------------------------------------------------
+        |  Setelah data berhasil disimpan, proses selanjutnya
+        |  adalah mengunggah foto.
+        */
         try {
             UploadFile(foto, data.foto);
         } catch (e) {
             throw new InternalServerErrorException(e);
         }
 
-        /* ------------------ SELESAI ------------------
-    |  Setelah data berhasil disimpan, dan foto
-    |  berhasil di unggah, proses selanjutnya adalah
-    |  mengembalikan data baru tersebut kepada client.
-    */
+        /* ----------------------------------------------------------
+        |  SELESAI
+        |  ----------------------------------------------------------
+        |  Setelah data berhasil disimpan, dan foto
+        |  berhasil di unggah, proses selanjutnya adalah
+        |  mengembalikan data baru tersebut kepada client
+        */
         return newData;
     }
 
+    /* ----------------------------------------------------------
+    |  GET ALL - GET WHERE - AND MORE
+    |  ----------------------------------------------------------
+    |  Mengambil seluruh data ataupun spesifik sesuai query
+    */
     @UseGuards(AuthGuard)
     @Get()
     async findAll(@Query() query: any): Promise<Admin[]> {
@@ -218,7 +241,12 @@ export class AdminController {
         return data;
     }
 
-    // Getone method will return Admin object or nul, so set return type as any.
+    /* ----------------------------------------------------------
+    |  GET ONE
+    |  ----------------------------------------------------------
+    |  Getone method will return Admin object or null,
+    |  so set return type as any.
+    */
     @UseGuards(AuthGuard)
     @Get(":tlp")
     async findOne(
@@ -431,6 +459,10 @@ export class AdminController {
         return updatedData;
     }
 
+    /* ----------------------------------------------------------
+    |  HAPUS DATA
+    |  ----------------------------------------------------------
+    */
     @UseGuards(AuthGuard)
     @Delete(":tlp")
     async remove(

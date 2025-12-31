@@ -135,6 +135,13 @@ export class UserController {
         return newRegisterCode;
     }
 
+    /* =====================================================
+    |  VERIFIKASI PASSWORD
+    |  =====================================================
+    |  Sebelum user berhasil melakukan perubahan password,
+    |  harus dilakukan terlebih dahulu apakah password lama
+    |  betul, jika tidak maka perubahan password dibatalkan.
+    */
     @UseGuards(AuthGuard)
     @Post("verify-password/:tlp")
     async checkPassword(
@@ -154,6 +161,10 @@ export class UserController {
         return { result };
     }
 
+    /* ----------------------------------------------------------
+    |  INPUT DATA
+    |  ----------------------------------------------------------
+    */
     @UseGuards(AuthGuard)
     @Post()
     @UseInterceptors(FileInterceptor("foto"))
@@ -173,21 +184,31 @@ export class UserController {
 
         let newData: any;
 
-        /* ------------------ USER TIDAK MENGUNGGAH FOTO ------------------ */
+        /* ----------------------------------------------------------
+        |  PENGECEKAN FOTO
+        |  ----------------------------------------------------------
+        |  Jika user tidak mengunggah foto, permintaan input secara
+        |  otomatis akan ditolak.
+        |  ----------------------------------------------------------
+        |  Format dan ukuran foto akan di cek, format dan ukuran
+        |  yang di izinkan:
+        |  1. Format: JPG, PNG
+        |  2. Ukuran <= 2 Megabyte
+        |  ----------------------------------------------------------
+        |  Lihat selengkapnya di:
+        |  libs/upload-file-handler.ts/ProfileImageValidator()
+        */
         if (!foto) {
             throw new BadRequestException("Wajib mengunggah foto!");
-        } else {
-            /* --------------------- PENGECEKAN FORMAT DAN UKURAN FOTO ---------------------
-            |  Format foto yang dibolehkan adalah: JPG, JPEG dan PNG
-            |  Lihat selengkapnya di: libs/upload-file-handler.ts/ProfileImageValidator()
-            */
-            const { status, message } = ProfileImageValidator(foto);
-            if (!status) {
-                throw new BadRequestException(message);
-            }
+        }
+        const { status, message } = ProfileImageValidator(foto);
+        if (!status) {
+            throw new BadRequestException(message);
         }
 
-        /* ------------------ PENGECEKAN NO. TLP ------------------
+        /* ----------------------------------------------------------
+        |  PENGECEKAN NO. TLP
+        |  ----------------------------------------------------------
         |  Pastikan No. Tlp belum ada yang menggunakan, jika ada
         |  user ataupun admin yang menggunakan No. Tlp tersebut,
         |  permintaan input data ditolak.
@@ -226,14 +247,18 @@ export class UserController {
             );
         }
 
-        /* ------------------ NAMA FOTO ------------------
+        /* ----------------------------------------------------------
+        |  NAMA FOTO
+        |  ----------------------------------------------------------
         |  Nama foto berasal dari No. Tlp user
         */
         const img_path = `${upload_img_dir}/user/profile`;
         const img_name = data.tlp;
         data.foto = GetFileDestBeforeUpload(foto, img_path, img_name);
 
-        /* ------------------ MENYIMPAN DATA ------------------
+        /* ----------------------------------------------------------
+        |  MENYIMPAN DATA
+        |  ----------------------------------------------------------
         |  Simpan data dulu, foto hanya URL saja, upload file
         |  setelah berhasil menyimpan data.
         */
@@ -245,21 +270,12 @@ export class UserController {
                 foto: data.foto.replace("public", ""),
             });
         } catch (e) {
-            // Unique constraint error
-            if (e instanceof Prisma.PrismaClientKnownRequestError) {
-                // The .code property can be accessed in a type-safe manner
-                if (e.code === "P2002") {
-                    throw new BadRequestException(
-                        "There is a unique constraint violation.",
-                    );
-                }
-            }
-
-            // Another error
             throw new InternalServerErrorException(e);
         }
 
-        /* ------------------ MENGUNGGAH FOTO ------------------
+        /* ----------------------------------------------------------
+        |  MENGUNGGAH FOTO
+        |  ----------------------------------------------------------
         |  Setelah data berhasil disimpan, proses selanjutnya
         |  adalah mengunggah foto.
         */
@@ -269,7 +285,9 @@ export class UserController {
             throw new InternalServerErrorException(e);
         }
 
-        /* ------------------ HAPUS TIKET REGISTRASI ------------------
+        /* ----------------------------------------------------------
+        |  HAPUS TIKET REGISTRASI
+        |  ----------------------------------------------------------
         |  Setelah data berhasil disimpan, dan berhasil menghubungkan
         |  antara user dengan admin pembuatnya (pembuat tiket),
         |  tugas selanjutnya adalah menghapus tiket tersebut.
@@ -280,14 +298,21 @@ export class UserController {
             await this.registerTicketService.remove({ code: ticket_code });
         } catch {}
 
-        /* ------------------ SELESAI ------------------
+        /* ----------------------------------------------------------
+        |  SELESAI
+        |  ----------------------------------------------------------
         |  Setelah data berhasil disimpan, dan foto
         |  berhasil di unggah, proses selanjutnya adalah
-        |  mengembalikan data baru tersebut kepada client.
+        |  mengembalikan data baru tersebut kepada client
         */
         return newData;
     }
 
+    /* ----------------------------------------------------------
+    |  GET ALL - GET WHERE - AND MORE
+    |  ----------------------------------------------------------
+    |  Mengambil seluruh data ataupun spesifik sesuai query
+    */
     @UseGuards(AuthGuard)
     @Get()
     async findAll(@Query() query: any): Promise<User[]> {
@@ -300,7 +325,12 @@ export class UserController {
         return data;
     }
 
-    // Getone method will return User object or nul, so set return type as any.
+    /* ----------------------------------------------------------
+    |  GET ONE
+    |  ----------------------------------------------------------
+    |  Getone method will return User object or null,
+    |  so set return type as any.
+    */
     @UseGuards(AuthGuard)
     @Get(":uuid")
     async findOne(
@@ -510,6 +540,10 @@ export class UserController {
         return updatedData;
     }
 
+    /* ----------------------------------------------------------
+    |  HAPUS DATA
+    |  ----------------------------------------------------------
+    */
     @UseGuards(AuthGuard)
     @Delete(":tlp")
     async remove(
