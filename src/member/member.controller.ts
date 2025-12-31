@@ -141,7 +141,7 @@ export class MemberController {
         try {
             member = await this.service.update(q.where, data);
         } catch (error) {
-            throw new InternalServerErrorException(error);
+            throw new NotFoundException(error);
         }
         return member;
     }

@@ -124,7 +124,7 @@ export class DiskonController {
         try {
             diskon = await this.service.update(q.where, data);
         } catch (error) {
-            throw new InternalServerErrorException(error);
+            throw new NotFoundException(error);
         }
         return diskon;
     }
@@ -146,7 +146,7 @@ export class DiskonController {
         try {
             diskon = await this.service.remove(q.where);
         } catch (error) {
-            throw new InternalServerErrorException(error);
+            throw new NotFoundException(error);
         }
         return diskon;
     }

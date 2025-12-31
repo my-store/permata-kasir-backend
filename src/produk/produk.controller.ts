@@ -126,7 +126,7 @@ export class ProdukController {
         try {
             produk = await this.service.update(q.where, data);
         } catch (error) {
-            throw new InternalServerErrorException(error);
+            throw new NotFoundException(error);
         }
         return produk;
     }

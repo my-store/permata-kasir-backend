@@ -7,7 +7,7 @@ import { ParseUrlQuery } from "src/libs/string";
 import {
     InternalServerErrorException,
     UnauthorizedException,
-    BadRequestException,
+    NotFoundException,
     Controller,
     UseGuards,
     Request,
@@ -34,7 +34,7 @@ export class TransaksiPembelianController {
 
         // Check if this request is come from the owner, if not, block the request.
         try {
-            await this.service.ownerCheck({
+            await this.service.inputOwnerCheck({
                 ...req.user,
                 userId: newData.userId,
                 tokoId: newData.tokoId,
@@ -50,32 +50,24 @@ export class TransaksiPembelianController {
         try {
             data = await this.service.create(fixedNewData);
         } catch (error) {
-            // Prisma error
-            if (error instanceof Prisma.PrismaClientKnownRequestError) {
-                // The `code` property is the Prisma error code.
-                if (error.code === "P2003") {
-                    throw new BadRequestException(
-                        "Foreign key constraint failed. The specified author does not exist.",
-                    );
-                } else {
-                    // Handle other Prisma errors
-                    throw new InternalServerErrorException(error);
-                }
-            }
-            // Other error
-            else {
-                // Handle non-Prisma errors
-                throw new InternalServerErrorException(error);
-            }
+            throw new InternalServerErrorException(error);
         }
         return data;
     }
 
     @Get()
-    async findAll(@Query() query: any): Promise<TransaksiPembelian[]> {
+    async findAll(
+        @Query() query: any,
+        @Request() req: any,
+    ): Promise<TransaksiPembelian[]> {
         let data: TransaksiPembelian[];
         try {
-            data = await this.service.findAll(ParseUrlQuery(query));
+            data = await this.service.findAll(
+                this.service.secureQueries({
+                    queries: ParseUrlQuery(query),
+                    headers: req.user,
+                }),
+            );
         } catch (e) {
             throw new InternalServerErrorException(e);
         }
@@ -87,15 +79,32 @@ export class TransaksiPembelianController {
     async findOne(
         @Param("uuid") uuid: string,
         @Query() query: any,
+        @Request() req: any,
     ): Promise<any> {
+        const parsedQueries: any = ParseUrlQuery(query);
         let data: any;
         try {
-            data = await this.service.findOne({
-                where: { uuid },
-                ...ParseUrlQuery(query),
-            });
+            data = await this.service.findOne(
+                this.service.secureQueries({
+                    queries: {
+                        // Query database yang dikirm pada URL
+                        ...parsedQueries,
+
+                        // Where statement
+                        where: {
+                            // Where statement pada query di URL (jika ada)
+                            ...parsedQueries.where,
+
+                            // Timpa dengan where.uuid = yang ada pada URL parameter
+                            // jadi, pada query di URL tidak perlu menambahkan where={"uuid": "some_uuid"}.
+                            uuid,
+                        },
+                    },
+                    headers: req.user,
+                }),
+            );
         } catch (e) {
-            throw new InternalServerErrorException(e);
+            throw new NotFoundException(e);
         }
         return data;
     }
@@ -103,42 +112,45 @@ export class TransaksiPembelianController {
     @Patch(":uuid")
     async update(
         @Param("uuid") uuid: string,
-        @Body() updatedData: UpdateTransaksiPembelianDto,
+        @Body() data: UpdateTransaksiPembelianDto,
         @Request() req: any,
     ): Promise<TransaksiPembelian> {
-        let data: TransaksiPembelian;
-
-        // Check if this request is come from the owner, if not, block the request.
+        let transaksiPembelian: TransaksiPembelian;
+        const q: any = this.service.secureQueries({
+            queries: {
+                where: <Prisma.TransaksiPembelianWhereUniqueInput>{
+                    uuid,
+                },
+            },
+            headers: req.user,
+        });
         try {
-            await this.service.ownerCheck({
-                ...req.user,
-                userId: updatedData.userId,
-                tokoId: updatedData.tokoId,
-            });
-        } catch {
-            throw new UnauthorizedException();
-        }
-
-        // Make sure to remove userId before insert, because that is only
-        // for security checking.
-        const { userId, ...fixedupdatedData } = updatedData;
-
-        try {
-            data = await this.service.update({ uuid }, fixedupdatedData);
+            transaksiPembelian = await this.service.update(q.where, data);
         } catch (error) {
-            throw new InternalServerErrorException(error);
+            throw new NotFoundException(error);
         }
-        return data;
+        return transaksiPembelian;
     }
 
     @Delete(":uuid")
-    async remove(@Param("uuid") uuid: string): Promise<TransaksiPembelian> {
-        let data: TransaksiPembelian;
+    async remove(
+        @Param("uuid") uuid: string,
+        @Request() req: any,
+    ): Promise<TransaksiPembelian> {
+        let transaksiPembelian: TransaksiPembelian;
+        const q: any = this.service.secureQueries({
+            queries: {
+                where: <Prisma.TransaksiPembelianWhereUniqueInput>{
+                    uuid,
+                },
+            },
+            headers: req.user,
+        });
         try {
-            data = await this.service.remove({ uuid });
+            transaksiPembelian = await this.service.remove(q.where);
         } catch (error) {
-            throw new InternalServerErrorException(error);
+            throw new NotFoundException(error);
         }
-        return data;
+        return transaksiPembelian;
     }
 }
