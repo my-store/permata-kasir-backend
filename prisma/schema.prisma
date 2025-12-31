@@ -27,6 +27,7 @@ model Admin {
 
   // Child tables
   users              User[]
+  userRanking        UserRanking[]
   userRegisterTicket UserRegisterTicket[]
 
   createdAt DateTime
@@ -58,8 +59,12 @@ model User {
   deactivatedReason String?
 
   // Parent table
-  admin   Admin? @relation(fields: [adminId], references: [id])
-  adminId Int?
+  admin   Admin @relation(fields: [adminId], references: [id])
+  adminId Int
+
+  // Parent table
+  userRanking   UserRanking? @relation(fields: [userRankingId], references: [id])
+  userRankingId Int?
 
   // Child tables
   toko Toko[]
@@ -84,6 +89,20 @@ model UserRegisterTicket {
   // Parent table
   admin   Admin @relation(fields: [adminId], references: [id])
   adminId Int
+}
+
+model UserRanking {
+  id Int @id @default(autoincrement())
+
+  // Parent table
+  admin   Admin @relation(fields: [adminId], references: [id])
+  adminId Int
+
+  // Child tables
+  user User[]
+
+  createdAt DateTime
+  updatedAt DateTime
 }
 
 model Toko {
@@ -228,8 +247,8 @@ model TransaksiPenjualan {
   uuid String @unique
 
   // Parent table
-  toko   Toko? @relation(fields: [tokoId], references: [id])
-  tokoId Int?
+  toko   Toko @relation(fields: [tokoId], references: [id])
+  tokoId Int
 
   /**
    * =====================================================

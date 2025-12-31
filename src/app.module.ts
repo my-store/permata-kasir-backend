@@ -1,6 +1,7 @@
 import { TransaksiPenjualanModule } from "./transaksi-penjualan/transaksi-penjualan.module";
 import { TransaksiPembelianModule } from "./transaksi-pembelian/transaksi-pembelian.module";
 import { MemberRankingModule } from "./member-ranking/member-ranking.module";
+import { UserRankingModule } from './user-ranking/user-ranking.module';
 import { ServeStaticModule } from "@nestjs/serve-static";
 import { ProdukModule } from "./produk/produk.module";
 import { DiskonModule } from "./diskon/diskon.module";
@@ -10,12 +11,12 @@ import { AppController } from "./app.controller";
 import { AuthModule } from "./auth/auth.module";
 import { UserModule } from "./user/user.module";
 import { TokoModule } from "./toko/toko.module";
+import { JasaModule } from './jasa/jasa.module';
 import { ConfigModule } from "@nestjs/config";
 import { AppGateway } from "./app.gateway";
 import { AppService } from "./app.service";
 import { Module } from "@nestjs/common";
 import { join } from "path";
-import { JasaModule } from './jasa/jasa.module';
 
 @Module({
     imports: [
@@ -34,6 +35,7 @@ import { JasaModule } from './jasa/jasa.module';
         TokoModule,
         MemberRankingModule,
         JasaModule,
+        UserRankingModule,
     ],
 
     controllers: [AppController],
