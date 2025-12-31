@@ -1,34 +1,44 @@
-import { Controller, Get, Post, Body, Patch, Param, Delete } from '@nestjs/common';
-import { CreateUserRankingDto } from './dto/create-user-ranking.dto';
-import { UpdateUserRankingDto } from './dto/update-user-ranking.dto';
-import { UserRankingService } from './user-ranking.service';
+import {
+    Controller,
+    Delete,
+    Query,
+    Param,
+    Patch,
+    Post,
+    Body,
+    Get,
+} from "@nestjs/common";
+import { CreateUserRankingDto } from "./dto/create-user-ranking.dto";
+import { UpdateUserRankingDto } from "./dto/update-user-ranking.dto";
+import { UserRankingService } from "./user-ranking.service";
+import { ParseUrlQuery } from "src/libs/string";
 
-@Controller('user-ranking')
+@Controller("user-ranking")
 export class UserRankingController {
-  constructor(private readonly userRankingService: UserRankingService) {}
+    constructor(private readonly userRankingService: UserRankingService) {}
 
-  @Post()
-  create(@Body() createUserRankingDto: CreateUserRankingDto) {
-    return this.userRankingService.create(createUserRankingDto);
-  }
+    @Post()
+    create(@Body() createUserRankingDto: CreateUserRankingDto) {
+        return this.userRankingService.create(createUserRankingDto);
+    }
 
-  @Get()
-  findAll() {
-    return this.userRankingService.findAll();
-  }
+    @Get()
+    findAll(@Query() query: any) {
+        return this.userRankingService.findAll(ParseUrlQuery(query));
+    }
 
-  @Get(':id')
-  findOne(@Param('id') id: string) {
-    return this.userRankingService.findOne(+id);
-  }
+    @Get(":uuid")
+    findOne(@Param("uuid") uuid: string) {
+        return this.userRankingService.findOne({ where: { uuid } });
+    }
 
-  @Patch(':id')
-  update(@Param('id') id: string, @Body() updateUserRankingDto: UpdateUserRankingDto) {
-    return this.userRankingService.update(+id, updateUserRankingDto);
-  }
+    @Patch(":uuid")
+    update(@Param("uuid") uuid: string, @Body() data: UpdateUserRankingDto) {
+        return this.userRankingService.update({ uuid }, data);
+    }
 
-  @Delete(':id')
-  remove(@Param('id') id: string) {
-    return this.userRankingService.remove(+id);
-  }
+    @Delete(":uuid")
+    remove(@Param("uuid") uuid: string) {
+        return this.userRankingService.remove({ uuid });
+    }
 }

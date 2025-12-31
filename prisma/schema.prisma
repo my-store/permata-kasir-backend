@@ -92,7 +92,8 @@ model UserRegisterTicket {
 }
 
 model UserRanking {
-  id Int @id @default(autoincrement())
+  id   Int    @id @default(autoincrement())
+  uuid String @unique
 
   // Parent table
   admin   Admin @relation(fields: [adminId], references: [id])
