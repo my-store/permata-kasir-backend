@@ -6,7 +6,7 @@ import { encryptPassword } from "src/libs/bcrypt";
 import { AuthGuard } from "src/auth/auth.guard";
 import { ParseUrlQuery } from "src/libs/string";
 import { AdminService } from "./admin.service";
-import { Prisma, Admin } from "models/client";
+import { Admin } from "models/client";
 import * as bcrypt from "bcrypt";
 import {
     GetFileDestBeforeUpload,
@@ -40,20 +40,6 @@ export class AdminController {
         private readonly adminService: AdminService,
         private readonly userService: UserService,
     ) {}
-
-    cleanUpdateData(d: any): any {
-        const {
-            // Disabled data to be updated
-            id,
-            uuid,
-            createdAt,
-            updatedAt,
-
-            // Fixed | Now data update will be save
-            ...cleanedData
-        }: any = d;
-        return cleanedData;
-    }
 
     // Look at .env file
     // The URL should be '/api/admin/register/APP_ADMIN_REGISTER_DEVCODE'
@@ -414,7 +400,7 @@ export class AdminController {
                 { tlp },
                 {
                     // Data yang telah dibersihkan dari kolom2 yang memang tidak boleh diubah.
-                    ...this.cleanUpdateData(data),
+                    ...this.adminService.cleanUpdateData(data),
 
                     // Menghapush "public" pada URL foto baru.
                     foto: data.foto?.replace("public", ""),
