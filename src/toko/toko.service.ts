@@ -37,6 +37,56 @@ export class TokoService {
 
     constructor(private readonly prisma: PrismaService) {}
 
+    /* -----------------------------------------------------
+    |  SECURE DATABASE QUERIES
+    |  -----------------------------------------------------
+    |  Method ini dapat digunkan untuk mengambil, merubah
+    |  dan menghapus data.
+    */
+    secureQueries(params: {
+        queries: any;
+        headers: {
+            sub: string;
+            role: string;
+        };
+    }): any {
+        const {
+            queries,
+            headers: { sub, role },
+        } = params;
+
+        // Query database sebelum di modifikasi
+        let qx: any = { ...queries };
+
+        /* -----------------------------------------------------
+        |  POSES MODIFIKASI WHERE STATEMENT | USER ONLY
+        |  -----------------------------------------------------
+        */
+        if (role != "Admin") {
+            // Melakukan modifikasi pada where statement
+            qx["where"] = {
+                /* -----------------------------------------------------
+                |  USER WHERE STATEMENTS
+                |  -----------------------------------------------------
+                |  Where statement yang dikirim user
+                */
+                ...qx["where"],
+
+                /* -----------------------------------------------------
+                |  OVERRIDE USER WHERE STATEMENTS
+                |  -----------------------------------------------------
+                |  Hanya menampilkan atau memodifikasi data toko
+                |  sesuai yang user miliki.
+                */
+                user: {
+                    tlp: sub,
+                },
+            };
+        }
+
+        return qx;
+    }
+
     async inputOwnerCheck(params: {
         sub: string;
         role: string;
@@ -152,11 +202,7 @@ export class TokoService {
         });
     }
 
-    async update(params: {
-        where: Prisma.TokoWhereUniqueInput;
-        data: any;
-    }): Promise<Toko> {
-        const { where, data } = params;
+    async update(where: Prisma.TokoWhereUniqueInput, data: any): Promise<Toko> {
         return this.prisma.toko.update({
             where,
             data: {

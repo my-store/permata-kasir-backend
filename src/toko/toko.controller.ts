@@ -26,19 +26,6 @@ import {
 export class TokoController {
     constructor(private readonly service: TokoService) {}
 
-    userGetQuery(q: any, tlp: string): any {
-        let qx: any = { ...q };
-        qx["where"] = {
-            // If user spesified some where statement
-            ...qx["where"],
-            // For security reason, display onle member that owned by this user (who send the request)
-            user: {
-                tlp, // Get by unique key
-            },
-        };
-        return qx;
-    }
-
     @Post()
     async create(
         @Body() newData: CreateTokoDto,
@@ -85,23 +72,16 @@ export class TokoController {
     @Get()
     async findAll(@Query() query: any, @Request() req: any): Promise<Toko[]> {
         let data: Toko[];
-        let q: any = { ...ParseUrlQuery(query) };
-
-        // Data login admin/ user
-        const { sub, role } = req.user;
-
-        // Selain admin (siapapun), wajib melewati pengecekan dibawah
-        if (role != "Admin") {
-            // Modify where statement
-            q = this.userGetQuery(q, sub);
-        }
-
         try {
-            data = await this.service.findAll(q);
+            data = await this.service.findAll(
+                this.service.secureQueries({
+                    queries: ParseUrlQuery(query),
+                    headers: req.user,
+                }),
+            );
         } catch (e) {
             throw new InternalServerErrorException(e);
         }
-
         return data;
     }
 
@@ -112,35 +92,31 @@ export class TokoController {
         @Query() query: any,
         @Request() req: any,
     ): Promise<any> {
+        const parsedQueries: any = ParseUrlQuery(query);
         let data: any;
-        let q: any = { ...ParseUrlQuery(query) };
-
-        // Data login admin/ user
-        const { sub, role } = req.user;
-
-        // Selain admin (siapapun), wajib melewati pengecekan dibawah
-        if (role != "Admin") {
-            // Modify where statement
-            q = this.userGetQuery(q, sub);
-        }
-
         try {
-            data = await this.service.findOne({
-                ...q, // Other arguments (specified by user in URL)
+            data = await this.service.findOne(
+                this.service.secureQueries({
+                    queries: {
+                        // Query database yang dikirm pada URL
+                        ...parsedQueries,
 
-                // Override user where statement (if exist)
-                where: {
-                    // Get one by some uuid (on URL as a parameter)
-                    uuid,
+                        // Where statement
+                        where: {
+                            // Where statement pada query di URL (jika ada)
+                            ...parsedQueries.where,
 
-                    // Also show only if this request come from the author
-                    ...q["where"],
-                },
-            });
+                            // Timpa dengan where.uuid = yang ada pada URL parameter
+                            // jadi, pada query di URL tidak perlu menambahkan where={"uuid": "some_uuid"}.
+                            uuid,
+                        },
+                    },
+                    headers: req.user,
+                }),
+            );
         } catch {
             throw new NotFoundException();
         }
-
         return data;
     }
 
@@ -150,38 +126,26 @@ export class TokoController {
         @Body() data: UpdateTokoDto,
         @Request() req: any,
     ): Promise<Toko> {
-        let newData: Toko;
-
-        // Data admin/ user yang sedang login
-        const { sub, role } = req.user;
-
-        // Database update where statement
-        let where: Prisma.TokoWhereUniqueInput = {
-            // No uuid toko yang akan di update datanya
-            uuid,
-        };
-
-        // Selain admin (siapapun), wajib melewati pengecekan dibawah
-        if (role != "Admin") {
-            // Modify where statement
-            where.user = {
-                // No tlp user yang terdeteksi pada headers
-                tlp: sub,
-            };
-        }
-
+        let toko: Toko;
+        const q: any = this.service.secureQueries({
+            queries: {
+                where: <Prisma.TokoWhereUniqueInput>{
+                    uuid,
+                },
+            },
+            headers: req.user,
+        });
         try {
-            newData = await this.service.update({
-                where,
+            toko = await this.service.update(
+                q.where,
 
                 // Data yang telah dibersihkan dari kolom2 yang memang tidak boleh diubah.
-                data: this.service.cleanUpdateData(data),
-            });
+                this.service.cleanUpdateData(data),
+            );
         } catch {
             throw new NotFoundException();
         }
-
-        return newData;
+        return toko;
     }
 
     @Delete(":uuid")
@@ -190,31 +154,19 @@ export class TokoController {
         @Request() req: any,
     ): Promise<Toko> {
         let deletedToko: Toko;
-
-        // Data admin/ user yang sedang login
-        const { sub, role } = req.user;
-
-        // Database update where statement
-        let where: Prisma.TokoWhereUniqueInput = {
-            // No uuid toko yang akan di update datanya
-            uuid,
-        };
-
-        // Selain admin (siapapun), wajib melewati pengecekan dibawah
-        if (role != "Admin") {
-            // Modify where statement
-            where.user = {
-                // No tlp user yang terdeteksi pada headers
-                tlp: sub,
-            };
-        }
-
+        const q: any = this.service.secureQueries({
+            queries: {
+                where: <Prisma.TokoWhereUniqueInput>{
+                    uuid,
+                },
+            },
+            headers: req.user,
+        });
         try {
-            deletedToko = await this.service.remove(where);
+            deletedToko = await this.service.remove(q.where);
         } catch {
             throw new NotFoundException();
         }
-
         return deletedToko;
     }
 }
