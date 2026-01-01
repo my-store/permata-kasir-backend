@@ -1,5 +1,13 @@
+import { CreateUserRankingDto } from "./dto/create-user-ranking.dto";
+import { UpdateUserRankingDto } from "./dto/update-user-ranking.dto";
+import { UserRankingService } from "./user-ranking.service";
+import { ParseUrlQuery } from "src/libs/string";
+import { AuthGuard } from "src/auth/auth.guard";
 import {
+    UnauthorizedException,
     Controller,
+    UseGuards,
+    Request,
     Delete,
     Query,
     Param,
@@ -7,19 +15,38 @@ import {
     Post,
     Body,
     Get,
+    InternalServerErrorException,
 } from "@nestjs/common";
-import { CreateUserRankingDto } from "./dto/create-user-ranking.dto";
-import { UpdateUserRankingDto } from "./dto/update-user-ranking.dto";
-import { UserRankingService } from "./user-ranking.service";
-import { ParseUrlQuery } from "src/libs/string";
+import { UserRanking } from "models";
 
-@Controller("user-ranking")
+@UseGuards(AuthGuard)
+@Controller("api/user-ranking")
 export class UserRankingController {
     constructor(private readonly userRankingService: UserRankingService) {}
 
     @Post()
-    create(@Body() createUserRankingDto: CreateUserRankingDto) {
-        return this.userRankingService.create(createUserRankingDto);
+    async create(
+        @Body() data: CreateUserRankingDto,
+        @Request() req: any,
+    ): Promise<UserRanking> {
+        const { sub, role } = req.user;
+        if (role != "Admin") {
+            throw new UnauthorizedException();
+        }
+        let userRanking: UserRanking;
+        try {
+            userRanking = await this.userRankingService.create({
+                ...data,
+                admin: {
+                    connect: {
+                        tlp: sub,
+                    },
+                },
+            });
+        } catch (error) {
+            throw new InternalServerErrorException(error);
+        }
+        return userRanking;
     }
 
     @Get()

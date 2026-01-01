@@ -63,6 +63,21 @@ export class TokoService {
         });
     }
 
+    cleanUpdateData(d: any): any {
+        const {
+            // Disabled data to be updated
+            id,
+            uuid,
+            userId,
+            createdAt,
+            updatedAt,
+
+            // Fixed | Now data update will be save
+            ...cleanedData
+        } = d;
+        return cleanedData;
+    }
+
     async create(newData: any): Promise<Toko> {
         // Konfigurasi timestamp
         const thisTime = new Date().toISOString();

@@ -12,6 +12,7 @@ const defaultKeys: DefaultKeysInterface = {
 
     // Parent table data
     adminId: true,
+    userRankingId: true,
 };
 
 @Injectable()
@@ -73,13 +74,7 @@ export class UserRegisterTicketService {
 
             // Generated data
             code,
-
-            // Parse to intger
-            adminId: parseInt(data.adminId),
         };
-
-        // IMPORTANT !!!
-        // Run cron-job to delete data after some minutes.
 
         // Save a new data
         return this.prisma.userRegisterTicket.create({ data: newData });
@@ -115,7 +110,7 @@ export class UserRegisterTicketService {
         where: Prisma.UserRegisterTicketWhereUniqueInput;
     }): Promise<UserRegisterTicket | null> {
         const { select, where } = params;
-        return this.prisma.userRegisterTicket.findUnique({
+        return this.prisma.userRegisterTicket.findUniqueOrThrow({
             select: {
                 // Default keys to display
                 ...this.findOneKeys,

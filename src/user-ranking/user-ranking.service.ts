@@ -1,7 +1,7 @@
 import { Prisma, UserRanking } from "models/client";
 import { PrismaService } from "../prisma.service";
-import { Injectable } from "@nestjs/common";
 import { generateId } from "src/libs/string";
+import { Injectable } from "@nestjs/common";
 
 // Placeholder | Short type name purpose only
 interface DefaultKeysInterface extends Prisma.UserRankingSelect {}
@@ -9,6 +9,10 @@ interface DefaultKeysInterface extends Prisma.UserRankingSelect {}
 const defaultKeys: DefaultKeysInterface = {
     id: true,
     uuid: true,
+    nama: true,
+    maxToko: true,
+    maxProduk: true,
+    maxJasa: true,
     createdAt: true,
     updatedAt: true,
 

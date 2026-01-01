@@ -39,21 +39,6 @@ export class TokoController {
         return qx;
     }
 
-    cleanUpdateData(d: any): any {
-        const {
-            // Disabled data to be updated
-            id,
-            uuid,
-            userId,
-            createdAt,
-            updatedAt,
-
-            // Fixed | Now data update will be save
-            ...cleanedData
-        } = d;
-        return cleanedData;
-    }
-
     @Post()
     async create(
         @Body() newData: CreateTokoDto,
@@ -190,7 +175,7 @@ export class TokoController {
                 where,
 
                 // Data yang telah dibersihkan dari kolom2 yang memang tidak boleh diubah.
-                data: this.cleanUpdateData(data),
+                data: this.service.cleanUpdateData(data),
             });
         } catch {
             throw new NotFoundException();

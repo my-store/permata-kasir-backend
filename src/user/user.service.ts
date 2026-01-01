@@ -1,8 +1,8 @@
 import { PrismaService } from "../prisma.service";
 import { encryptPassword } from "../libs/bcrypt";
 import { Prisma, User } from "models/client";
-import { Injectable } from "@nestjs/common";
 import { generateId } from "src/libs/string";
+import { Injectable } from "@nestjs/common";
 
 // Placeholder | Short type name purpose only
 interface DefaultKeysInterface extends Prisma.UserSelect {}
@@ -24,6 +24,7 @@ const defaultKeys: DefaultKeysInterface = {
 
     // Parent table data
     adminId: true,
+    userRankingId: true,
 };
 
 @Injectable()
@@ -43,6 +44,21 @@ export class UserService {
     };
 
     constructor(private readonly prisma: PrismaService) {}
+
+    cleanUpdateData(d: any): any {
+        const {
+            // Disabled data to be updated
+            id,
+            uuid,
+            adminId,
+            createdAt,
+            updatedAt,
+
+            // Fixed | Now data update will be save
+            ...cleanedData
+        }: any = d;
+        return cleanedData;
+    }
 
     async create(newData: any): Promise<User> {
         // Konfigurasi timestamp

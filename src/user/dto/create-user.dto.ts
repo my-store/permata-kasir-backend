@@ -18,5 +18,8 @@ export class CreateUserDto {
 
 export class CreateUserRegisterTicketDto {
     @IsNotEmpty()
-    adminId: string;
+    adminId: number;
+
+    @IsNotEmpty()
+    userRankingId: number;
 }

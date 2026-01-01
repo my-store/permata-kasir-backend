@@ -63,8 +63,8 @@ model User {
   adminId Int
 
   // Parent table
-  userRanking   UserRanking? @relation(fields: [userRankingId], references: [id])
-  userRankingId Int?
+  userRanking   UserRanking @relation(fields: [userRankingId], references: [id])
+  userRankingId Int
 
   // Child tables
   toko Toko[]
@@ -87,20 +87,81 @@ model UserRegisterTicket {
   code String @unique
 
   // Parent table
-  admin   Admin @relation(fields: [adminId], references: [id])
-  adminId Int
+  admin         Admin       @relation(fields: [adminId], references: [id])
+  adminId       Int
+  userRanking   UserRanking @relation(fields: [userRankingId], references: [id])
+  userRankingId Int
 }
 
+/**
+ * =====================================================
+ * |  ATURAN PENGGUNA
+ * |  =====================================================
+ * |  Disini menyimpan aturan pengguna gratis dan berbayar
+ */
 model UserRanking {
   id   Int    @id @default(autoincrement())
   uuid String @unique
+  nama String
+
+  /**
+   * =====================================================
+   * |  MAKSIMAL JUMLAH TOKO
+   * |  =====================================================
+   * |  1. Ultimate
+   * |     10 Toko
+   * |  2. Pro
+   * |     5 Toko
+   * |  3. Basic
+   * |     3 Toko
+   * |  4. Free
+   * |     1 Toko
+   */
+  maxToko Int
+
+  /**
+   * ========================================================
+   * |  MAKSIMAL JUMLAH PRODUK
+   * |  =====================================================
+   * |  Per toko (berbayar) maksimal nya memilik 3.000 produk,
+   * |  maksimal jumlah produk x maksimal jumlah toko.
+   * |  -----------------------------------------------------
+   * |  1. Ultimate
+   * |     30.000 Produk
+   * |  2. Pro
+   * |     15.000 Produk
+   * |  3. Basic
+   * |     9.000 Produk
+   * |  4. Free
+   * |     500 Produk
+   */
+  maxProduk Int
+
+  /**
+   * ========================================================
+   * |  MAKSIMAL JUMLAH JASA
+   * |  =====================================================
+   * |  Per toko (berbayar) maksimal nya memilik 100 jasa,
+   * |  maksimal jumlah jasa x maksimal jumlah toko.
+   * |  -----------------------------------------------------
+   * |  1. Ultimate
+   * |     1.000 Jasa
+   * |  2. Pro
+   * |     500 Jasa
+   * |  3. Basic
+   * |     300 Jasa
+   * |  4. Free
+   * |     50 Jasa
+   */
+  maxJasa Int
 
   // Parent table
   admin   Admin @relation(fields: [adminId], references: [id])
   adminId Int
 
   // Child tables
-  user User[]
+  user               User[]
+  userRegisterTicket UserRegisterTicket[]
 
   createdAt DateTime
   updatedAt DateTime

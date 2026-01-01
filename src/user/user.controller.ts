@@ -1,8 +1,12 @@
 import { UpdateUserDto, UpdateUserPasswordDto } from "./dto/update-user.dto";
 import { UserRegisterTicketService } from "./user.register.ticket.service";
-import { UserRegisterTicket, Prisma, User } from "models/client";
 import { FileInterceptor } from "@nestjs/platform-express";
+import { UserRegisterTicket, User } from "models/client";
 import { AdminService } from "src/admin/admin.service";
+import {
+    CreateUserDto,
+    CreateUserRegisterTicketDto,
+} from "./dto/create-user.dto";
 import { encryptPassword } from "src/libs/bcrypt";
 import { AuthGuard } from "src/auth/auth.guard";
 import { ParseUrlQuery } from "src/libs/string";
@@ -15,10 +19,6 @@ import {
     UploadFile,
 } from "src/libs/upload-file-handler";
 import * as bcrypt from "bcrypt";
-import {
-    CreateUserRegisterTicketDto,
-    CreateUserDto,
-} from "./dto/create-user.dto";
 import { join } from "path";
 import {
     InternalServerErrorException,
@@ -45,21 +45,6 @@ export class UserController {
         private readonly adminService: AdminService,
         private readonly userService: UserService,
     ) {}
-
-    cleanUpdateData(d: any): any {
-        const {
-            // Disabled data to be updated
-            id,
-            uuid,
-            adminId,
-            createdAt,
-            updatedAt,
-
-            // Fixed | Now data update will be save
-            ...cleanedData
-        }: any = d;
-        return cleanedData;
-    }
 
     /* =====================================================
     |  REGISTRASI
@@ -101,8 +86,9 @@ export class UserController {
         const data: any = {
             ...newData,
 
-            // Admin or parent data
+            // Parse to an integer
             adminId: parseInt(ticket.adminId),
+            userRankingId: parseInt(ticket.userRankingId),
         };
 
         return this.create(data, foto, ticket_code);
@@ -178,7 +164,7 @@ export class UserController {
     ): Promise<User> {
         // Someone accessing this route, block it!
         // Ticket code used for delete from database after insert user succeed
-        if (ticket_code == "" || ticket_code.length < 1) {
+        if (ticket_code == "") {
             throw new UnauthorizedException();
         }
 
@@ -494,7 +480,7 @@ export class UserController {
                 { tlp },
                 {
                     // Data yang telah dibersihkan dari kolom2 yang memang tidak boleh diubah.
-                    ...this.cleanUpdateData(data),
+                    ...this.userService.cleanUpdateData(data),
 
                     // Menghapush "public" pada URL foto baru.
                     foto: data.foto?.replace("public", ""),
