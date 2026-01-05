@@ -1,10 +1,14 @@
 import { PrismaService } from "src/prisma.service";
 import { generateId } from "src/libs/string";
 import { Injectable } from "@nestjs/common";
-import { Toko, Prisma } from "models";
+import { Toko, Prisma, User, UserRanking } from "models";
 
 // Placeholder | Short type name purpose only
 interface DefaultKeysInterface extends Prisma.TokoSelect {}
+
+export interface InputOwnerCheckInterface {
+    status: boolean;
+}
 
 const defaultKeys: DefaultKeysInterface = {
     id: true,
@@ -91,16 +95,16 @@ export class TokoService {
         sub: string;
         role: string;
         userId: number;
-    }): Promise<any> {
+    }): Promise<InputOwnerCheckInterface> {
         const { role, sub, userId } = params;
 
         // Bypass this security for admin (developer)
         if (role == "Admin") {
-            return;
+            return { status: true };
         }
 
-        // Cari data user
-        return this.prisma.user.findUniqueOrThrow({
+        // Ambil data user
+        const user: User = await this.prisma.user.findUniqueOrThrow({
             // Antara tlp login dengan ID yang di inputkan harus saling terhubung
             // untuk memastikan kepemilikan.
             where: {
@@ -111,6 +115,23 @@ export class TokoService {
                 id: userId,
             },
         });
+
+        // Ambil data user-ranking
+        const userRanking: UserRanking =
+            await this.prisma.userRanking.findUniqueOrThrow({
+                where: {
+                    id: user.userRankingId,
+                },
+            });
+
+        // Ambil data toko
+        const toko: Toko[] = await this.findAll({
+            where: { userId },
+        });
+
+        return {
+            status: toko.length < userRanking.maxToko,
+        };
     }
 
     cleanUpdateData(d: any): any {

@@ -344,7 +344,7 @@ export class UserController {
         @UploadedFile() foto?: Express.Multer.File,
     ): Promise<User> {
         // No update data is presented
-        if (Object.keys(data).length < 1) {
+        if (!data || Object.keys(data).length < 1) {
             throw new BadRequestException("No data is presented!");
         }
 

@@ -13,6 +13,9 @@ export class CreateUserDto {
     @IsNotEmpty()
     alamat: string;
 
+    @IsNotEmpty()
+    userRankingId: number;
+
     foto?: string;
 }
 

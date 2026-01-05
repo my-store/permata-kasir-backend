@@ -1,8 +1,8 @@
+import { InputOwnerCheckInterface, TokoService } from "./toko.service";
 import { CreateTokoDto } from "./dto/create-toko.dto";
 import { UpdateTokoDto } from "./dto/update-toko.dto";
 import { AuthGuard } from "src/auth/auth.guard";
 import { ParseUrlQuery } from "src/libs/string";
-import { TokoService } from "./toko.service";
 import { Prisma, Toko } from "models";
 import {
     InternalServerErrorException,
@@ -33,14 +33,20 @@ export class TokoController {
     ): Promise<Toko> {
         let toko: Toko;
 
-        // Check if this request is come from the owner, if not, block the request.
+        // Cek pemilik dan jumlah kuota pembuatan toko
         try {
-            await this.service.inputOwnerCheck({
-                ...req.user,
-                userId: newData.userId,
-            });
-        } catch {
-            throw new UnauthorizedException();
+            const { status }: InputOwnerCheckInterface =
+                await this.service.inputOwnerCheck({
+                    ...req.user,
+                    userId: newData.userId,
+                });
+            if (!status) {
+                throw new BadRequestException(
+                    "Silahkan upgrade ke premium untuk membuat toko lagi.",
+                );
+            }
+        } catch (error) {
+            throw new UnauthorizedException(error);
         }
 
         try {
@@ -126,6 +132,11 @@ export class TokoController {
         @Body() data: UpdateTokoDto,
         @Request() req: any,
     ): Promise<Toko> {
+        // No update data is presented
+        if (!data || Object.keys(data).length < 1) {
+            throw new BadRequestException("No data is presented!");
+        }
+
         let toko: Toko;
         const q: any = this.service.secureQueries({
             queries: {
