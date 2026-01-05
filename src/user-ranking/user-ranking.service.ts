@@ -38,6 +38,24 @@ export class UserRankingService {
 
     constructor(private readonly prisma: PrismaService) {}
 
+    cleanUpdateData(d: any): any {
+        const {
+            // Disabled data to be updated
+            id,
+            uuid,
+            adminId,
+            createdAt,
+            updatedAt,
+
+            // Update - 1 January 2026
+            admin,
+
+            // Fixed | Now data update will be save
+            ...cleanedData
+        }: any = d;
+        return cleanedData;
+    }
+
     async create(newData: any): Promise<UserRanking> {
         // Konfigurasi timestamp
         const thisTime = new Date().toISOString();
