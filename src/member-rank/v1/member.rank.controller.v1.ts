@@ -125,7 +125,10 @@ export class MemberRankControllerV1 {
             headers: req.user,
         });
         try {
-            memberRank = await this.service.update(q.where, data);
+            memberRank = await this.service.update(
+                q.where,
+                this.service.cleanUpdateData(data),
+            );
         } catch (error) {
             throw new NotFoundException(error);
         }
