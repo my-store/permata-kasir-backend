@@ -91,7 +91,7 @@ export class UserControllerV1 {
 
             // Parse to an integer
             adminId: parseInt(ticket.adminId),
-            userRankingId: parseInt(ticket.userRankingId),
+            userRankId: parseInt(ticket.userRankId),
         };
 
         return this.create(data, foto, ticket_code);
@@ -351,8 +351,6 @@ export class UserControllerV1 {
             throw new BadRequestException("No data is presented!");
         }
 
-        let updatedData: User;
-
         /* ----------------------------------------------------------
         |  ATURAN PERUBAHAN DATA USER - 28 DESEMBER 2025
         |  ----------------------------------------------------------
@@ -378,6 +376,14 @@ export class UserControllerV1 {
                 throw new UnauthorizedException();
             }
         }
+
+        // 6 January 2026 - Hanya Admin yang boleh melakukan perubahan user-rank-id
+        if (data.userRankId && role != "Admin") {
+            // Blokir permintaan update
+            throw new UnauthorizedException();
+        }
+
+        let updatedData: User;
 
         /* ----------------------------------------------------------
         |  MENGAMBIL DATA LAMA

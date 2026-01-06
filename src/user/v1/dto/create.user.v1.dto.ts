@@ -13,9 +13,6 @@ export class CreateUserDtoV1 {
     @IsNotEmpty()
     alamat: string;
 
-    @IsNotEmpty()
-    userRankingId: number;
-
     foto?: string;
 }
 
@@ -24,5 +21,5 @@ export class CreateUserRegisterTicketDtoV1 {
     adminId: number;
 
     @IsNotEmpty()
-    userRankingId: number;
+    userRankId: number;
 }
