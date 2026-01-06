@@ -35,15 +35,29 @@ export class TokoController {
 
         // Cek pemilik dan jumlah kuota pembuatan toko
         try {
-            const { status }: InputOwnerCheckInterface =
+            // Hasil pengecekan akan mengembalikan object { status, paid }
+            const { status, paid }: InputOwnerCheckInterface =
                 await this.service.inputOwnerCheck({
                     ...req.user,
                     userId: newData.userId,
                 });
+            // Ada kesalahan
             if (!status) {
-                throw new BadRequestException(
-                    "Silahkan upgrade ke premium untuk membuat toko lagi.",
-                );
+                let errMsg: string; // Error user message
+                let errCode: number; // Error user code
+                // Free user
+                if (!paid) {
+                    errMsg =
+                        "Silahkan upgrade ke premium untuk membuat toko lagi.";
+                    errCode = 401;
+                }
+                // Paid user
+                else {
+                    errMsg =
+                        "Maksimal jumlah toko telah tercapai, silahkan upgrade paket anda.";
+                    errCode = 200;
+                }
+                throw new BadRequestException({ errMsg, errCode });
             }
         } catch (error) {
             throw new UnauthorizedException(error);

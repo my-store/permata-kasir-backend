@@ -1,13 +1,14 @@
+import { Toko, Prisma, User, UserRanking } from "models";
 import { PrismaService } from "src/prisma.service";
 import { generateId } from "src/libs/string";
 import { Injectable } from "@nestjs/common";
-import { Toko, Prisma, User, UserRanking } from "models";
 
 // Placeholder | Short type name purpose only
 interface DefaultKeysInterface extends Prisma.TokoSelect {}
 
 export interface InputOwnerCheckInterface {
     status: boolean;
+    paid?: boolean;
 }
 
 const defaultKeys: DefaultKeysInterface = {
@@ -119,18 +120,17 @@ export class TokoService {
         // Ambil data user-ranking
         const userRanking: UserRanking =
             await this.prisma.userRanking.findUniqueOrThrow({
-                where: {
-                    id: user.userRankingId,
-                },
+                where: { id: user.userRankingId },
             });
 
         // Ambil data toko
-        const toko: Toko[] = await this.findAll({
-            where: { userId },
-        });
+        const toko: Toko[] = await this.findAll({ where: { userId } });
 
         return {
             status: toko.length < userRanking.maxToko,
+
+            // User gratis hanya boleh memiliki 1 toko
+            paid: userRanking.maxToko > 1,
         };
     }
 
