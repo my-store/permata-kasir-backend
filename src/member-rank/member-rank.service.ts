@@ -1,10 +1,10 @@
 import { PrismaService } from "src/prisma.service";
-import { MemberRanking, Prisma } from "models";
 import { generateId } from "src/libs/string";
 import { Injectable } from "@nestjs/common";
+import { MemberRank, Prisma } from "models";
 
 // Placeholder | Short type name purpose only
-interface DefaultKeysInterface extends Prisma.MemberRankingSelect {}
+interface DefaultKeysInterface extends Prisma.MemberRankSelect {}
 
 const defaultKeys: DefaultKeysInterface = {
     id: true,
@@ -19,7 +19,7 @@ const defaultKeys: DefaultKeysInterface = {
 };
 
 @Injectable()
-export class MemberRankingService {
+export class MemberRankService {
     private readonly findAllKeys: DefaultKeysInterface = {
         // Default keys
         ...defaultKeys,
@@ -74,10 +74,10 @@ export class MemberRankingService {
                 /* -----------------------------------------------------
                 |  OVERRIDE USER WHERE STATEMENTS
                 |  -----------------------------------------------------
-                |  Hanya menampilkan atau memodifikasi data member-ranking
+                |  Hanya menampilkan atau memodifikasi data member-rank
                 |  sesuai dengan toko yang user miliki,
                 |  jika user memiliki banyak toko, akan menampilkan
-                |  seluruh member-ranking dari toko-toko tersebut.
+                |  seluruh member-rank dari toko-toko tersebut.
                 */
                 toko: {
                     user: {
@@ -140,7 +140,7 @@ export class MemberRankingService {
         });
     }
 
-    async create(newData: any): Promise<MemberRanking> {
+    async create(newData: any): Promise<MemberRank> {
         // Konfigurasi timestamp
         const thisTime = new Date().toISOString();
 
@@ -150,7 +150,7 @@ export class MemberRankingService {
         // Pastikan uuid belum pernah digunakan
         try {
             // Jika tidak ditemukan, akan langsung ke input method dibawah
-            await this.prisma.memberRanking.findUniqueOrThrow({
+            await this.prisma.memberRank.findUniqueOrThrow({
                 where: { uuid },
             });
 
@@ -159,7 +159,7 @@ export class MemberRankingService {
         } catch {}
 
         // Prepare data
-        const data: Prisma.MemberRankingCreateInput = {
+        const data: Prisma.MemberRankCreateInput = {
             ...newData,
 
             // UUID
@@ -174,19 +174,19 @@ export class MemberRankingService {
         };
 
         // Insert data
-        return this.prisma.memberRanking.create({ data });
+        return this.prisma.memberRank.create({ data });
     }
 
     async findAll(params: {
         skip?: number;
         take?: number;
         select?: DefaultKeysInterface;
-        cursor?: Prisma.MemberRankingWhereUniqueInput;
-        where?: Prisma.MemberRankingWhereInput;
-        orderBy?: Prisma.MemberRankingOrderByWithRelationInput;
-    }): Promise<MemberRanking[]> {
+        cursor?: Prisma.MemberRankWhereUniqueInput;
+        where?: Prisma.MemberRankWhereInput;
+        orderBy?: Prisma.MemberRankOrderByWithRelationInput;
+    }): Promise<MemberRank[]> {
         const { skip, take, select, cursor, where, orderBy } = params;
-        return this.prisma.memberRanking.findMany({
+        return this.prisma.memberRank.findMany({
             skip,
             take,
             cursor,
@@ -204,10 +204,10 @@ export class MemberRankingService {
 
     async findOne(params: {
         select?: DefaultKeysInterface;
-        where: Prisma.MemberRankingWhereUniqueInput;
-    }): Promise<MemberRanking | null> {
+        where: Prisma.MemberRankWhereUniqueInput;
+    }): Promise<MemberRank | null> {
         const { select, where } = params;
-        return this.prisma.memberRanking.findUniqueOrThrow({
+        return this.prisma.memberRank.findUniqueOrThrow({
             select: {
                 // Default keys to display
                 ...this.findOneKeys,
@@ -220,22 +220,22 @@ export class MemberRankingService {
     }
 
     async update(
-        where: Prisma.MemberRankingWhereUniqueInput,
+        where: Prisma.MemberRankWhereUniqueInput,
         data: any,
-    ): Promise<MemberRanking> {
-        let updatedData: Prisma.MemberRankingUpdateInput = { ...data };
+    ): Promise<MemberRank> {
+        let updatedData: Prisma.MemberRankUpdateInput = { ...data };
 
         // Konfigurasi timestamp
         const thisTime = new Date().toISOString();
         updatedData.updatedAt = thisTime;
 
         // Save updated data
-        return this.prisma.memberRanking.update({ where, data: updatedData });
+        return this.prisma.memberRank.update({ where, data: updatedData });
     }
 
     async remove(
-        where: Prisma.MemberRankingWhereUniqueInput,
-    ): Promise<MemberRanking> {
-        return this.prisma.memberRanking.delete({ where });
+        where: Prisma.MemberRankWhereUniqueInput,
+    ): Promise<MemberRank> {
+        return this.prisma.memberRank.delete({ where });
     }
 }

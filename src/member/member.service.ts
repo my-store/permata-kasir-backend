@@ -17,7 +17,7 @@ const defaultKeys: DefaultKeysInterface = {
 
     // Parent table data keys
     tokoId: true,
-    memberRankingId: true,
+    memberRankId: true,
 };
 
 @Injectable()

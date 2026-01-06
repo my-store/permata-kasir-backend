@@ -1,4 +1,4 @@
-import { Toko, Prisma, User, UserRanking } from "models";
+import { Toko, Prisma, User, UserRank } from "models";
 import { PrismaService } from "src/prisma.service";
 import { generateId } from "src/libs/string";
 import { Injectable } from "@nestjs/common";
@@ -117,20 +117,21 @@ export class TokoService {
             },
         });
 
-        // Ambil data user-ranking
-        const userRanking: UserRanking =
-            await this.prisma.userRanking.findUniqueOrThrow({
-                where: { id: user.userRankingId },
-            });
+        // Ambil data user-rank
+        const userRank: UserRank = await this.prisma.userRank.findUniqueOrThrow(
+            {
+                where: { id: user.userRankId },
+            },
+        );
 
         // Ambil data toko
         const toko: Toko[] = await this.findAll({ where: { userId } });
 
         return {
-            status: toko.length < userRanking.maxToko,
+            status: toko.length < userRank.maxToko,
 
             // User gratis hanya boleh memiliki 1 toko
-            paid: userRanking.maxToko > 1,
+            paid: userRank.maxToko > 1,
         };
     }
 

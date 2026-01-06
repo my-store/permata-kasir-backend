@@ -27,7 +27,7 @@ model Admin {
 
   // Child tables
   users              User[]
-  userRanking        UserRanking[]
+  userRank           UserRank[]
   userRegisterTicket UserRegisterTicket[]
 
   createdAt DateTime
@@ -63,8 +63,8 @@ model User {
   adminId Int
 
   // Parent table
-  userRanking   UserRanking @relation(fields: [userRankingId], references: [id])
-  userRankingId Int
+  userRank   UserRank @relation(fields: [userRankId], references: [id])
+  userRankId Int
 
   // Child tables
   toko Toko[]
@@ -87,10 +87,10 @@ model UserRegisterTicket {
   code String @unique
 
   // Parent table
-  admin         Admin       @relation(fields: [adminId], references: [id])
-  adminId       Int
-  userRanking   UserRanking @relation(fields: [userRankingId], references: [id])
-  userRankingId Int
+  admin      Admin    @relation(fields: [adminId], references: [id])
+  adminId    Int
+  userRank   UserRank @relation(fields: [userRankId], references: [id])
+  userRankId Int
 }
 
 /**
@@ -99,7 +99,7 @@ model UserRegisterTicket {
  * |  =====================================================
  * |  Disini menyimpan aturan pengguna gratis dan berbayar
  */
-model UserRanking {
+model UserRank {
   id   Int    @id @default(autoincrement())
   uuid String @unique
   nama String
@@ -183,7 +183,7 @@ model Toko {
   jasa               Jasa[]
   diskon             Diskon[]
   member             Member[]
-  memberRanking      MemberRanking[]
+  memberRank         MemberRank[]
   transaksiPembelian TransaksiPembelian[]
   transaksiPenjualan TransaksiPenjualan[]
 
@@ -253,17 +253,17 @@ model Member {
   tlp    String @unique
 
   // Parent table
-  toko            Toko           @relation(fields: [tokoId], references: [id])
-  tokoId          Int
+  toko         Toko        @relation(fields: [tokoId], references: [id])
+  tokoId       Int
   // Optional | nullable
-  memberRanking   MemberRanking? @relation(fields: [memberRankingId], references: [id])
-  memberRankingId Int?
+  memberRank   MemberRank? @relation(fields: [memberRankId], references: [id])
+  memberRankId Int?
 
   createdAt DateTime
   updatedAt DateTime
 }
 
-model MemberRanking {
+model MemberRank {
   id   Int    @id @default(autoincrement())
   uuid String @unique
   nama String

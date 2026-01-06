@@ -1,9 +1,9 @@
-import { CreateUserRankingDto } from "./dto/create-user-ranking.dto";
-import { UpdateUserRankingDto } from "./dto/update-user-ranking.dto";
-import { UserRankingService } from "./user-ranking.service";
+import { CreateUserRankDto } from "./dto/create-user-rank.dto";
+import { UpdateUserRankDto } from "./dto/update-user-rank.dto";
+import { UserRankService } from "./user-rank.service";
 import { ParseUrlQuery } from "src/libs/string";
 import { AuthGuard } from "src/auth/auth.guard";
-import { UserRanking } from "models";
+import { UserRank } from "models";
 import {
     InternalServerErrorException,
     UnauthorizedException,
@@ -21,22 +21,22 @@ import {
 } from "@nestjs/common";
 
 @UseGuards(AuthGuard)
-@Controller("api/user-ranking")
-export class UserRankingController {
-    constructor(private readonly userRankingService: UserRankingService) {}
+@Controller("api/user-rank")
+export class UserRankController {
+    constructor(private readonly userRankService: UserRankService) {}
 
     @Post()
     async create(
-        @Body() data: CreateUserRankingDto,
+        @Body() data: CreateUserRankDto,
         @Request() req: any,
-    ): Promise<UserRanking> {
+    ): Promise<UserRank> {
         const { sub, role } = req.user;
         if (role != "Admin") {
             throw new UnauthorizedException();
         }
-        let userRanking: UserRanking;
+        let userRank: UserRank;
         try {
-            userRanking = await this.userRankingService.create({
+            userRank = await this.userRankService.create({
                 ...data,
                 admin: {
                     connect: {
@@ -47,30 +47,28 @@ export class UserRankingController {
         } catch (error) {
             throw new InternalServerErrorException(error);
         }
-        return userRanking;
+        return userRank;
     }
 
     @Get()
     async findAll(
         @Query() query: any,
         @Request() req: any,
-    ): Promise<UserRanking[]> {
+    ): Promise<UserRank[]> {
         const { role } = req.user;
         if (role != "Admin") {
             throw new UnauthorizedException();
         }
-        let userRanking: UserRanking[];
+        let userRank: UserRank[];
         try {
-            userRanking = await this.userRankingService.findAll(
-                ParseUrlQuery(query),
-            );
+            userRank = await this.userRankService.findAll(ParseUrlQuery(query));
         } catch (error) {
             throw new InternalServerErrorException(error);
         }
-        return userRanking;
+        return userRank;
     }
 
-    // Getone method will return UserRanking object or nul, so set return type as any.
+    // Getone method will return UserRank object or nul, so set return type as any.
     @Get(":uuid")
     async findOne(
         @Param("uuid") uuid: string,
@@ -80,62 +78,62 @@ export class UserRankingController {
         if (role != "Admin") {
             throw new UnauthorizedException();
         }
-        let userRanking: any;
+        let userRank: any;
         try {
-            userRanking = await this.userRankingService.findOne({
+            userRank = await this.userRankService.findOne({
                 where: { uuid },
             });
         } catch {
             throw new NotFoundException();
         }
-        return userRanking;
+        return userRank;
     }
 
     @Patch(":uuid")
     async update(
         @Param("uuid") uuid: string,
-        @Body() data: UpdateUserRankingDto,
+        @Body() data: UpdateUserRankDto,
         @Request() req: any,
-    ): Promise<UserRanking> {
+    ): Promise<UserRank> {
         const { sub, role } = req.user;
         if (role != "Admin") {
             throw new UnauthorizedException();
         }
-        let userRanking: UserRanking;
+        let userRank: UserRank;
         try {
-            userRanking = await this.userRankingService.update(
+            userRank = await this.userRankService.update(
                 {
                     uuid,
                     admin: {
                         tlp: sub,
                     },
                 },
-                this.userRankingService.cleanUpdateData(data),
+                this.userRankService.cleanUpdateData(data),
             );
         } catch {
             throw new NotFoundException();
         }
-        return userRanking;
+        return userRank;
     }
 
     @Delete(":uuid")
     async remove(
         @Param("uuid") uuid: string,
         @Request() req: any,
-    ): Promise<UserRanking> {
+    ): Promise<UserRank> {
         const { sub, role } = req.user;
         if (role != "Admin") {
             throw new UnauthorizedException();
         }
-        let userRanking: UserRanking;
+        let userRank: UserRank;
         try {
-            userRanking = await this.userRankingService.remove({
+            userRank = await this.userRankService.remove({
                 uuid,
                 admin: { tlp: sub },
             });
         } catch {
             throw new NotFoundException();
         }
-        return userRanking;
+        return userRank;
     }
 }

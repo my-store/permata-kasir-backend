@@ -1,6 +1,6 @@
 import { IsNotEmpty } from "class-validator";
 
-export class CreateUserRankingDto {
+export class CreateUserRankDto {
     @IsNotEmpty()
     nama: string;
 

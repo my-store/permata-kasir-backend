@@ -1,9 +1,9 @@
-import { CreateMemberRankingDto } from "./dto/create-member-ranking.dto";
-import { UpdateMemberRankingDto } from "./dto/update-member-ranking.dto";
-import { MemberRankingService } from "./member-ranking.service";
+import { CreateMemberRankDto } from "./dto/create-member-rank.dto";
+import { UpdateMemberRankDto } from "./dto/update-member-rank.dto";
+import { MemberRankService } from "./member-rank.service";
 import { ParseUrlQuery } from "src/libs/string";
 import { AuthGuard } from "src/auth/auth.guard";
-import { MemberRanking, Prisma } from "models";
+import { MemberRank, Prisma } from "models";
 import {
     InternalServerErrorException,
     UnauthorizedException,
@@ -22,15 +22,15 @@ import {
 
 @UseGuards(AuthGuard)
 @Controller("api/member-ranking")
-export class MemberRankingController {
-    constructor(private readonly service: MemberRankingService) {}
+export class MemberRankController {
+    constructor(private readonly service: MemberRankService) {}
 
     @Post()
     async create(
-        @Body() newData: CreateMemberRankingDto,
+        @Body() newData: CreateMemberRankDto,
         @Request() req: any,
-    ): Promise<MemberRanking> {
-        let data: MemberRanking;
+    ): Promise<MemberRank> {
+        let data: MemberRank;
 
         // Check if this request is come from the owner, if not, block the request.
         try {
@@ -59,8 +59,8 @@ export class MemberRankingController {
     async findAll(
         @Query() query: any,
         @Request() req: any,
-    ): Promise<MemberRanking[]> {
-        let data: MemberRanking[];
+    ): Promise<MemberRank[]> {
+        let data: MemberRank[];
         try {
             data = await this.service.findAll(
                 this.service.secureQueries({
@@ -74,7 +74,7 @@ export class MemberRankingController {
         return data;
     }
 
-    // Getone method will return MemberRanking object or nul, so set return type as any.
+    // Getone method will return MemberRank object or nul, so set return type as any.
     @Get(":uuid")
     async findOne(
         @Param("uuid") uuid: string,
@@ -112,35 +112,35 @@ export class MemberRankingController {
     @Patch(":uuid")
     async update(
         @Param("uuid") uuid: string,
-        @Body() data: UpdateMemberRankingDto,
+        @Body() data: UpdateMemberRankDto,
         @Request() req: any,
-    ): Promise<MemberRanking> {
-        let memberRanking: MemberRanking;
+    ): Promise<MemberRank> {
+        let memberRank: MemberRank;
         const q: any = this.service.secureQueries({
             queries: {
-                where: <Prisma.MemberRankingWhereUniqueInput>{
+                where: <Prisma.MemberRankWhereUniqueInput>{
                     uuid,
                 },
             },
             headers: req.user,
         });
         try {
-            memberRanking = await this.service.update(q.where, data);
+            memberRank = await this.service.update(q.where, data);
         } catch (error) {
             throw new NotFoundException(error);
         }
-        return memberRanking;
+        return memberRank;
     }
 
     @Delete(":uuid")
     async remove(
         @Param("uuid") uuid: string,
         @Request() req: any,
-    ): Promise<MemberRanking> {
-        let data: MemberRanking;
+    ): Promise<MemberRank> {
+        let data: MemberRank;
         const q: any = this.service.secureQueries({
             queries: {
-                where: <Prisma.MemberRankingWhereUniqueInput>{
+                where: <Prisma.MemberRankWhereUniqueInput>{
                     uuid,
                 },
             },

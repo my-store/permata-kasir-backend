@@ -1,10 +1,10 @@
-import { Prisma, UserRanking } from "models/client";
+import { Prisma, UserRank } from "models/client";
 import { PrismaService } from "../prisma.service";
 import { generateId } from "src/libs/string";
 import { Injectable } from "@nestjs/common";
 
 // Placeholder | Short type name purpose only
-interface DefaultKeysInterface extends Prisma.UserRankingSelect {}
+interface DefaultKeysInterface extends Prisma.UserRankSelect {}
 
 const defaultKeys: DefaultKeysInterface = {
     id: true,
@@ -21,7 +21,7 @@ const defaultKeys: DefaultKeysInterface = {
 };
 
 @Injectable()
-export class UserRankingService {
+export class UserRankService {
     private readonly findAllKeys: DefaultKeysInterface = {
         // Default keys
         ...defaultKeys,
@@ -56,7 +56,7 @@ export class UserRankingService {
         return cleanedData;
     }
 
-    async create(newData: any): Promise<UserRanking> {
+    async create(newData: any): Promise<UserRank> {
         // Konfigurasi timestamp
         const thisTime = new Date().toISOString();
 
@@ -66,7 +66,7 @@ export class UserRankingService {
         // Pastikan uuid belum pernah digunakan
         try {
             // Jika tidak ditemukan, akan langsung ke input method dibawah
-            await this.prisma.userRanking.findUniqueOrThrow({
+            await this.prisma.userRank.findUniqueOrThrow({
                 where: { uuid },
             });
 
@@ -75,7 +75,7 @@ export class UserRankingService {
         } catch {}
 
         // Prepare data
-        let data: Prisma.UserRankingCreateInput = {
+        let data: Prisma.UserRankCreateInput = {
             ...newData,
 
             // UUID
@@ -87,24 +87,24 @@ export class UserRankingService {
         };
 
         // Insert data
-        return this.prisma.userRanking.create({
+        return this.prisma.userRank.create({
             data,
             select: this.findOneKeys,
         });
     }
 
     async update(
-        where: Prisma.UserRankingWhereUniqueInput,
+        where: Prisma.UserRankWhereUniqueInput,
         data: any,
-    ): Promise<UserRanking> {
-        let updatedData: Prisma.UserRankingUpdateInput = { ...data };
+    ): Promise<UserRank> {
+        let updatedData: Prisma.UserRankUpdateInput = { ...data };
 
         // Konfigurasi timestamp
         const thisTime = new Date().toISOString();
         updatedData.updatedAt = thisTime;
 
         // Save updated data
-        return this.prisma.userRanking.update({
+        return this.prisma.userRank.update({
             where,
             data: updatedData,
             select: this.findOneKeys,
@@ -114,13 +114,13 @@ export class UserRankingService {
     async findAll(params: {
         skip?: number;
         take?: number;
-        cursor?: Prisma.UserRankingWhereUniqueInput;
-        where?: Prisma.UserRankingWhereInput;
-        orderBy?: Prisma.UserRankingOrderByWithRelationInput;
+        cursor?: Prisma.UserRankWhereUniqueInput;
+        where?: Prisma.UserRankWhereInput;
+        orderBy?: Prisma.UserRankOrderByWithRelationInput;
         select?: DefaultKeysInterface;
-    }): Promise<UserRanking[]> {
+    }): Promise<UserRank[]> {
         const { skip, take, cursor, where, orderBy, select } = params;
-        return this.prisma.userRanking.findMany({
+        return this.prisma.userRank.findMany({
             skip,
             take,
             cursor,
@@ -130,7 +130,7 @@ export class UserRankingService {
                 // Default keys to display
                 ...this.findAllKeys,
 
-                // User-ranking specified keys to display
+                // User-rank specified keys to display
                 ...select,
             },
         });
@@ -138,25 +138,23 @@ export class UserRankingService {
 
     async findOne(params: {
         select?: DefaultKeysInterface;
-        where: Prisma.UserRankingWhereUniqueInput;
-    }): Promise<UserRanking | null> {
+        where: Prisma.UserRankWhereUniqueInput;
+    }): Promise<UserRank | null> {
         const { select, where } = params;
-        return this.prisma.userRanking.findUniqueOrThrow({
+        return this.prisma.userRank.findUniqueOrThrow({
             select: {
                 // Default keys to display
                 ...this.findOneKeys,
 
-                // User-Ranking specified keys to display
+                // User-Rank specified keys to display
                 ...select,
             },
             where,
         });
     }
 
-    async remove(
-        where: Prisma.UserRankingWhereUniqueInput,
-    ): Promise<UserRanking> {
-        return this.prisma.userRanking.delete({
+    async remove(where: Prisma.UserRankWhereUniqueInput): Promise<UserRank> {
+        return this.prisma.userRank.delete({
             where,
             select: this.findOneKeys,
         });
