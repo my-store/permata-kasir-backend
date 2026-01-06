@@ -124,7 +124,10 @@ export class ProdukControllerV1 {
             headers: req.user,
         });
         try {
-            produk = await this.service.update(q.where, data);
+            produk = await this.service.update(
+                q.where,
+                this.service.cleanUpdateData(data),
+            );
         } catch (error) {
             throw new NotFoundException(error);
         }
