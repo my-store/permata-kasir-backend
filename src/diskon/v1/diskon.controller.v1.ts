@@ -122,7 +122,10 @@ export class DiskonControllerV1 {
             headers: req.user,
         });
         try {
-            diskon = await this.service.update(q.where, data);
+            diskon = await this.service.update(
+                q.where,
+                this.service.cleanUpdateData(data),
+            );
         } catch (error) {
             throw new NotFoundException(error);
         }
