@@ -22,6 +22,7 @@
         "db:migrate": "prisma migrate dev --skip-generate",
         "db:generate": "prisma generate",
         "db:studio": "prisma studio",
+        "db:update": "rm -f -R prisma/database.sqlite && rm -f -R prisma/migrations && rm -f -R models && npm run db:migrate && npm run db:deploy && npm run db:generate",
         "git:commit": "git add . && git commit -m",
         "git:push": "git push -u origin main"
     },
