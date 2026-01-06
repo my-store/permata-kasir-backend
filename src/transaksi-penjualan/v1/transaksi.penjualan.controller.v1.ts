@@ -125,7 +125,10 @@ export class TransaksiPenjualanControllerV1 {
             headers: req.user,
         });
         try {
-            transaksiPenjualan = await this.service.update(q.where, data);
+            transaksiPenjualan = await this.service.update(
+                q.where,
+                this.service.cleanUpdateData(data),
+            );
         } catch (error) {
             throw new NotFoundException(error);
         }
