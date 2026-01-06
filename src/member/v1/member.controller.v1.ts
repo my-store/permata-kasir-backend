@@ -139,7 +139,10 @@ export class MemberControllerV1 {
             headers: req.user,
         });
         try {
-            member = await this.service.update(q.where, data);
+            member = await this.service.update(
+                q.where,
+                this.service.cleanUpdateData(data),
+            );
         } catch (error) {
             throw new NotFoundException(error);
         }
