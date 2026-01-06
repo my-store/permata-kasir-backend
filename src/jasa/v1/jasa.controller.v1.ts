@@ -124,7 +124,10 @@ export class JasaControllerV1 {
             headers: req.user,
         });
         try {
-            jasa = await this.service.update(q.where, data);
+            jasa = await this.service.update(
+                q.where,
+                this.service.cleanUpdateData(data),
+            );
         } catch (error) {
             throw new NotFoundException(error);
         }

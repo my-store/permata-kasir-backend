@@ -149,6 +149,21 @@ export class JasaServiceV1 {
         });
     }
 
+    cleanUpdateData(d: any): any {
+        const {
+            // Disabled data to be updated
+            id,
+            uuid,
+            tokoId,
+            createdAt,
+            updatedAt,
+
+            // Fixed | Now data update will be save
+            ...cleanedData
+        }: any = d;
+        return cleanedData;
+    }
+
     async create(newData: any): Promise<Jasa> {
         // Konfigurasi timestamp
         const thisTime = new Date().toISOString();
