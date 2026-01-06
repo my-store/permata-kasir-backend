@@ -59,7 +59,13 @@ export class AdminControllerV1 {
             // Terminate task
             throw new UnauthorizedException();
         }
-        return this.create(data, foto);
+        return this.create(
+            data,
+            foto,
+
+            // 6 January 2026
+            { user: { role: "Admin" } },
+        );
     }
 
     /* =====================================================
@@ -99,7 +105,18 @@ export class AdminControllerV1 {
         @Body() data: CreateAdminDtoV1,
         @UploadedFile()
         foto: Express.Multer.File,
+
+        // 6 January 2026
+        @Request() req: any,
     ): Promise<Admin> {
+        // 6 January 2026
+        const { role } = req.user;
+
+        // Block request for non-admin client
+        if (role != "Admin") {
+            throw new UnauthorizedException();
+        }
+
         let newData: any;
 
         /* ----------------------------------------------------------
