@@ -125,7 +125,10 @@ export class TransaksiPembelianControllerV1 {
             headers: req.user,
         });
         try {
-            transaksiPembelian = await this.service.update(q.where, data);
+            transaksiPembelian = await this.service.update(
+                q.where,
+                this.service.cleanUpdateData(data),
+            );
         } catch (error) {
             throw new NotFoundException(error);
         }
