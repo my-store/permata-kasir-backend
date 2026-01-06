@@ -1,10 +1,10 @@
-import { DiskonController } from './diskon.controller';
-import { PrismaService } from 'src/prisma.service';
-import { DiskonService } from './diskon.service';
-import { Module } from '@nestjs/common';
+import { DiskonControllerV1 } from "./v1/diskon.controller.v1";
+import { DiskonServiceV1 } from "./v1/diskon.service.v1";
+import { PrismaService } from "src/prisma.service";
+import { Module } from "@nestjs/common";
 
 @Module({
-  controllers: [DiskonController],
-  providers: [DiskonService, PrismaService],
+    controllers: [DiskonControllerV1],
+    providers: [DiskonServiceV1, PrismaService],
 })
 export class DiskonModule {}

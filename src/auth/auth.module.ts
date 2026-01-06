@@ -1,23 +1,23 @@
+import { AuthControllerV1 } from "./v1/auth.controller.v1";
 import { AdminModule } from "../admin/admin.module";
-import { AuthController } from "./auth.controller";
+import { AuthServiceV1 } from "./v1/auth.service.v1";
 import { UserModule } from "../user/user.module";
-import { AuthService } from "./auth.service";
 import { Module } from "@nestjs/common";
 import { JwtModule } from "@nestjs/jwt";
 
 @Module({
-  imports: [
-    AdminModule,
-    UserModule,
-    JwtModule.register({
-      global: true,
-      secret: process.env.APP_AUTH_API_KEY,
-      signOptions: {
-        expiresIn: "1h", // 1 Jam
-      },
-    }),
-  ],
-  controllers: [AuthController],
-  providers: [AuthService],
+    imports: [
+        AdminModule,
+        UserModule,
+        JwtModule.register({
+            global: true,
+            secret: process.env.APP_AUTH_API_KEY,
+            signOptions: {
+                expiresIn: "1h", // 1 Jam
+            },
+        }),
+    ],
+    controllers: [AuthControllerV1],
+    providers: [AuthServiceV1],
 })
 export class AuthModule {}

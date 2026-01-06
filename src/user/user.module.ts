@@ -1,18 +1,18 @@
-import { UserRegisterTicketService } from "./user.register.ticket.service";
-import { AdminService } from "src/admin/admin.service";
-import { UserController } from "./user.controller";
+import { UserRegisterTicketServiceV1 } from "./v1/user.register.ticket.service.v1";
+import { AdminServiceV1 } from "src/admin/v1/admin.service.v1";
+import { UserControllerV1 } from "./v1/user.controller.v1";
+import { UserServiceV1 } from "./v1/user.service.v1";
 import { PrismaService } from "../prisma.service";
-import { UserService } from "./user.service";
 import { Module } from "@nestjs/common";
 
 @Module({
-    exports: [UserService],
-    controllers: [UserController],
+    exports: [UserServiceV1],
+    controllers: [UserControllerV1],
     providers: [
-        UserRegisterTicketService,
+        UserRegisterTicketServiceV1,
         PrismaService,
-        AdminService,
-        UserService,
+        AdminServiceV1,
+        UserServiceV1,
     ],
 })
 export class UserModule {}

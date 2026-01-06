@@ -1,0 +1,20 @@
+import { IsNotEmpty } from "class-validator";
+
+export class CreateMemberDtoV1 {
+    @IsNotEmpty()
+    nama: string;
+
+    @IsNotEmpty()
+    alamat: string;
+
+    @IsNotEmpty()
+    tlp: string;
+
+    @IsNotEmpty()
+    tokoId: number;
+
+    @IsNotEmpty()
+    userId: number;
+
+    memberRankingId?: number;
+}

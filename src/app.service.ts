@@ -1,13 +1,13 @@
 import { Injectable, UnauthorizedException } from "@nestjs/common";
-import { AdminService } from "./admin/admin.service";
-import { UserService } from "./user/user.service";
+import { AdminServiceV1 } from "./admin/v1/admin.service.v1";
+import { UserServiceV1 } from "./user/v1/user.service.v1";
 import { Admin, User } from "models/client";
 
 @Injectable()
 export class AppService {
     constructor(
-        private readonly admin: AdminService,
-        private readonly user: UserService,
+        private readonly admin: AdminServiceV1,
+        private readonly user: UserServiceV1,
     ) {}
 
     async updateOnlineStatus(

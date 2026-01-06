@@ -1,7 +1,7 @@
-import { TransaksiPenjualanModule } from "./transaksi-penjualan/transaksi-penjualan.module";
-import { TransaksiPembelianModule } from "./transaksi-pembelian/transaksi-pembelian.module";
-import { MemberRankModule } from "./member-rank/member-rank.module";
-import { UserRankModule } from "./user-rank/user-rank.module";
+import { TransaksiPenjualanModule } from "./transaksi-penjualan/transaksi.penjualan.module";
+import { TransaksiPembelianModule } from "./transaksi-pembelian/transaksi.pembelian.module";
+import { MemberRankModule } from "./member-rank/member.rank.module";
+import { UserRankModule } from "./user-rank/user.rank.module";
 import { ServeStaticModule } from "@nestjs/serve-static";
 import { ProdukModule } from "./produk/produk.module";
 import { DiskonModule } from "./diskon/diskon.module";

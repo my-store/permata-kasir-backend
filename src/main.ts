@@ -1,5 +1,5 @@
 import { NestExpressApplication } from "@nestjs/platform-express";
-import { ValidationPipe } from "@nestjs/common";
+import { ValidationPipe, VersioningType } from "@nestjs/common";
 import { NestFactory } from "@nestjs/core";
 import { AppModule } from "./app.module";
 
@@ -11,6 +11,13 @@ async function bootstrap() {
         methods: "GET,HEAD,PUT,PATCH,POST,DELETE",
         credentials: true,
     });
+
+    // Enable api versioning - 6 January 2026
+    app.enableVersioning({
+        type: VersioningType.URI,
+    });
+
+    app.setGlobalPrefix("api");
 
     // Enable public folder
     app.useStaticAssets("./public", { prefix: "/static/" });
