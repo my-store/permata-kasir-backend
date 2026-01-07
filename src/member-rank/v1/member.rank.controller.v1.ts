@@ -7,6 +7,7 @@ import { MemberRank, Prisma } from "models";
 import {
     InternalServerErrorException,
     UnauthorizedException,
+    BadRequestException,
     NotFoundException,
     Controller,
     UseGuards,
@@ -115,6 +116,11 @@ export class MemberRankControllerV1 {
         @Body() data: UpdateMemberRankDtoV1,
         @Request() req: any,
     ): Promise<MemberRank> {
+        // No update data is presented
+        if (!data || Object.keys(data).length < 1) {
+            throw new BadRequestException("No data is presented!");
+        }
+
         let memberRank: MemberRank;
         const q: any = this.service.secureQueries({
             queries: {

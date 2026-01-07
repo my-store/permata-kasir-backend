@@ -7,6 +7,7 @@ import { ParseUrlQuery } from "src/libs/string";
 import {
     InternalServerErrorException,
     UnauthorizedException,
+    BadRequestException,
     NotFoundException,
     Controller,
     UseGuards,
@@ -115,6 +116,11 @@ export class TransaksiPembelianControllerV1 {
         @Body() data: UpdateTransaksiPembelianDtoV1,
         @Request() req: any,
     ): Promise<TransaksiPembelian> {
+        // No update data is presented
+        if (!data || Object.keys(data).length < 1) {
+            throw new BadRequestException("No data is presented!");
+        }
+
         let transaksiPembelian: TransaksiPembelian;
         const q: any = this.service.secureQueries({
             queries: {

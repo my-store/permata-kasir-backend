@@ -129,6 +129,11 @@ export class MemberControllerV1 {
         @Body() data: UpdateMemberDtoV1,
         @Request() req: any,
     ): Promise<Member> {
+        // No update data is presented
+        if (!data || Object.keys(data).length < 1) {
+            throw new BadRequestException("No data is presented!");
+        }
+
         let member: Member;
         const q: any = this.service.secureQueries({
             queries: {

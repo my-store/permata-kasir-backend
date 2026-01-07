@@ -7,6 +7,7 @@ import { Diskon, Prisma } from "models";
 import {
     InternalServerErrorException,
     UnauthorizedException,
+    BadRequestException,
     NotFoundException,
     Controller,
     UseGuards,
@@ -112,6 +113,11 @@ export class DiskonControllerV1 {
         @Body() data: UpdateDiskonDtoV1,
         @Request() req: any,
     ): Promise<Diskon> {
+        // No update data is presented
+        if (!data || Object.keys(data).length < 1) {
+            throw new BadRequestException("No data is presented!");
+        }
+
         let diskon: Diskon;
         const q: any = this.service.secureQueries({
             queries: {

@@ -7,17 +7,18 @@ import { encryptPassword } from "src/libs/bcrypt";
 import { ParseUrlQuery } from "src/libs/string";
 import { Admin } from "models/client";
 import {
-    UpdateAdminPasswordDtoV1,
-    UpdateAdminDtoV1,
-} from "./dto/update.admin.v1.dto";
-import * as bcrypt from "bcrypt";
-import {
     GetFileDestBeforeUpload,
     ProfileImageValidator,
     upload_img_dir,
     DeleteFileOrDir,
     UploadFile,
 } from "src/libs/upload-file-handler";
+import {
+    UpdateAdminPasswordDtoV1,
+    UpdateAdminDtoV1,
+} from "./dto/update.admin.v1.dto";
+import * as bcrypt from "bcrypt";
+import { join } from "path";
 import {
     InternalServerErrorException,
     UnauthorizedException,
@@ -35,7 +36,6 @@ import {
     Post,
     Get,
 } from "@nestjs/common";
-import { join } from "path";
 
 @Controller({ version: "1", path: "admin" })
 export class AdminControllerV1 {
@@ -280,6 +280,11 @@ export class AdminControllerV1 {
         @Request() req: any,
         @UploadedFile() foto?: Express.Multer.File,
     ): Promise<Admin> {
+        // No update data is presented
+        if (!data || Object.keys(data).length < 1) {
+            throw new BadRequestException("No data is presented!");
+        }
+
         let updatedData: Admin;
 
         /* ----------------------------------------------------------

@@ -7,6 +7,7 @@ import { Prisma, Produk } from "models";
 import {
     InternalServerErrorException,
     UnauthorizedException,
+    BadRequestException,
     NotFoundException,
     Controller,
     UseGuards,
@@ -114,6 +115,11 @@ export class ProdukControllerV1 {
         @Body() data: UpdateProdukDtoV1,
         @Request() req: any,
     ): Promise<Produk> {
+        // No update data is presented
+        if (!data || Object.keys(data).length < 1) {
+            throw new BadRequestException("No data is presented!");
+        }
+
         let produk: Produk;
         const q: any = this.service.secureQueries({
             queries: {

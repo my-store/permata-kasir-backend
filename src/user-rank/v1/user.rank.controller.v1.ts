@@ -18,6 +18,7 @@ import {
     Post,
     Body,
     Get,
+    BadRequestException,
 } from "@nestjs/common";
 
 @UseGuards(AuthGuardV1)
@@ -95,15 +96,24 @@ export class UserRankControllerV1 {
         @Body() data: UpdateUserRankDtoV1,
         @Request() req: any,
     ): Promise<UserRank> {
+        // No update data is presented
+        if (!data || Object.keys(data).length < 1) {
+            throw new BadRequestException("No data is presented!");
+        }
+
+        // Blokir jika request ini datang dari user
         const { sub, role } = req.user;
         if (role != "Admin") {
             throw new UnauthorizedException();
         }
+
         let userRank: UserRank;
         try {
             userRank = await this.userRankService.update(
                 {
                     uuid,
+
+                    // Hanya admin (pemilik) yang dapat merubah data
                     admin: {
                         tlp: sub,
                     },
