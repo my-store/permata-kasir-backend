@@ -7,6 +7,7 @@ import { UserRank } from "models";
 import {
     InternalServerErrorException,
     UnauthorizedException,
+    BadRequestException,
     NotFoundException,
     Controller,
     UseGuards,
@@ -18,7 +19,6 @@ import {
     Post,
     Body,
     Get,
-    BadRequestException,
 } from "@nestjs/common";
 
 @UseGuards(AuthGuardV1)
