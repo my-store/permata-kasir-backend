@@ -1,4 +1,3 @@
-import { InternalServerErrorException } from "@nestjs/common";
 import { spawn } from "child_process";
 import { dirname, join } from "path";
 import { copyFileSync } from "fs";
@@ -32,13 +31,8 @@ export async function uploadUpdateFiles(): Promise<void> {
             // Create a folder if it doesn't exist
             checkOrCreateDir(dirname(dest));
 
-            // SOON will be fixed for subfolder copy!
             // Copy update file
-            try {
-                copyFileSync(join(__dirname, "..", "..", f), dest);
-            } catch (error) {
-                throw new InternalServerErrorException(error);
-            }
+            copyFileSync(join(__dirname, "..", "..", f), dest);
         }
 
         // Remove / delete everything inside update folder

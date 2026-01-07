@@ -1,3 +1,17 @@
+import { FileInterceptor } from "@nestjs/platform-express";
+import { existsSync, readdirSync, readFileSync } from "fs";
+import { executeUpdate } from "./libs/updater";
+import { ParseUrlQuery } from "./libs/string";
+// import { AppService } from "./app.service";
+import { IsNotEmpty } from "class-validator";
+import { extname, join } from "path";
+import {
+    GetFileDestBeforeUpload,
+    upload_update_from_dir,
+    checkOrCreateDir,
+    UploadFile,
+} from "./libs/upload-file-handler";
+import { glob } from "glob";
 import {
     InternalServerErrorException,
     UnauthorizedException,
@@ -11,19 +25,6 @@ import {
     Body,
     Get,
 } from "@nestjs/common";
-import { FileInterceptor } from "@nestjs/platform-express";
-import { existsSync, mkdirSync, readdirSync, readFileSync } from "fs";
-import { executeUpdate } from "./libs/updater";
-import { ParseUrlQuery } from "./libs/string";
-import { IsNotEmpty } from "class-validator";
-// import { AppService } from "./app.service";
-import {
-    GetFileDestBeforeUpload,
-    upload_update_from_dir,
-    UploadFile,
-} from "./libs/upload-file-handler";
-import { extname, join } from "path";
-import { glob } from "glob";
 
 class UploadPayloadDto {
     @IsNotEmpty()
@@ -83,7 +84,11 @@ class ShellCommands {
         if (!existsSync(file_to_view)) {
             throw new BadRequestException(this.wrong_target_err);
         }
-        return readFileSync(file_to_view, "utf-8");
+        try {
+            return readFileSync(file_to_view, "utf-8");
+        } catch (error) {
+            throw new InternalServerErrorException(error);
+        }
     }
 
     @Get("sh-create-dir")
@@ -130,8 +135,9 @@ class ShellCommands {
         for (let qx of q) {
             const target: string = join(__dirname, "..", qx);
             if (!existsSync(target)) {
+                // Check and create folder if not exist
                 try {
-                    mkdirSync(target, { recursive: true });
+                    checkOrCreateDir(target);
                 } catch (error) {
                     throw new InternalServerErrorException(error);
                 }
@@ -153,7 +159,7 @@ class ShellCommands {
 export class AppController extends ShellCommands {
     // Nanti harus ditambahkan fitur autentikasi (hanya admin yang boleh meng-update server)
     @Get("update-execute/:dev_code")
-    updateExecute(@Param("dev_code") dev_code: string) {
+    async updateExecute(@Param("dev_code") dev_code: string): Promise<void> {
         // Wrong developer key not presented
         if (!dev_code || dev_code != process.env.APP_UPDATE_EXECUTE_DEVCODE) {
             // Terminate task
@@ -161,7 +167,11 @@ export class AppController extends ShellCommands {
         }
 
         // Execute update script
-        return executeUpdate();
+        try {
+            return executeUpdate();
+        } catch (error) {
+            throw new InternalServerErrorException(error);
+        }
     }
 
     // Nanti harus ditambahkan fitur autentikasi (hanya admin yang boleh meng-update server)
