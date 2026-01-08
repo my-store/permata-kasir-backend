@@ -7,6 +7,7 @@ models
 
 public/img/admin
 public/img/user
+public/img/kasir
 
 .turbo
 dist
