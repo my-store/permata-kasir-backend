@@ -30,6 +30,7 @@ model Admin {
   users              User[]
   userRank           UserRank[]
   userRegisterTicket UserRegisterTicket[]
+  adminRefreshToken  AdminRefreshToken[]
 
   createdAt DateTime
   updatedAt DateTime
@@ -68,14 +69,15 @@ model User {
   userRankId Int
 
   // Child tables
-  toko Toko[]
+  toko             Toko[]
+  userRefreshToken UserRefreshToken[]
 
   createdAt DateTime
   updatedAt DateTime
 }
 
 /**
- * =====================================================
+ * ========================================================
  * |  REGISTER SECURITY TABLE
  * |  =====================================================
  * |  Hanya dapat digunakan dalam waktu beberapa menit saja
@@ -95,7 +97,7 @@ model UserRegisterTicket {
 }
 
 /**
- * =====================================================
+ * ========================================================
  * |  ATURAN PENGGUNA
  * |  =====================================================
  * |  Disini menyimpan aturan pengguna gratis dan berbayar
@@ -106,7 +108,7 @@ model UserRank {
   nama String
 
   /**
-   * =====================================================
+   * ========================================================
    * |  MAKSIMAL JUMLAH TOKO
    * |  =====================================================
    * |  1. Ultimate
@@ -180,7 +182,7 @@ model Toko {
   userId Int
 
   // Child tables
-  Monitor            Monitor[] // Pengawas
+  monitorToko        MonitorToko[] // Pengawas Toko
   kasir              Kasir[]
   produk             Produk[]
   jasa               Jasa[]
@@ -204,16 +206,19 @@ model Toko {
  * |  -----------------------------------------------------
  * |  Harus login menggunakan uuid & password
  */
-model Monitor {
+model MonitorToko {
   id Int @id @default(autoincrement())
 
   // Credentials untuk login
-  uuid     String @unique
+  username String @unique
   password String
 
   // Parent table
   toko   Toko @relation(fields: [tokoId], references: [id])
   tokoId Int
+
+  // Child Tables
+  monitorTokoRefreshToken MonitorTokoRefreshToken[]
 
   createdAt DateTime
   updatedAt DateTime
@@ -246,6 +251,9 @@ model Kasir {
   toko   Toko @relation(fields: [tokoId], references: [id])
   tokoId Int
 
+  // Child Tables
+  kasirRefreshToken KasirRefreshToken[]
+
   createdAt DateTime
   updatedAt DateTime
 }
@@ -263,7 +271,8 @@ model Produk {
   tokoId Int
 
   // Many to many relations
-  diskon Diskon[]
+  diskon             Diskon[]
+  transaksiPenjualan TransaksiPenjualan[]
 
   createdAt DateTime
   updatedAt DateTime
@@ -351,7 +360,7 @@ model TransaksiPembelian {
   tokoId Int
 
   /**
-   * =====================================================
+   * ========================================================
    * |  JSON DATA - TIDAK BERGANTUNG DENGAN RELASI
    * |  =====================================================
    * |  Jika tabel produk dihapus, tidak akan berpengaruh
@@ -363,6 +372,13 @@ model TransaksiPembelian {
   updatedAt DateTime
 }
 
+/**
+ * ========================================================
+ * |  TRANSAKSI PENJUALAN TOKO
+ * |  =====================================================
+ * |  Jika tabel produk dihapus, tidak akan berpengaruh
+ * |  pada data JSON ini.
+ */
 model TransaksiPenjualan {
   id   Int    @id @default(autoincrement())
   uuid String @unique
@@ -371,14 +387,87 @@ model TransaksiPenjualan {
   toko   Toko @relation(fields: [tokoId], references: [id])
   tokoId Int
 
-  /**
-   * =====================================================
-   * |  JSON DATA - TIDAK BERGANTUNG DENGAN RELASI
-   * |  =====================================================
-   * |  Jika tabel produk dihapus, tidak akan berpengaruh
-   * |  pada data JSON ini.
-   */
-  produk String // Example: [{ id: Important, nama, harga, dll }]
+  // Many to Many relation
+  produk Produk[]
+
+  createdAt DateTime
+  updatedAt DateTime
+}
+
+/**
+ * ========================================================
+ * |  REFRESH LOGIN TOKEN
+ * |  =====================================================
+ * |  Berlaku untuk Admin, User dan Kasir
+ * |  -----------------------------------------------------
+ * |  Saat login akan dibuatkan otomatis refresh token
+ * |  yang nantinya akan digunakan untuk membuat token baru
+ * |  saat masa aktif token telah habis.
+ * |  -----------------------------------------------------
+ * |  Sebelum memberikan token baru, akan dilakukan
+ * |  pengecekan apakah token dan refresh token
+ * |  yang diberikan oleh user sesuai dengan yang ada
+ * |  di database.
+ */
+model AdminRefreshToken {
+  id Int @id @default(autoincrement())
+
+  // Dibuat saat login,
+  // akan digunakan lagi untuk pengecekan sebelum membuat token baru
+  token        String
+  refreshToken String
+
+  // Parent Table
+  admin   Admin @relation(fields: [adminId], references: [id])
+  adminId Int
+
+  createdAt DateTime
+  updatedAt DateTime
+}
+
+model UserRefreshToken {
+  id Int @id @default(autoincrement())
+
+  // Dibuat saat login,
+  // akan digunakan lagi untuk pengecekan sebelum membuat token baru
+  token        String
+  refreshToken String
+
+  // Parent Table
+  user   User @relation(fields: [userId], references: [id])
+  userId Int
+
+  createdAt DateTime
+  updatedAt DateTime
+}
+
+model KasirRefreshToken {
+  id Int @id @default(autoincrement())
+
+  // Dibuat saat login,
+  // akan digunakan lagi untuk pengecekan sebelum membuat token baru
+  token        String
+  refreshToken String
+
+  // Parent Table
+  kasir   Kasir @relation(fields: [kasirId], references: [id])
+  kasirId Int
+
+  createdAt DateTime
+  updatedAt DateTime
+}
+
+model MonitorTokoRefreshToken {
+  id Int @id @default(autoincrement())
+
+  // Dibuat saat login,
+  // akan digunakan lagi untuk pengecekan sebelum membuat token baru
+  token        String
+  refreshToken String
+
+  // Parent Table
+  monitorToko   MonitorToko @relation(fields: [monitorTokoId], references: [id])
+  monitorTokoId Int
 
   createdAt DateTime
   updatedAt DateTime
