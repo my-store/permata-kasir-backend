@@ -15,13 +15,14 @@ datasource db {
 }
 
 model Admin {
-  id         Int     @id @default(autoincrement())
-  uuid       String  @unique
-  nama       String
-  tlp        String  @unique
-  password   String
-  alamat     String
-  foto       String? // URL foto
+  id       Int     @id @default(autoincrement())
+  uuid     String  @unique
+  nama     String
+  tlp      String  @unique
+  password String
+  alamat   String
+  foto     String? // URL foto
+
   online     Boolean @default(false)
   lastOnline String?
 
@@ -225,6 +226,9 @@ model Kasir {
   tlp      String  @unique
   password String
   foto     String? // URL foto
+
+  online     Boolean @default(false)
+  lastOnline String?
 
   /**
    * ==========================================================

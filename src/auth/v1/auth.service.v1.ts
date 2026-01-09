@@ -133,6 +133,7 @@ export class AuthServiceV1 {
         // --------------------------------------------------------------
         // Jangan lupa buat dulu tabel untuk menyimpan token di database.
         // --------------------------------------------------------------
+        // UPDATED: 9 January 2026
 
         // Buat token baru
         return this.createJwt(data, role);
