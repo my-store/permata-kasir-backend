@@ -12,6 +12,7 @@ const defaultKeys: DefaultKeysInterface = {
     nama: true,
     tlp: true,
     password: true,
+    foto: true,
     createdAt: true,
     updatedAt: true,
 

@@ -50,9 +50,9 @@ model User {
    * ==========================================================
    * |  USER STATUS
    * |  =======================================================
-   * |  1. active = Need to activate by admin
-   * |  2. deactivatedAt = kapan admin memblokir user ini
-   * |  3. deactivatedReason = alasan admin memblokir user ini
+   * |  1. active = Harus di aktivasi oleh admin
+   * |  2. deactivatedAt = kapan admin memblokir user
+   * |  3. deactivatedReason = alasan admin memblokir user
    */
   active            Boolean   @default(false)
   deactivatedAt     DateTime?
@@ -225,6 +225,18 @@ model Kasir {
   tlp      String  @unique
   password String
   foto     String? // URL foto
+
+  /**
+   * ==========================================================
+   * |  KASIR STATUS
+   * |  =======================================================
+   * |  1. active = Harus di aktivasi oleh user (pemilik toko)
+   * |  2. deactivatedAt = kapan user memblokir kasir
+   * |  3. deactivatedReason = alasan user memblokir kasir
+   */
+  active            Boolean   @default(false)
+  deactivatedAt     DateTime?
+  deactivatedReason String?
 
   // Parent table
   toko   Toko @relation(fields: [tokoId], references: [id])

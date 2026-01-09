@@ -1,12 +1,13 @@
 import { Injectable, UnauthorizedException } from "@nestjs/common";
 import { AdminServiceV1 } from "../../admin/v1/admin.service.v1";
+import { KasirServiceV1 } from "src/kasir/v1/kasir.service.v1";
 import { UserServiceV1 } from "../../user/v1/user.service.v1";
-import { Admin, User } from "models/client";
+import { Admin, User, Kasir } from "models/client";
 import { JwtService } from "@nestjs/jwt";
 import * as bcrypt from "bcrypt";
 
-interface FindAdminOrUser {
-    data: Admin | User;
+interface FindAccountInterface {
+    data: Admin | User | Kasir;
     role: string;
 }
 
@@ -15,10 +16,11 @@ export class AuthServiceV1 {
     constructor(
         private readonly admin: AdminServiceV1,
         private readonly user: UserServiceV1,
+        private readonly kasir: KasirServiceV1,
         private readonly jwt: JwtService,
     ) {}
 
-    async findAdminOrUser(tlp: string): Promise<FindAdminOrUser> {
+    async findAccount(tlp: string): Promise<FindAccountInterface> {
         let data: any;
         let role: string = "";
 
@@ -33,20 +35,31 @@ export class AuthServiceV1 {
             try {
                 data = await this.user.findOne({ where: { tlp } });
                 role = "User";
-            } catch {
-                // The user also not found, terminate task
-                throw new UnauthorizedException();
-            }
+            } catch {}
+        }
+
+        // User not found, try find kasir
+        if (!data) {
+            try {
+                data = await this.kasir.findOne({ where: { tlp } });
+                role = "Kasir";
+            } catch {}
+        }
+
+        // The kasir also not found
+        if (!data) {
+            // Terminate task
+            throw new UnauthorizedException();
         }
 
         return { data, role };
     }
 
     async signIn(tlp: string, pass: string): Promise<any> {
-        const { data, role }: any = await this.findAdminOrUser(tlp);
+        const { data, role }: any = await this.findAccount(tlp);
 
         // Admin or User not found
-        if (!data) {
+        if (!data || role.length < 1) {
             // Terminate task
             throw new UnauthorizedException("Akun tidak ditemukan!");
         }
@@ -59,24 +72,35 @@ export class AuthServiceV1 {
             throw new UnauthorizedException("Password salah!");
         }
 
-        // User rules
-        if (role == "User") {
+        // User and Kasir rules
+        if (role == "User" || role == "Kasir") {
             // Blocked | banned account | not activated yet
             if (!data.active) {
                 // Blocked or banned
                 if (data.deactivatedAt && data.deactivatedAt.length > 0) {
                     // Terminate task
                     throw new UnauthorizedException(
-                        "Akun anda telah di blokir!",
+                        `Akun anda telah di blokir, karena:\n${data.deactivatedReason}`,
                     );
                 }
 
                 // Not activated (make sure deactivatedAt is empty string)
                 else {
-                    // Terminate task
-                    throw new UnauthorizedException(
-                        "Akun anda belum di aktivasi, silahkan menghubungi admin.",
-                    );
+                    let msg: string =
+                        "Akun anda belum di aktivasi, silahkan menghubungi ";
+
+                    switch (role) {
+                        // Jika yang login adalah kasir
+                        case "Kasir":
+                            msg += "pemilik toko";
+                            break;
+                        // Jika yang login adalah user
+                        default:
+                            msg += "admin";
+                    }
+
+                    // Terminate task, and display the message
+                    throw new UnauthorizedException(msg);
                 }
             }
         }
@@ -85,7 +109,7 @@ export class AuthServiceV1 {
         return this.createJwt(data, role);
     }
 
-    async createJwt(person: Admin | User, role: string): Promise<any> {
+    async createJwt(person: Admin | User | Kasir, role: string): Promise<any> {
         const payload = { sub: person.tlp, role };
         const access_token = await this.jwt.signAsync(payload);
         return { access_token, role };
@@ -93,7 +117,7 @@ export class AuthServiceV1 {
 
     async refresh(tlp: string): Promise<void> {
         // Ambil data user/admin
-        const { data, role }: any = await this.findAdminOrUser(tlp);
+        const { data, role }: any = await this.findAccount(tlp);
 
         // Admin or User not found
         if (!data) {
