@@ -1,3 +1,4 @@
+import { MonitorTokoModule } from "src/monitor-toko/monitor-toko.module";
 import { AuthControllerV1 } from "./v1/auth.controller.v1";
 import { KasirModule } from "src/kasir/kasir.module";
 import { AuthServiceV1 } from "./v1/auth.service.v1";
@@ -11,6 +12,7 @@ import { JwtModule } from "@nestjs/jwt";
         AdminModule,
         UserModule,
         KasirModule,
+        MonitorTokoModule,
         JwtModule.register({
             global: true,
             secret: process.env.APP_AUTH_API_KEY,

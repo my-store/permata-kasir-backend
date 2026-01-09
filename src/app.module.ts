@@ -18,6 +18,7 @@ import { AppService } from "./app.service";
 import { Module } from "@nestjs/common";
 import { join } from "path";
 import { KasirModule } from './kasir/kasir.module';
+import { MonitorTokoModule } from './monitor-toko/monitor-toko.module';
 
 @Module({
     imports: [
@@ -38,6 +39,7 @@ import { KasirModule } from './kasir/kasir.module';
         JasaModule,
         UserRankModule,
         KasirModule,
+        MonitorTokoModule,
     ],
 
     controllers: [AppController],

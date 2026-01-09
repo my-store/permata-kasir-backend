@@ -16,18 +16,18 @@ export class AuthControllerV1 {
 
     @Post()
     signIn(@Body() signInDto: AuthLoginDtoV1) {
-        return this.service.signIn(signInDto.tlp, signInDto.pass);
+        return this.service.signIn(signInDto.tlp, signInDto.password);
     }
 
     @Post("refresh")
-    refreshToken(@Body() data: AuthRefreshDtoV1) {
-        return this.service.refresh(data.tlp);
+    refreshToken(@Request() req: any, @Body() data: AuthRefreshDtoV1) {
+        return this.service.refresh({ refreshData: { ...data, ...req.user } });
     }
 
     // PROTECTED ROUTE
     @UseGuards(AuthGuardV1)
     @Get()
-    getProfile(@Request() req) {
+    getProfile(@Request() req: any) {
         return req.user;
     }
 }

@@ -217,9 +217,6 @@ model MonitorToko {
   toko   Toko @relation(fields: [tokoId], references: [id])
   tokoId Int
 
-  // Child Tables
-  monitorTokoRefreshToken MonitorTokoRefreshToken[]
-
   createdAt DateTime
   updatedAt DateTime
 }
@@ -452,22 +449,6 @@ model KasirRefreshToken {
   // Parent Table
   kasir   Kasir @relation(fields: [kasirId], references: [id])
   kasirId Int
-
-  createdAt DateTime
-  updatedAt DateTime
-}
-
-model MonitorTokoRefreshToken {
-  id Int @id @default(autoincrement())
-
-  // Dibuat saat login,
-  // akan digunakan lagi untuk pengecekan sebelum membuat token baru
-  token        String
-  refreshToken String
-
-  // Parent Table
-  monitorToko   MonitorToko @relation(fields: [monitorTokoId], references: [id])
-  monitorTokoId Int
 
   createdAt DateTime
   updatedAt DateTime

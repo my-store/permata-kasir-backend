@@ -1,6 +1,6 @@
+import { Prisma, User, UserRefreshToken } from "models";
 import { PrismaService } from "../../prisma.service";
 import { encryptPassword } from "../../libs/bcrypt";
-import { Prisma, User } from "models/client";
 import { generateId } from "src/libs/string";
 import { Injectable } from "@nestjs/common";
 
@@ -41,6 +41,13 @@ export class UserServiceV1 {
         ...defaultKeys,
 
         // Another keys
+    };
+
+    // Refresh Token Keys
+    private readonly refreshTokenKeys: Prisma.UserRefreshTokenSelect = {
+        id: true,
+        token: true,
+        refreshToken: true,
     };
 
     constructor(private readonly prisma: PrismaService) {}
@@ -163,5 +170,29 @@ export class UserServiceV1 {
 
     async remove(where: Prisma.UserWhereUniqueInput): Promise<User> {
         return this.prisma.user.delete({ where, select: this.findOneKeys });
+    }
+
+    /* ==============================================================
+    |  REFRESH TOKEN
+    |  ==============================================================
+    |  Update 9 January 2026
+    |  --------------------------------------------------------------
+    |  Mencari token lama sebelum token baru dibuat.
+    */
+    async findToken(params: {
+        select?: Prisma.UserRefreshTokenSelect;
+        where: Prisma.UserRefreshTokenWhereUniqueInput;
+    }): Promise<UserRefreshToken> {
+        const { select, where } = params;
+        return this.prisma.userRefreshToken.findUniqueOrThrow({
+            select: {
+                // Default keys to display
+                ...this.refreshTokenKeys,
+
+                // User specified keys to display
+                ...select,
+            },
+            where,
+        });
     }
 }

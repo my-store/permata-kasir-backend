@@ -1,18 +1,14 @@
-import { Prisma, Kasir, KasirRefreshToken } from "models";
 import { PrismaService } from "src/prisma.service";
-import { generateId } from "src/libs/string";
+import { Prisma, MonitorToko } from "models";
 import { Injectable } from "@nestjs/common";
 
 // Placeholder | Short type name purpose only
-interface DefaultKeysInterface extends Prisma.KasirSelect {}
+interface DefaultKeysInterface extends Prisma.MonitorTokoSelect {}
 
 const defaultKeys: DefaultKeysInterface = {
     id: true,
-    uuid: true,
-    nama: true,
-    tlp: true,
+    username: true,
     password: true,
-    foto: true,
     createdAt: true,
     updatedAt: true,
 
@@ -21,7 +17,7 @@ const defaultKeys: DefaultKeysInterface = {
 };
 
 @Injectable()
-export class KasirServiceV1 {
+export class MonitorTokoServiceV1 {
     private readonly findAllKeys: DefaultKeysInterface = {
         // Default keys
         ...defaultKeys,
@@ -34,13 +30,6 @@ export class KasirServiceV1 {
         ...defaultKeys,
 
         // Another keys
-    };
-
-    // Refresh Token Keys
-    private readonly refreshTokenKeys: Prisma.KasirRefreshTokenSelect = {
-        id: true,
-        token: true,
-        refreshToken: true,
     };
 
     constructor(private readonly prisma: PrismaService) {}
@@ -83,10 +72,10 @@ export class KasirServiceV1 {
                 /* -----------------------------------------------------
                 |  OVERRIDE USER WHERE STATEMENTS
                 |  -----------------------------------------------------
-                |  Hanya menampilkan atau memodifikasi data kasir
+                |  Hanya menampilkan atau memodifikasi data monitor-toko
                 |  sesuai dengan toko yang user miliki,
                 |  jika user memiliki banyak toko, akan menampilkan
-                |  seluruh kasir dari toko-toko tersebut.
+                |  seluruh monitor-toko dari toko-toko tersebut.
                 */
                 toko: {
                     user: {
@@ -164,28 +153,13 @@ export class KasirServiceV1 {
         return cleanedData;
     }
 
-    async create(newData: any): Promise<Kasir> {
+    async create(newData: any): Promise<MonitorToko> {
         // Konfigurasi timestamp
         const thisTime = new Date().toISOString();
 
-        // UUID
-        const uuid: string = generateId(10);
-
-        // Pastikan uuid belum pernah digunakan
-        try {
-            // Jika tidak ditemukan, akan langsung ke input method dibawah
-            await this.prisma.kasir.findUniqueOrThrow({ where: { uuid } });
-
-            // Jika ditemukan, buat ulang uuid dengan memanggil ulang method ini
-            return this.create(newData);
-        } catch {}
-
         // Prepare data
-        const data: Prisma.KasirCreateInput = {
+        const data: Prisma.MonitorTokoCreateInput = {
             ...newData,
-
-            // UUID
-            uuid,
 
             // Timestamp
             createdAt: thisTime,
@@ -193,19 +167,19 @@ export class KasirServiceV1 {
         };
 
         // Insert data
-        return this.prisma.kasir.create({ data });
+        return this.prisma.monitorToko.create({ data });
     }
 
     async findAll(params: {
         skip?: number;
         take?: number;
         select?: DefaultKeysInterface;
-        cursor?: Prisma.KasirWhereUniqueInput;
-        where?: Prisma.KasirWhereInput;
-        orderBy?: Prisma.KasirOrderByWithRelationInput;
-    }): Promise<Kasir[]> {
+        cursor?: Prisma.MonitorTokoWhereUniqueInput;
+        where?: Prisma.MonitorTokoWhereInput;
+        orderBy?: Prisma.MonitorTokoOrderByWithRelationInput;
+    }): Promise<MonitorToko[]> {
         const { skip, take, select, cursor, where, orderBy } = params;
-        return this.prisma.kasir.findMany({
+        return this.prisma.monitorToko.findMany({
             skip,
             take,
             cursor,
@@ -223,10 +197,10 @@ export class KasirServiceV1 {
 
     async findOne(params: {
         select?: DefaultKeysInterface;
-        where: Prisma.KasirWhereUniqueInput;
-    }): Promise<Kasir | null> {
+        where: Prisma.MonitorTokoWhereUniqueInput;
+    }): Promise<MonitorToko | null> {
         const { select, where } = params;
-        return this.prisma.kasir.findUniqueOrThrow({
+        return this.prisma.monitorToko.findUniqueOrThrow({
             select: {
                 // Default keys to display
                 ...this.findOneKeys,
@@ -239,44 +213,22 @@ export class KasirServiceV1 {
     }
 
     async update(
-        where: Prisma.KasirWhereUniqueInput,
+        where: Prisma.MonitorTokoWhereUniqueInput,
         data: any,
-    ): Promise<Kasir> {
-        let updatedData: Prisma.KasirUpdateInput = { ...data };
+    ): Promise<MonitorToko> {
+        let updatedData: Prisma.MonitorTokoUpdateInput = { ...data };
 
         // Konfigurasi timestamp
         const thisTime = new Date().toISOString();
         updatedData.updatedAt = thisTime;
 
         // Save updated data
-        return this.prisma.kasir.update({ where, data: updatedData });
+        return this.prisma.monitorToko.update({ where, data: updatedData });
     }
 
-    async remove(where: Prisma.KasirWhereUniqueInput): Promise<Kasir> {
-        return this.prisma.kasir.delete({ where });
-    }
-
-    /* ==============================================================
-        |  REFRESH TOKEN
-        |  ==============================================================
-        |  Update 9 January 2026
-        |  --------------------------------------------------------------
-        |  Mencari token lama sebelum token baru dibuat.
-        */
-    async findToken(params: {
-        select?: Prisma.KasirRefreshTokenSelect;
-        where: Prisma.KasirRefreshTokenWhereUniqueInput;
-    }): Promise<KasirRefreshToken> {
-        const { select, where } = params;
-        return this.prisma.kasirRefreshToken.findUniqueOrThrow({
-            select: {
-                // Default keys to display
-                ...this.refreshTokenKeys,
-
-                // User specified keys to display
-                ...select,
-            },
-            where,
-        });
+    async remove(
+        where: Prisma.MonitorTokoWhereUniqueInput,
+    ): Promise<MonitorToko> {
+        return this.prisma.monitorToko.delete({ where });
     }
 }

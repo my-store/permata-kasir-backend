@@ -1,6 +1,6 @@
+import { Admin, Prisma, AdminRefreshToken } from "models";
 import { PrismaService } from "src/prisma.service";
 import { encryptPassword } from "src/libs/bcrypt";
-import { Admin, Prisma } from "models/client";
 import { generateId } from "src/libs/string";
 import { Injectable } from "@nestjs/common";
 
@@ -34,6 +34,13 @@ export class AdminServiceV1 {
 
         // Another keys
         password: true,
+    };
+
+    // Refresh Token Keys
+    private readonly refreshTokenKeys: Prisma.AdminRefreshTokenSelect = {
+        id: true,
+        token: true,
+        refreshToken: true,
     };
 
     constructor(private readonly prisma: PrismaService) {}
@@ -149,5 +156,29 @@ export class AdminServiceV1 {
 
     async remove(where: Prisma.AdminWhereUniqueInput): Promise<Admin> {
         return this.prisma.admin.delete({ where, select: this.findOneKeys });
+    }
+
+    /* ==============================================================
+    |  REFRESH TOKEN
+    |  ==============================================================
+    |  Update 9 January 2026
+    |  --------------------------------------------------------------
+    |  Mencari token lama sebelum token baru dibuat.
+    */
+    async findToken(params: {
+        select?: Prisma.AdminRefreshTokenSelect;
+        where: Prisma.AdminRefreshTokenWhereUniqueInput;
+    }): Promise<AdminRefreshToken> {
+        const { select, where } = params;
+        return this.prisma.adminRefreshToken.findUniqueOrThrow({
+            select: {
+                // Default keys to display
+                ...this.refreshTokenKeys,
+
+                // User specified keys to display
+                ...select,
+            },
+            where,
+        });
     }
 }

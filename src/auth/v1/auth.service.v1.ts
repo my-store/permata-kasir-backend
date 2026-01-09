@@ -2,13 +2,30 @@ import { Injectable, UnauthorizedException } from "@nestjs/common";
 import { AdminServiceV1 } from "../../admin/v1/admin.service.v1";
 import { KasirServiceV1 } from "src/kasir/v1/kasir.service.v1";
 import { UserServiceV1 } from "../../user/v1/user.service.v1";
+import { AuthRefreshDtoV1 } from "./dto/auth.dto.v1";
 import { Admin, User, Kasir } from "models/client";
+import { generateId } from "src/libs/string";
 import { JwtService } from "@nestjs/jwt";
 import * as bcrypt from "bcrypt";
 
 interface FindAccountInterface {
     data: Admin | User | Kasir;
     role: string;
+}
+
+interface JWTResponseInterface {
+    access_token: string;
+    refresh_token: string;
+    role: string;
+}
+
+interface RefreshTokenDataInterface {
+    // Dari header.user
+    role: string; // Admin | User | Kasir
+    sub: string; // No. Tlp
+
+    // Dari request body
+    tokenData: AuthRefreshDtoV1;
 }
 
 @Injectable()
@@ -55,7 +72,7 @@ export class AuthServiceV1 {
         return { data, role };
     }
 
-    async signIn(tlp: string, pass: string): Promise<any> {
+    async signIn(tlp: string, pass: string): Promise<JWTResponseInterface> {
         const { data, role }: any = await this.findAccount(tlp);
 
         // Admin or User not found
@@ -109,15 +126,45 @@ export class AuthServiceV1 {
         return this.createJwt(data, role);
     }
 
-    async createJwt(person: Admin | User | Kasir, role: string): Promise<any> {
+    async createJwt(
+        person: Admin | User | Kasir,
+        role: string,
+    ): Promise<JWTResponseInterface> {
+        // User Payload
         const payload = { sub: person.tlp, role };
+
+        // JSON Web Token
         const access_token = await this.jwt.signAsync(payload);
-        return { access_token, role };
+
+        // Get refresh-token length (Look at .env file)
+        const rtLentgh: any = process.env.APP_AUTH_REFRESH_TOKEN_LENGTH;
+        // Parse refresh-token length to insteger
+        // and then use it for generate random ID.
+        const refresh_token = generateId(parseInt(rtLentgh));
+
+        return { access_token, refresh_token, role };
     }
 
-    async refresh(tlp: string): Promise<void> {
+    /* ==============================================================
+    |  PEMBUATAN TOKEN BARU - SETELAH KADALUARSA
+    |  ==============================================================
+    |  Disini akan dilakukan pengecekan pada database token,
+    |  jika data tidak benar, blokir permintaan refresh token.
+    |  --------------------------------------------------------------
+    */
+    async refresh(params: {
+        refreshData: RefreshTokenDataInterface;
+    }): Promise<JWTResponseInterface> {
+        const { refreshData } = params;
+
+        // No refresh data is presented
+        if (!refreshData.sub || !refreshData.role) {
+            // Terminate task
+            throw new UnauthorizedException();
+        }
+
         // Ambil data user/admin
-        const { data, role }: any = await this.findAccount(tlp);
+        const { data, role }: any = await this.findAccount(refreshData.sub);
 
         // Admin or User not found
         if (!data) {
@@ -125,14 +172,26 @@ export class AuthServiceV1 {
             throw new UnauthorizedException("Akun tidak ditemukan!");
         }
 
-        // --------------------------------------------------------------
-        // SOON
-        // --------------------------------------------------------------
-        // Disini akan dilakukan pengecekan pada database token,
-        // jika data tidak benar, blokir permintaan refresh token.
-        // --------------------------------------------------------------
-        // Jangan lupa buat dulu tabel untuk menyimpan token di database.
-        // --------------------------------------------------------------
+        // Token data { token, refresh_token }
+        const { tokenData } = refreshData;
+
+        // Mencari refresh-token - Admin
+        if (role == "Admin") {
+            try {
+            } catch {}
+        }
+
+        // Mencari refresh-token - User
+        if (role == "User") {
+            try {
+            } catch {}
+        }
+
+        // Mencari refresh-token - Kasir
+        if (role == "Kasir") {
+            try {
+            } catch {}
+        }
 
         // Buat token baru
         return this.createJwt(data, role);
