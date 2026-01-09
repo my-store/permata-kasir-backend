@@ -254,15 +254,15 @@ export class AdminControllerV1 {
     |  so set return type as any.
     */
     @UseGuards(AuthGuardV1)
-    @Get(":tlp")
+    @Get(":uuid")
     async findOne(
-        @Param("tlp") tlp: string,
+        @Param("uuid") uuid: string,
         @Query() query: any,
     ): Promise<any> {
         let data: any;
         try {
             data = await this.adminService.findOne({
-                where: { tlp },
+                where: { uuid },
                 ...ParseUrlQuery(query),
             });
         } catch (e) {

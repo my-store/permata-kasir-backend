@@ -179,6 +179,8 @@ model Toko {
   userId Int
 
   // Child tables
+  Monitor            Monitor[] // Pengawas
+  kasir              Kasir[]
   produk             Produk[]
   jasa               Jasa[]
   diskon             Diskon[]
@@ -186,6 +188,47 @@ model Toko {
   memberRank         MemberRank[]
   transaksiPembelian TransaksiPembelian[]
   transaksiPenjualan TransaksiPenjualan[]
+
+  createdAt DateTime
+  updatedAt DateTime
+}
+
+/**
+ * ========================================================
+ * |  MONITORING STATISTIK TOKO
+ * |  =====================================================
+ * |  Data statistik toko dapat dilihat menggunakan
+ * |  akun dibawah ini.
+ * |  Tentunya sesuai izin pemilik toko (User)
+ * |  -----------------------------------------------------
+ * |  Harus login menggunakan uuid & password
+ */
+model Monitor {
+  id Int @id @default(autoincrement())
+
+  // Credentials untuk login
+  uuid     String @unique
+  password String
+
+  // Parent table
+  toko   Toko @relation(fields: [tokoId], references: [id])
+  tokoId Int
+
+  createdAt DateTime
+  updatedAt DateTime
+}
+
+model Kasir {
+  id       Int     @id @default(autoincrement())
+  uuid     String  @unique
+  nama     String
+  tlp      String  @unique
+  password String
+  foto     String? // URL foto
+
+  // Parent table
+  toko   Toko @relation(fields: [tokoId], references: [id])
+  tokoId Int
 
   createdAt DateTime
   updatedAt DateTime
