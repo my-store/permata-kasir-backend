@@ -1,7 +1,7 @@
+import { generateId, getTimestamp } from "src/libs/string";
 import { Prisma, User, UserRefreshToken } from "models";
 import { PrismaService } from "../../prisma.service";
 import { encryptPassword } from "../../libs/bcrypt";
-import { generateId } from "src/libs/string";
 import { Injectable } from "@nestjs/common";
 
 // Placeholder | Short type name purpose only
@@ -69,7 +69,7 @@ export class UserServiceV1 {
 
     async create(newData: any): Promise<User> {
         // Konfigurasi timestamp
-        const thisTime = new Date().toISOString();
+        const thisTime = getTimestamp();
 
         // UUID
         const uuid: string = generateId(10);
@@ -170,6 +170,41 @@ export class UserServiceV1 {
 
     async remove(where: Prisma.UserWhereUniqueInput): Promise<User> {
         return this.prisma.user.delete({ where, select: this.findOneKeys });
+    }
+
+    /* ==============================================================
+    |  CREATE A NEW LOGIN TOKEN
+    |  ==============================================================
+    |  Update 9 January 2026
+    |  --------------------------------------------------------------
+    |  Membuat refresh-token baru saat login.
+    */
+    async createToken(tlp: string, newData: any): Promise<UserRefreshToken> {
+        // Konfigurasi timestamp
+        const thisTime = getTimestamp();
+
+        const data: Prisma.UserRefreshTokenCreateInput = {
+            ...newData,
+
+            // Pastikan user masih ada (untuk keamanan)
+            user: {
+                connect: {
+                    tlp,
+                },
+            },
+
+            // Timestamp
+            createdAt: thisTime,
+            updatedAt: thisTime,
+        };
+
+        return this.prisma.userRefreshToken.create({
+            data,
+            select: {
+                // Default keys to display
+                ...this.refreshTokenKeys,
+            },
+        });
     }
 
     /* ==============================================================

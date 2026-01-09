@@ -1,7 +1,7 @@
+import { generateId, getTimestamp } from "src/libs/string";
 import { Admin, Prisma, AdminRefreshToken } from "models";
 import { PrismaService } from "src/prisma.service";
 import { encryptPassword } from "src/libs/bcrypt";
-import { generateId } from "src/libs/string";
 import { Injectable } from "@nestjs/common";
 
 // Placeholder | Short type name purpose only
@@ -61,7 +61,7 @@ export class AdminServiceV1 {
 
     async create(newData: any): Promise<Admin> {
         // Konfigurasi timestamp
-        const thisTime = new Date().toISOString();
+        const thisTime = getTimestamp();
 
         // UUID
         const uuid: string = generateId(10);
@@ -159,7 +159,42 @@ export class AdminServiceV1 {
     }
 
     /* ==============================================================
-    |  REFRESH TOKEN
+    |  CREATE A NEW LOGIN TOKEN
+    |  ==============================================================
+    |  Update 9 January 2026
+    |  --------------------------------------------------------------
+    |  Membuat refresh-token baru saat login.
+    */
+    async createToken(tlp: string, newData: any): Promise<AdminRefreshToken> {
+        // Konfigurasi timestamp
+        const thisTime = getTimestamp();
+
+        const data: Prisma.AdminRefreshTokenCreateInput = {
+            ...newData,
+
+            // Pastikan admin masih ada (untuk keamanan)
+            admin: {
+                connect: {
+                    tlp,
+                },
+            },
+
+            // Timestamp
+            createdAt: thisTime,
+            updatedAt: thisTime,
+        };
+
+        return this.prisma.adminRefreshToken.create({
+            data,
+            select: {
+                // Default keys to display
+                ...this.refreshTokenKeys,
+            },
+        });
+    }
+
+    /* ==============================================================
+    |  REFRESH LOGIN TOKEN
     |  ==============================================================
     |  Update 9 January 2026
     |  --------------------------------------------------------------

@@ -1,12 +1,16 @@
-import { Injectable, UnauthorizedException } from "@nestjs/common";
 import { AdminServiceV1 } from "../../admin/v1/admin.service.v1";
 import { KasirServiceV1 } from "src/kasir/v1/kasir.service.v1";
 import { UserServiceV1 } from "../../user/v1/user.service.v1";
 import { AuthRefreshDtoV1 } from "./dto/auth.dto.v1";
-import { Admin, User, Kasir } from "models/client";
+import { Admin, Kasir, User } from "models/client";
 import { generateId } from "src/libs/string";
 import { JwtService } from "@nestjs/jwt";
 import * as bcrypt from "bcrypt";
+import {
+    InternalServerErrorException,
+    UnauthorizedException,
+    Injectable,
+} from "@nestjs/common";
 
 interface FindAccountInterface {
     data: Admin | User | Kasir;
@@ -89,41 +93,45 @@ export class AuthServiceV1 {
             throw new UnauthorizedException("Password salah!");
         }
 
-        // User and Kasir rules
+        // Check for active account (User & Kasir)
         if (role == "User" || role == "Kasir") {
-            // Blocked | banned account | not activated yet
-            if (!data.active) {
-                // Blocked or banned
-                if (data.deactivatedAt && data.deactivatedAt.length > 0) {
-                    // Terminate task
-                    throw new UnauthorizedException(
-                        `Akun anda telah di blokir, karena:\n${data.deactivatedReason}`,
-                    );
-                }
-
-                // Not activated (make sure deactivatedAt is empty string)
-                else {
-                    let msg: string =
-                        "Akun anda belum di aktivasi, silahkan menghubungi ";
-
-                    switch (role) {
-                        // Jika yang login adalah kasir
-                        case "Kasir":
-                            msg += "pemilik toko";
-                            break;
-                        // Jika yang login adalah user
-                        default:
-                            msg += "admin";
-                    }
-
-                    // Terminate task, and display the message
-                    throw new UnauthorizedException(msg);
-                }
-            }
+            this.checkActiveAccount(role, data);
         }
 
-        // Create JWT token
+        // Return created token & refresh-token
         return this.createJwt(data, role);
+    }
+
+    checkActiveAccount(role: string, data: any) {
+        // Blocked | banned account | not activated yet
+        if (!data.active) {
+            // Blocked or banned
+            if (data.deactivatedAt && data.deactivatedAt.length > 0) {
+                // Terminate task
+                throw new UnauthorizedException(
+                    `Akun anda telah di blokir, karena:\n${data.deactivatedReason}`,
+                );
+            }
+
+            // Not activated (make sure deactivatedAt is empty string)
+            else {
+                let msg: string =
+                    "Akun anda belum di aktivasi, silahkan menghubungi ";
+
+                switch (role) {
+                    // Jika yang login adalah kasir
+                    case "Kasir":
+                        msg += "pemilik toko";
+                        break;
+                    // Jika yang login adalah user
+                    default:
+                        msg += "admin";
+                }
+
+                // Terminate task, and display the message
+                throw new UnauthorizedException(msg);
+            }
+        }
     }
 
     async createJwt(
@@ -141,6 +149,47 @@ export class AuthServiceV1 {
         // Parse refresh-token length to insteger
         // and then use it for generate random ID.
         const refresh_token = generateId(parseInt(rtLentgh));
+
+        // Create refresh-token
+        let refreshTokenCreated: boolean = false;
+        switch (role) {
+            case "Admin":
+                try {
+                    await this.admin.createToken(person.tlp, {
+                        token: access_token,
+                        refreshToken: refresh_token,
+                    });
+                    refreshTokenCreated = true;
+                } catch {}
+                break;
+
+            case "User":
+                try {
+                    await this.user.createToken(person.tlp, {
+                        token: access_token,
+                        refreshToken: refresh_token,
+                    });
+                    refreshTokenCreated = true;
+                } catch {}
+                break;
+
+            case "Kasir":
+                try {
+                    await this.kasir.createToken(person.tlp, {
+                        token: access_token,
+                        refreshToken: refresh_token,
+                    });
+                    refreshTokenCreated = true;
+                } catch {}
+                break;
+        }
+
+        // Refresh token creation failed
+        if (!refreshTokenCreated) {
+            throw new InternalServerErrorException(
+                "Gagal membuat refresh-token!",
+            );
+        }
 
         return { access_token, refresh_token, role };
     }
@@ -172,25 +221,57 @@ export class AuthServiceV1 {
             throw new UnauthorizedException("Akun tidak ditemukan!");
         }
 
+        // Security check passed state
+        let passed: boolean = false;
+
         // Token data { token, refresh_token }
         const { tokenData } = refreshData;
 
-        // Mencari refresh-token - Admin
-        if (role == "Admin") {
-            try {
-            } catch {}
+        // Mencari refresh-token
+        switch (role) {
+            case "Admin":
+                try {
+                    await this.admin.findToken({
+                        where: {
+                            token: tokenData.token,
+                            refreshToken: tokenData.refresh_token,
+                        },
+                    });
+                } catch {}
+                passed = true;
+                break;
+
+            case "User":
+                try {
+                    // Cari token
+                    await this.user.findToken({
+                        where: {
+                            token: tokenData.token,
+                            refreshToken: tokenData.refresh_token,
+                        },
+                    });
+                    // Jika token ditemukan, cek user apakah masih aktif
+                } catch {}
+                passed = true;
+                break;
+
+            case "Kasir":
+                try {
+                    await this.kasir.findToken({
+                        where: {
+                            token: tokenData.token,
+                            refreshToken: tokenData.refresh_token,
+                        },
+                    });
+                } catch {}
+                passed = true;
+                break;
         }
 
-        // Mencari refresh-token - User
-        if (role == "User") {
-            try {
-            } catch {}
-        }
-
-        // Mencari refresh-token - Kasir
-        if (role == "Kasir") {
-            try {
-            } catch {}
+        // Security check failed
+        if (!passed) {
+            // Terminate task
+            throw new UnauthorizedException();
         }
 
         // Buat token baru

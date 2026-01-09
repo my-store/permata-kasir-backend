@@ -1,6 +1,6 @@
+import { generateId, getTimestamp } from "src/libs/string";
 import { Prisma, Kasir, KasirRefreshToken } from "models";
 import { PrismaService } from "src/prisma.service";
-import { generateId } from "src/libs/string";
 import { Injectable } from "@nestjs/common";
 
 // Placeholder | Short type name purpose only
@@ -166,7 +166,7 @@ export class KasirServiceV1 {
 
     async create(newData: any): Promise<Kasir> {
         // Konfigurasi timestamp
-        const thisTime = new Date().toISOString();
+        const thisTime = getTimestamp();
 
         // UUID
         const uuid: string = generateId(10);
@@ -254,6 +254,41 @@ export class KasirServiceV1 {
 
     async remove(where: Prisma.KasirWhereUniqueInput): Promise<Kasir> {
         return this.prisma.kasir.delete({ where });
+    }
+
+    /* ==============================================================
+    |  CREATE A NEW LOGIN TOKEN
+    |  ==============================================================
+    |  Update 9 January 2026
+    |  --------------------------------------------------------------
+    |  Membuat refresh-token baru saat login.
+    */
+    async createToken(tlp: string, newData: any): Promise<KasirRefreshToken> {
+        // Konfigurasi timestamp
+        const thisTime = getTimestamp();
+
+        const data: Prisma.KasirRefreshTokenCreateInput = {
+            ...newData,
+
+            // Pastikan kasir masih ada (untuk keamanan)
+            kasir: {
+                connect: {
+                    tlp,
+                },
+            },
+
+            // Timestamp
+            createdAt: thisTime,
+            updatedAt: thisTime,
+        };
+
+        return this.prisma.kasirRefreshToken.create({
+            data,
+            select: {
+                // Default keys to display
+                ...this.refreshTokenKeys,
+            },
+        });
     }
 
     /* ==============================================================

@@ -23,6 +23,10 @@ export function IsNumber(str: any) {
     ); // ...and ensure strings of whitespace fail
 }
 
+export function getTimestamp(): string {
+    return new Date().toISOString();
+}
+
 export function ParseUrlQuery(oldQuery: any): any {
     let newQuery: any = {};
 
