@@ -14,5 +14,5 @@ dist
 test
 update
 
-# Remove the comment in production
-#.env
+# Remove backup of .env file, when .env file is updated, that will create backup file
+.env-backup
