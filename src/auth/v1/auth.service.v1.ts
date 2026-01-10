@@ -237,8 +237,8 @@ export class AuthServiceV1 {
                             refreshToken: tokenData.refresh_token,
                         },
                     });
+                    passed = true;
                 } catch {}
-                passed = true;
                 break;
 
             case "User":
@@ -250,9 +250,8 @@ export class AuthServiceV1 {
                             refreshToken: tokenData.refresh_token,
                         },
                     });
-                    // Jika token ditemukan, cek user apakah masih aktif
+                    passed = true;
                 } catch {}
-                passed = true;
                 break;
 
             case "Kasir":
@@ -263,8 +262,8 @@ export class AuthServiceV1 {
                             refreshToken: tokenData.refresh_token,
                         },
                     });
+                    passed = true;
                 } catch {}
-                passed = true;
                 break;
         }
 
