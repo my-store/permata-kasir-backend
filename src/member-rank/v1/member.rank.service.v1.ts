@@ -160,7 +160,8 @@ export class MemberRankServiceV1 {
         const thisTime = new Date().toISOString();
 
         // UUID
-        const uuid: string = generateId(10);
+        const uuidLength: any = process.env.MEMBER_RANK_INSERT_UUID_LENGTH;
+        const uuid: string = generateId(parseInt(uuidLength));
 
         // Pastikan uuid belum pernah digunakan
         try {

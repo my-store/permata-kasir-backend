@@ -73,7 +73,8 @@ export class UserServiceV1 {
         const thisTime = getTimestamp();
 
         // UUID
-        const uuid: string = generateId(10);
+        const uuidLength: any = process.env.USER_INSERT_UUID_LENGTH;
+        const uuid: string = generateId(parseInt(uuidLength));
 
         // Pastikan uuid belum pernah digunakan
         try {
