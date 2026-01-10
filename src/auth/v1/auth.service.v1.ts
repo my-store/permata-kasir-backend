@@ -79,7 +79,7 @@ export class AuthServiceV1 {
     async signIn(tlp: string, pass: string): Promise<JWTResponseInterface> {
         const { data, role }: any = await this.findAccount(tlp);
 
-        // Admin or User not found
+        // Admin, User and Kasir not found
         if (!data || role.length < 1) {
             // Terminate task
             throw new UnauthorizedException("Akun tidak ditemukan!");
@@ -215,10 +215,15 @@ export class AuthServiceV1 {
         // Ambil data user/admin
         const { data, role }: any = await this.findAccount(refreshData.sub);
 
-        // Admin or User not found
+        // Admin, User and Kasir not found
         if (!data) {
             // Terminate task
             throw new UnauthorizedException("Akun tidak ditemukan!");
+        }
+
+        // Check for active account (User & Kasir)
+        if (role == "User" || role == "Kasir") {
+            this.checkActiveAccount(role, data);
         }
 
         // Security check passed state
