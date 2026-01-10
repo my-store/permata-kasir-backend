@@ -3,7 +3,7 @@ import { KasirServiceV1 } from "./kasir/v1/kasir.service.v1";
 import { AdminServiceV1 } from "./admin/v1/admin.service.v1";
 import { UserServiceV1 } from "./user/v1/user.service.v1";
 import { Admin, User, Kasir } from "models/client";
-import { readFileSync } from "fs";
+import { copyFileSync, readFileSync, writeFileSync } from "fs";
 import { join } from "path";
 
 @Injectable()
@@ -63,9 +63,52 @@ export class AppService {
         });
     }
 
-    updateApiKey(newValue: string) {
-        console.log(newValue);
-        const env = readFileSync(join(__dirname, "..", ".env"), "utf-8");
-        return env;
+    updateEnv(key: string, newValue: string): [boolean, string] {
+        // Lokasi file .env
+        const envLoc: string = join(__dirname, "..", ".env");
+
+        // Buka isi file .env
+        const env: string = readFileSync(envLoc, "utf-8");
+
+        // Ubah isi .env (yang telah dibaca didalam RAM) ke array
+        const arrEnv = env.split("\n");
+
+        // Index data yang akan diubah didalam .env
+        let indexKey: any;
+
+        // Cari data yang akan diubah
+        const data = arrEnv.filter((v, x) => {
+            // Menggunakan metode regex untuk mencari data berdasarkan key yang dikirim (pada parameter key)
+            const z = new RegExp(key, "gi").test(v);
+
+            // Jika data ditemukan
+            if (z) {
+                // Set nilai index dari data tersebut
+                indexKey = x;
+
+                // Kembalian data yang ditemukan dan hentikan filter loop
+                return z;
+            }
+        });
+
+        // Data ditemukan
+        if (data.length > 0) {
+            // Nilai lama
+            const oldData: string = data[0].trim();
+
+            // Nilai baru
+            const newData: string = oldData.split("=")[0] + `="${newValue}"`;
+
+            // Backup .env lama
+            copyFileSync(envLoc, `${envLoc}-backup`);
+
+            // Simpan perubahan pada file .env
+            writeFileSync(envLoc, env.replace(oldData, newData));
+
+            return [true, `Data [${key}] berhasil diubah`];
+        }
+
+        // Apikey tidak ditemukan didalam file .env
+        return [false, `Data [${key}] tidak ditemukan!`];
     }
 }

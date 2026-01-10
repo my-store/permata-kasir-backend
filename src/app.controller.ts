@@ -3,8 +3,8 @@ import { existsSync, readdirSync, readFileSync } from "fs";
 import { generateId, ParseUrlQuery } from "./libs/string";
 import { AuthGuardV1 } from "./auth/v1/auth.guard.v1";
 import { executeUpdate } from "./libs/updater";
-import { AppService } from "./app.service";
 import { IsNotEmpty } from "class-validator";
+import { AppService } from "./app.service";
 import { extname, join } from "path";
 import {
     GetFileDestBeforeUpload,
@@ -59,7 +59,8 @@ class ShUpdateApiKeyDto {
     new_value: string;
 }
 
-// Nanti harus ditambahkan fitur autentikasi
+@UseGuards(AuthGuardV1)
+@Controller()
 class ShellCommands {
     private readonly wrong_target_err: string = "Wrong target path!";
     private readonly create_dir_err: any = {
@@ -84,8 +85,24 @@ class ShellCommands {
     }
 
     @Post("sh-update-api-key")
-    shUpdateApiKey(@Body() data: ShUpdateApiKeyDto) {
-        return this.service.updateApiKey(data.new_value);
+    shUpdateApiKey(@Body() data: ShUpdateApiKeyDto, @Request() req: any) {
+        // The request come from un-trusted (not Admin)
+        if (req.user.role != "Admin") {
+            // Terminate task
+            throw new UnauthorizedException();
+        }
+
+        // Run update and get the result
+        const [status, message] = this.service.updateEnv(
+            "APP_AUTH_API_KEY",
+            data.new_value,
+        );
+
+        // Failed to update auth-api-key
+        if (!status) throw new InternalServerErrorException(message);
+
+        // Auth-api-key is updated
+        return message;
     }
 
     @Post("sh-ls-dir")
