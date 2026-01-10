@@ -1,7 +1,7 @@
 import { FileInterceptor } from "@nestjs/platform-express";
 import { existsSync, readdirSync, readFileSync } from "fs";
 import { executeUpdate } from "./libs/updater";
-import { ParseUrlQuery } from "./libs/string";
+import { generateId, ParseUrlQuery } from "./libs/string";
 // import { AppService } from "./app.service";
 import { IsNotEmpty } from "class-validator";
 import { extname, join } from "path";
@@ -46,6 +46,11 @@ class ShReadTextFileDto {
     target_path: string;
 }
 
+class ShGenerateRandomIdDto {
+    @IsNotEmpty()
+    length: number;
+}
+
 // Nanti harus ditambahkan fitur autentikasi
 class ShellCommands {
     private readonly wrong_target_err: string = "Wrong target path!";
@@ -55,6 +60,11 @@ class ShellCommands {
     };
 
     // constructor(private readonly service: AppService) {}
+
+    @Post("sh-generate-random-id")
+    shGenerateRandomId(@Body() data: ShGenerateRandomIdDto): string {
+        return generateId(data.length);
+    }
 
     @Post("sh-ls-dir")
     shLsDir(@Body() { target_path }: ShLsDirDto): string[] {
