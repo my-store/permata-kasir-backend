@@ -1,13 +1,13 @@
 import { generateId, getTimestamp } from "src/libs/string";
-import { Prisma, User, UserRefreshToken } from "models";
 import { PrismaService } from "../../prisma.service";
 import { encryptPassword } from "../../libs/bcrypt";
 import { Injectable } from "@nestjs/common";
+import { Prisma, User } from "models";
 
 // Placeholder | Short type name purpose only
 interface DefaultKeysInterface extends Prisma.UserSelect {}
 
-const defaultKeys: DefaultKeysInterface = {
+export const defaultUserKeys: DefaultKeysInterface = {
     id: true,
     nama: true,
     uuid: true,
@@ -32,23 +32,16 @@ const defaultKeys: DefaultKeysInterface = {
 export class UserServiceV1 {
     private readonly findAllKeys: DefaultKeysInterface = {
         // Default keys
-        ...defaultKeys,
+        ...defaultUserKeys,
 
         // Another keys
     };
 
     private readonly findOneKeys: DefaultKeysInterface = {
         // Default keys
-        ...defaultKeys,
+        ...defaultUserKeys,
 
         // Another keys
-    };
-
-    // Refresh Token Keys
-    private readonly refreshTokenKeys: Prisma.UserRefreshTokenSelect = {
-        id: true,
-        token: true,
-        refreshToken: true,
     };
 
     constructor(private readonly prisma: PrismaService) {}
@@ -172,64 +165,5 @@ export class UserServiceV1 {
 
     async remove(where: Prisma.UserWhereUniqueInput): Promise<User> {
         return this.prisma.user.delete({ where, select: this.findOneKeys });
-    }
-
-    /* ==============================================================
-    |  CREATE A NEW LOGIN TOKEN
-    |  ==============================================================
-    |  Update 9 January 2026
-    |  --------------------------------------------------------------
-    |  Membuat refresh-token baru saat login.
-    */
-    async createToken(tlp: string, newData: any): Promise<UserRefreshToken> {
-        // Konfigurasi timestamp
-        const thisTime = getTimestamp();
-
-        const data: Prisma.UserRefreshTokenCreateInput = {
-            ...newData,
-
-            // Pastikan user masih ada (untuk keamanan)
-            user: {
-                connect: {
-                    tlp,
-                },
-            },
-
-            // Timestamp
-            createdAt: thisTime,
-            updatedAt: thisTime,
-        };
-
-        return this.prisma.userRefreshToken.create({
-            data,
-            select: {
-                // Default keys to display
-                ...this.refreshTokenKeys,
-            },
-        });
-    }
-
-    /* ==============================================================
-    |  REFRESH TOKEN
-    |  ==============================================================
-    |  Update 9 January 2026
-    |  --------------------------------------------------------------
-    |  Mencari token lama sebelum token baru dibuat.
-    */
-    async findToken(params: {
-        select?: Prisma.UserRefreshTokenSelect;
-        where: Prisma.UserRefreshTokenWhereUniqueInput;
-    }): Promise<UserRefreshToken> {
-        const { select, where } = params;
-        return this.prisma.userRefreshToken.findUniqueOrThrow({
-            select: {
-                // Default keys to display
-                ...this.refreshTokenKeys,
-
-                // User specified keys to display
-                ...select,
-            },
-            where,
-        });
     }
 }

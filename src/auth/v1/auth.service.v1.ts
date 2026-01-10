@@ -1,8 +1,18 @@
+import { KasirRefreshTokenServiceV1 } from "src/kasir/v1/kasir.refresh.token.service.v1";
+import { AdminRefreshTokenServiceV1 } from "src/admin/v1/admin.refresh.token.service.v1";
+import { UserRefreshTokenServiceV1 } from "src/user/v1/user.refresh.token.service.v1";
 import { AdminServiceV1 } from "../../admin/v1/admin.service.v1";
 import { KasirServiceV1 } from "src/kasir/v1/kasir.service.v1";
 import { UserServiceV1 } from "../../user/v1/user.service.v1";
 import { AuthRefreshDtoV1 } from "./dto/auth.dto.v1";
-import { Admin, Kasir, User } from "models/client";
+import {
+    Admin,
+    AdminRefreshToken,
+    Kasir,
+    KasirRefreshToken,
+    User,
+    UserRefreshToken,
+} from "models/client";
 import { generateId } from "src/libs/string";
 import { JwtService } from "@nestjs/jwt";
 import * as bcrypt from "bcrypt";
@@ -36,8 +46,14 @@ interface RefreshTokenDataInterface {
 export class AuthServiceV1 {
     constructor(
         private readonly admin: AdminServiceV1,
+        private readonly adminRefreshToken: AdminRefreshTokenServiceV1,
+
         private readonly user: UserServiceV1,
+        private readonly userRefreshToken: UserRefreshTokenServiceV1,
+
         private readonly kasir: KasirServiceV1,
+        private readonly kasirRefreshToken: KasirRefreshTokenServiceV1,
+
         private readonly jwt: JwtService,
     ) {}
 
@@ -99,6 +115,90 @@ export class AuthServiceV1 {
             this.checkActiveAccount(role, data);
         }
 
+        /* =======================================================
+        |  HAPUS REFRESH-TOKEN LAMA
+        |  =======================================================
+        |  Refresh token akan menumpuk jika tidak dilakukan 
+        |  penghapusan secara rutin, oleh karena itu kita hapus
+        |  seluruh token ketika client akan login kembali.
+        |*/
+        switch (role) {
+            case "Admin":
+                try {
+                    // Ambil seluruh refresh-token
+                    const adminRT: AdminRefreshToken[] =
+                        await this.adminRefreshToken.findAll({
+                            where: {
+                                admin: {
+                                    tlp,
+                                },
+                            },
+                        });
+                    // Jika ada, hapus semua
+                    if (adminRT.length > 0) {
+                        // Ambil seluruh ID pada token yang akan dihapus
+                        const ids: number[] = adminRT.map((x) => x.id);
+                        // Hapus seluruh token
+                        try {
+                            await this.adminRefreshToken.removeMany(ids);
+                        } catch (err) {
+                            throw new InternalServerErrorException(err);
+                        }
+                    }
+                } catch {}
+                break;
+
+            case "User":
+                try {
+                    // Ambil seluruh refresh-token
+                    const userRT: UserRefreshToken[] =
+                        await this.userRefreshToken.findAll({
+                            where: {
+                                user: {
+                                    tlp,
+                                },
+                            },
+                        });
+                    // Jika ada, hapus semua
+                    if (userRT.length > 0) {
+                        // Ambil seluruh ID pada token yang akan dihapus
+                        const ids: number[] = userRT.map((x) => x.id);
+                        // Hapus seluruh token
+                        try {
+                            await this.userRefreshToken.removeMany(ids);
+                        } catch (err) {
+                            throw new InternalServerErrorException(err);
+                        }
+                    }
+                } catch {}
+                break;
+
+            case "Kasir":
+                try {
+                    // Ambil seluruh refresh-token
+                    const kasirRT: KasirRefreshToken[] =
+                        await this.kasirRefreshToken.findAll({
+                            where: {
+                                kasir: {
+                                    tlp,
+                                },
+                            },
+                        });
+                    // Jika ada, hapus semua
+                    if (kasirRT.length > 0) {
+                        // Ambil seluruh ID pada token yang akan dihapus
+                        const ids: number[] = kasirRT.map((x) => x.id);
+                        // Hapus seluruh token
+                        try {
+                            await this.kasirRefreshToken.removeMany(ids);
+                        } catch (err) {
+                            throw new InternalServerErrorException(err);
+                        }
+                    }
+                } catch {}
+                break;
+        }
+
         // Return created token & refresh-token
         return this.createJwt(data, role);
     }
@@ -156,8 +256,8 @@ export class AuthServiceV1 {
         person: Admin | User | Kasir,
         role: string,
     ): Promise<JWTResponseInterface> {
-        // User Payload
-        const payload = { sub: person.tlp, role };
+        // User Payload (semakin banyak fileds, semakin banyak/ panjang jumlah token)
+        const payload: any = { sub: person.tlp, role, uuid: person.uuid };
 
         // JSON Web Token
         const access_token = await this.jwt.signAsync(payload);
@@ -172,33 +272,93 @@ export class AuthServiceV1 {
         let refreshTokenCreated: boolean = false;
         switch (role) {
             case "Admin":
+                // Cari token yang memiliki access_token dan refresh_token yang sama (jika ada)
+                // untuk menghindari tabrakan data (unique-key error).
                 try {
-                    await this.admin.createToken(person.tlp, {
+                    await this.adminRefreshToken.findOne({
+                        where: {
+                            token: access_token,
+                            refreshToken: refresh_token,
+                        },
+                    });
+                    // Token dengan data yang sama ditemukan, panggil lagi method ini
+                    // untuk membuat token dan refresh_token yang baru.
+                    return this.createJwt(person, role);
+                } catch {
+                    // Token dengan data yang sama tidak ditemukan, lanjut ke proses pembuatan token.
+                }
+                // Pembuatan token baru
+                try {
+                    await this.adminRefreshToken.create(person.tlp, {
                         token: access_token,
                         refreshToken: refresh_token,
                     });
+                    // Token baru berhasil dibuat
                     refreshTokenCreated = true;
-                } catch {}
+                } catch (err) {
+                    // Gagal membuat token baru
+                    throw new InternalServerErrorException(err);
+                }
                 break;
 
             case "User":
+                // Cari token yang memiliki access_token dan refresh_token yang sama (jika ada)
+                // untuk menghindari tabrakan data (unique-key error).
                 try {
-                    await this.user.createToken(person.tlp, {
+                    await this.userRefreshToken.findOne({
+                        where: {
+                            token: access_token,
+                            refreshToken: refresh_token,
+                        },
+                    });
+                    // Token dengan data yang sama ditemukan, panggil lagi method ini
+                    // untuk membuat token dan refresh_token yang baru.
+                    return this.createJwt(person, role);
+                } catch {
+                    // Token dengan data yang sama tidak ditemukan, lanjut ke proses pembuatan token.
+                }
+                // Pembuatan token baru
+                try {
+                    await this.userRefreshToken.create(person.tlp, {
                         token: access_token,
                         refreshToken: refresh_token,
                     });
+                    // Token baru berhasil dibuat
                     refreshTokenCreated = true;
-                } catch {}
+                } catch (err) {
+                    // Gagal membuat token baru
+                    throw new InternalServerErrorException(err);
+                }
                 break;
 
             case "Kasir":
+                // Cari token yang memiliki access_token dan refresh_token yang sama (jika ada)
+                // untuk menghindari tabrakan data (unique-key error).
                 try {
-                    await this.kasir.createToken(person.tlp, {
+                    await this.kasirRefreshToken.findOne({
+                        where: {
+                            token: access_token,
+                            refreshToken: refresh_token,
+                        },
+                    });
+                    // Token dengan data yang sama ditemukan, panggil lagi method ini
+                    // untuk membuat token dan refresh_token yang baru.
+                    return this.createJwt(person, role);
+                } catch {
+                    // Token dengan data yang sama tidak ditemukan, lanjut ke proses pembuatan token.
+                }
+                // Pembuatan token baru
+                try {
+                    await this.kasirRefreshToken.create(person.tlp, {
                         token: access_token,
                         refreshToken: refresh_token,
                     });
+                    // Token baru berhasil dibuat
                     refreshTokenCreated = true;
-                } catch {}
+                } catch (err) {
+                    // Gagal membuat token baru
+                    throw new InternalServerErrorException(err);
+                }
                 break;
         }
 
@@ -254,7 +414,7 @@ export class AuthServiceV1 {
         switch (role) {
             case "Admin":
                 try {
-                    await this.admin.findToken({
+                    await this.adminRefreshToken.findOne({
                         where: {
                             token: tokenData.token,
                             refreshToken: tokenData.refresh_token,
@@ -267,7 +427,7 @@ export class AuthServiceV1 {
             case "User":
                 try {
                     // Cari token
-                    await this.user.findToken({
+                    await this.userRefreshToken.findOne({
                         where: {
                             token: tokenData.token,
                             refreshToken: tokenData.refresh_token,
@@ -279,7 +439,7 @@ export class AuthServiceV1 {
 
             case "Kasir":
                 try {
-                    await this.kasir.findToken({
+                    await this.kasirRefreshToken.findOne({
                         where: {
                             token: tokenData.token,
                             refreshToken: tokenData.refresh_token,

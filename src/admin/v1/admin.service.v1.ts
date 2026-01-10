@@ -1,13 +1,13 @@
 import { generateId, getTimestamp } from "src/libs/string";
-import { Admin, Prisma, AdminRefreshToken } from "models";
 import { PrismaService } from "src/prisma.service";
 import { encryptPassword } from "src/libs/bcrypt";
 import { Injectable } from "@nestjs/common";
+import { Admin, Prisma } from "models";
 
 // Placeholder | Short type name purpose only
 interface DefaultKeysInterface extends Prisma.AdminSelect {}
 
-const defaultKeys: DefaultKeysInterface = {
+export const defaultAdminKeys: DefaultKeysInterface = {
     id: true,
     nama: true,
     uuid: true,
@@ -21,26 +21,37 @@ const defaultKeys: DefaultKeysInterface = {
 
 @Injectable()
 export class AdminServiceV1 {
+    // FIND ALL ADMIN DATA - DISPLAYED KEYS
     private readonly findAllKeys: DefaultKeysInterface = {
         // Default keys
-        ...defaultKeys,
+        ...defaultAdminKeys,
 
         // Another keys
     };
 
+    // FIND ONE ADMIN DATA - DISPLAYED KEYS
     private readonly findOneKeys: DefaultKeysInterface = {
         // Default keys
-        ...defaultKeys,
+        ...defaultAdminKeys,
 
         // Another keys
         password: true,
     };
 
-    // Refresh Token Keys
-    private readonly refreshTokenKeys: Prisma.AdminRefreshTokenSelect = {
+    // FIND ALL REFRESH-TOKEN DATA - DISPLAYED KEYS
+    private readonly findAllRTKeys: Prisma.AdminRefreshTokenSelect = {
         id: true,
         token: true,
         refreshToken: true,
+
+        // Admin keys
+        admin: {
+            // Only show some keys
+            select: {
+                nama: true,
+                online: true,
+            },
+        },
     };
 
     constructor(private readonly prisma: PrismaService) {}
@@ -157,64 +168,5 @@ export class AdminServiceV1 {
 
     async remove(where: Prisma.AdminWhereUniqueInput): Promise<Admin> {
         return this.prisma.admin.delete({ where, select: this.findOneKeys });
-    }
-
-    /* ==============================================================
-    |  CREATE A NEW LOGIN TOKEN
-    |  ==============================================================
-    |  Update 9 January 2026
-    |  --------------------------------------------------------------
-    |  Membuat refresh-token baru saat login.
-    */
-    async createToken(tlp: string, newData: any): Promise<AdminRefreshToken> {
-        // Konfigurasi timestamp
-        const thisTime = getTimestamp();
-
-        const data: Prisma.AdminRefreshTokenCreateInput = {
-            ...newData,
-
-            // Pastikan admin masih ada (untuk keamanan)
-            admin: {
-                connect: {
-                    tlp,
-                },
-            },
-
-            // Timestamp
-            createdAt: thisTime,
-            updatedAt: thisTime,
-        };
-
-        return this.prisma.adminRefreshToken.create({
-            data,
-            select: {
-                // Default keys to display
-                ...this.refreshTokenKeys,
-            },
-        });
-    }
-
-    /* ==============================================================
-    |  REFRESH LOGIN TOKEN
-    |  ==============================================================
-    |  Update 9 January 2026
-    |  --------------------------------------------------------------
-    |  Mencari token lama sebelum token baru dibuat.
-    */
-    async findToken(params: {
-        select?: Prisma.AdminRefreshTokenSelect;
-        where: Prisma.AdminRefreshTokenWhereUniqueInput;
-    }): Promise<AdminRefreshToken> {
-        const { select, where } = params;
-        return this.prisma.adminRefreshToken.findUniqueOrThrow({
-            select: {
-                // Default keys to display
-                ...this.refreshTokenKeys,
-
-                // User specified keys to display
-                ...select,
-            },
-            where,
-        });
     }
 }

@@ -1,12 +1,12 @@
 import { generateId, getTimestamp } from "src/libs/string";
-import { Prisma, Kasir, KasirRefreshToken } from "models";
 import { PrismaService } from "src/prisma.service";
 import { Injectable } from "@nestjs/common";
+import { Prisma, Kasir } from "models";
 
 // Placeholder | Short type name purpose only
 interface DefaultKeysInterface extends Prisma.KasirSelect {}
 
-const defaultKeys: DefaultKeysInterface = {
+export const defaultKasirKeys: DefaultKeysInterface = {
     id: true,
     uuid: true,
     nama: true,
@@ -29,23 +29,16 @@ const defaultKeys: DefaultKeysInterface = {
 export class KasirServiceV1 {
     private readonly findAllKeys: DefaultKeysInterface = {
         // Default keys
-        ...defaultKeys,
+        ...defaultKasirKeys,
 
         // Another keys
     };
 
     private readonly findOneKeys: DefaultKeysInterface = {
         // Default keys
-        ...defaultKeys,
+        ...defaultKasirKeys,
 
         // Another keys
-    };
-
-    // Refresh Token Keys
-    private readonly refreshTokenKeys: Prisma.KasirRefreshTokenSelect = {
-        id: true,
-        token: true,
-        refreshToken: true,
     };
 
     constructor(private readonly prisma: PrismaService) {}
@@ -260,64 +253,5 @@ export class KasirServiceV1 {
 
     async remove(where: Prisma.KasirWhereUniqueInput): Promise<Kasir> {
         return this.prisma.kasir.delete({ where });
-    }
-
-    /* ==============================================================
-    |  CREATE A NEW LOGIN TOKEN
-    |  ==============================================================
-    |  Update 9 January 2026
-    |  --------------------------------------------------------------
-    |  Membuat refresh-token baru saat login.
-    */
-    async createToken(tlp: string, newData: any): Promise<KasirRefreshToken> {
-        // Konfigurasi timestamp
-        const thisTime = getTimestamp();
-
-        const data: Prisma.KasirRefreshTokenCreateInput = {
-            ...newData,
-
-            // Pastikan kasir masih ada (untuk keamanan)
-            kasir: {
-                connect: {
-                    tlp,
-                },
-            },
-
-            // Timestamp
-            createdAt: thisTime,
-            updatedAt: thisTime,
-        };
-
-        return this.prisma.kasirRefreshToken.create({
-            data,
-            select: {
-                // Default keys to display
-                ...this.refreshTokenKeys,
-            },
-        });
-    }
-
-    /* ==============================================================
-        |  REFRESH TOKEN
-        |  ==============================================================
-        |  Update 9 January 2026
-        |  --------------------------------------------------------------
-        |  Mencari token lama sebelum token baru dibuat.
-        */
-    async findToken(params: {
-        select?: Prisma.KasirRefreshTokenSelect;
-        where: Prisma.KasirRefreshTokenWhereUniqueInput;
-    }): Promise<KasirRefreshToken> {
-        const { select, where } = params;
-        return this.prisma.kasirRefreshToken.findUniqueOrThrow({
-            select: {
-                // Default keys to display
-                ...this.refreshTokenKeys,
-
-                // User specified keys to display
-                ...select,
-            },
-            where,
-        });
     }
 }
