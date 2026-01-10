@@ -54,7 +54,10 @@ class ShGenerateRandomIdDto {
     length: number;
 }
 
-class ShUpdateApiKeyDto {
+class ShUpdateEnvDto {
+    @IsNotEmpty()
+    key: string;
+
     @IsNotEmpty()
     new_value: string;
 }
@@ -84,25 +87,29 @@ class ShellCommands {
         return generateId(data.length);
     }
 
-    @Post("sh-update-api-key")
-    shUpdateApiKey(@Body() data: ShUpdateApiKeyDto, @Request() req: any) {
+    @Post("sh-update-env")
+    shUpdateEnv(@Body() data: ShUpdateEnvDto, @Request() req: any) {
         // The request come from un-trusted (not Admin)
         if (req.user.role != "Admin") {
             // Terminate task
             throw new UnauthorizedException();
         }
 
-        // Run update and get the result
-        const [status, message] = this.service.updateEnv(
-            "APP_AUTH_API_KEY",
-            data.new_value,
-        );
+        try {
+            // Run update and get the result
+            const [status, message] = this.service.updateEnv(
+                data.key,
+                data.new_value,
+            );
 
-        // Failed to update auth-api-key
-        if (!status) throw new InternalServerErrorException(message);
+            // Failed to update some data inside .env file
+            if (!status) throw new InternalServerErrorException(message);
 
-        // Auth-api-key is updated
-        return message;
+            // Data inside .env file is updated
+            return message;
+        } catch (err) {
+            throw new InternalServerErrorException(err);
+        }
     }
 
     @Post("sh-ls-dir")
