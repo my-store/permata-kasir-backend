@@ -75,7 +75,7 @@ export class AppService {
         const arrEnv = env.split("\n");
 
         // Cari data yang akan diubah
-        const data = arrEnv.filter((v, x) => {
+        const data = arrEnv.filter((v) => {
             // Menggunakan metode regex untuk mencari data berdasarkan key yang dikirim (pada parameter key)
             const z = new RegExp(k, "gi").test(v);
             // Jika data ditemukan
