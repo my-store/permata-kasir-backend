@@ -107,14 +107,24 @@ export class AuthServiceV1 {
         // Blocked | banned account | not activated yet
         if (!data.active) {
             // Blocked or banned
-            if (data.deactivatedAt && data.deactivatedAt.length > 0) {
-                // Terminate task
-                throw new UnauthorizedException(
-                    `Akun anda telah di blokir, karena:\n${data.deactivatedReason}`,
-                );
+            if (data.deactivatedAt || data.deactivatedAt.length > 0) {
+                // Deactivation message
+                let msg: string = "Akun anda telah di blokir";
+
+                // Deactivated with reason
+                if (
+                    data.deactivatedReason ||
+                    data.deactivatedReason.length > 0
+                ) {
+                    // Add the reason message
+                    msg += `, karena:\n${data.deactivatedReason}`;
+                }
+
+                // Terminate task & display the deactivation message
+                throw new UnauthorizedException(msg);
             }
 
-            // Not activated (make sure deactivatedAt is empty string)
+            // Not activated
             else {
                 let msg: string =
                     "Akun anda belum di aktivasi, silahkan menghubungi ";
