@@ -31,8 +31,6 @@ export class TransaksiPenjualanControllerV1 {
         @Body() newData: CreateTransaksiPenjualanDtoV1,
         @Request() req: any,
     ): Promise<TransaksiPenjualan> {
-        let data: TransaksiPenjualan;
-
         // Check if this request is come from the owner, if not, block the request.
         try {
             await this.service.inputOwnerCheck({
@@ -48,12 +46,14 @@ export class TransaksiPenjualanControllerV1 {
         // for security checking.
         const { userId, ...fixedNewData } = newData;
 
+        // Menyimpan data
+        let createdTransaksiPenjualan: TransaksiPenjualan;
         try {
-            data = await this.service.create(fixedNewData);
+            createdTransaksiPenjualan = await this.service.create(fixedNewData);
         } catch (error) {
             throw new InternalServerErrorException(error);
         }
-        return data;
+        return createdTransaksiPenjualan;
     }
 
     @Get()

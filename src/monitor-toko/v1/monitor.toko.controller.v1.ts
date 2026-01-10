@@ -31,9 +31,6 @@ export class MonitorTokoControllerV1 {
         @Body() newData: CreateMonitorTokoDtoV1,
         @Request() req: any,
     ): Promise<MonitorToko> {
-        // Save inserted data into a variable, if not the server will shutdown when error occured.
-        let monitorToko: MonitorToko;
-
         // Check if this request is come from the owner, if not, block the request.
         try {
             await this.service.inputOwnerCheck({
@@ -50,12 +47,14 @@ export class MonitorTokoControllerV1 {
         // If not removed, will cause error.
         const { userId, ...fixedNewData } = newData;
 
+        // Menyimpan data
+        let createdMonitorToko: MonitorToko;
         try {
-            monitorToko = await this.service.create(fixedNewData);
+            createdMonitorToko = await this.service.create(fixedNewData);
         } catch (error) {
             throw new InternalServerErrorException(error);
         }
-        return monitorToko;
+        return createdMonitorToko;
     }
 
     @Get()

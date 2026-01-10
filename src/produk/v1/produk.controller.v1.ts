@@ -31,9 +31,6 @@ export class ProdukControllerV1 {
         @Body() newData: CreateProdukDtoV1,
         @Request() req: any,
     ): Promise<Produk> {
-        // Save inserted data into a variable, if not the server will shutdown when error occured.
-        let produk: Produk;
-
         // Check if this request is come from the owner, if not, block the request.
         try {
             await this.service.inputOwnerCheck({
@@ -50,12 +47,14 @@ export class ProdukControllerV1 {
         // If not removed, will cause error.
         const { userId, ...fixedNewData } = newData;
 
+        // Menyimpan data
+        let createdProduk: Produk;
         try {
-            produk = await this.service.create(fixedNewData);
+            createdProduk = await this.service.create(fixedNewData);
         } catch (error) {
             throw new InternalServerErrorException(error);
         }
-        return produk;
+        return createdProduk;
     }
 
     @Get()

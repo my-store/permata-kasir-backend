@@ -171,8 +171,6 @@ export class UserControllerV1 {
             throw new UnauthorizedException();
         }
 
-        let newData: any;
-
         /* ----------------------------------------------------------
         |  PENGECEKAN FOTO
         |  ----------------------------------------------------------
@@ -251,6 +249,7 @@ export class UserControllerV1 {
         |  Simpan data dulu, foto hanya URL saja, upload file
         |  setelah berhasil menyimpan data.
         */
+        let newData: any;
         try {
             newData = await this.userService.create({
                 ...data,
@@ -383,8 +382,6 @@ export class UserControllerV1 {
             throw new UnauthorizedException();
         }
 
-        let updatedData: User;
-
         /* ----------------------------------------------------------
         |  MENGAMBIL DATA LAMA
         |  ----------------------------------------------------------
@@ -489,6 +486,7 @@ export class UserControllerV1 {
         }
 
         // Menyimpan data
+        let updatedData: User;
         try {
             updatedData = await this.userService.update(
                 { tlp },
@@ -550,8 +548,6 @@ export class UserControllerV1 {
         @Param("tlp") tlp: string,
         @Request() req: any,
     ): Promise<User> {
-        let deletedData: any;
-
         // Data admin/ user yang sedang login
         const { sub, role } = req.user;
 
@@ -565,6 +561,7 @@ export class UserControllerV1 {
         }
 
         // Delete data from database
+        let deletedData: any;
         try {
             deletedData = await this.userService.remove({ tlp });
         } catch (e) {

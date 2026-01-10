@@ -31,8 +31,6 @@ export class TransaksiPembelianControllerV1 {
         @Body() newData: CreateTransaksiPembelianDtoV1,
         @Request() req: any,
     ): Promise<TransaksiPembelian> {
-        let data: TransaksiPembelian;
-
         // Check if this request is come from the owner, if not, block the request.
         try {
             await this.service.inputOwnerCheck({
@@ -48,12 +46,14 @@ export class TransaksiPembelianControllerV1 {
         // for security checking.
         const { userId, ...fixedNewData } = newData;
 
+        // Menyimpan data
+        let createdTransaksiPembelian: TransaksiPembelian;
         try {
-            data = await this.service.create(fixedNewData);
+            createdTransaksiPembelian = await this.service.create(fixedNewData);
         } catch (error) {
             throw new InternalServerErrorException(error);
         }
-        return data;
+        return createdTransaksiPembelian;
     }
 
     @Get()

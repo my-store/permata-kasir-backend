@@ -31,9 +31,6 @@ export class KasirControllerV1 {
         @Body() newData: CreateKasirDtoV1,
         @Request() req: any,
     ): Promise<Kasir> {
-        // Save inserted data into a variable, if not the server will shutdown when error occured.
-        let kasir: Kasir;
-
         // Check if this request is come from the owner, if not, block the request.
         try {
             await this.service.inputOwnerCheck({
@@ -50,12 +47,14 @@ export class KasirControllerV1 {
         // If not removed, will cause error.
         const { userId, ...fixedNewData } = newData;
 
+        // Menyimpan data
+        let createdKasir: Kasir;
         try {
-            kasir = await this.service.create(fixedNewData);
+            createdKasir = await this.service.create(fixedNewData);
         } catch (error) {
             throw new InternalServerErrorException(error);
         }
-        return kasir;
+        return createdKasir;
     }
 
     @Get()

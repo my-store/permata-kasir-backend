@@ -31,8 +31,6 @@ export class DiskonControllerV1 {
         @Body() newData: CreateDiskonDtoV1,
         @Request() req: any,
     ): Promise<Diskon> {
-        let data: Diskon;
-
         // Check if this request is come from the owner, if not, block the request.
         try {
             await this.service.inputOwnerCheck({
@@ -48,12 +46,14 @@ export class DiskonControllerV1 {
         // for security checking.
         const { userId, ...fixedNewData } = newData;
 
+        // Menyimpan data
+        let createdDiskon: Diskon;
         try {
-            data = await this.service.create(fixedNewData);
+            createdDiskon = await this.service.create(fixedNewData);
         } catch (error) {
             throw new InternalServerErrorException(error);
         }
-        return data;
+        return createdDiskon;
     }
 
     @Get()

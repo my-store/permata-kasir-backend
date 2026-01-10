@@ -31,9 +31,6 @@ export class JasaControllerV1 {
         @Body() newData: CreateJasaDtoV1,
         @Request() req: any,
     ): Promise<Jasa> {
-        // Save inserted data into a variable, if not the server will shutdown when error occured.
-        let jasa: Jasa;
-
         // Check if this request is come from the owner, if not, block the request.
         try {
             await this.service.inputOwnerCheck({
@@ -50,12 +47,14 @@ export class JasaControllerV1 {
         // If not removed, will cause error.
         const { userId, ...fixedNewData } = newData;
 
+        // Menyimpan data
+        let createdJasa: Jasa;
         try {
-            jasa = await this.service.create(fixedNewData);
+            createdJasa = await this.service.create(fixedNewData);
         } catch (error) {
             throw new InternalServerErrorException(error);
         }
-        return jasa;
+        return createdJasa;
     }
 
     @Get()

@@ -31,8 +31,6 @@ export class MemberRankControllerV1 {
         @Body() newData: CreateMemberRankDtoV1,
         @Request() req: any,
     ): Promise<MemberRank> {
-        let data: MemberRank;
-
         // Check if this request is come from the owner, if not, block the request.
         try {
             await this.service.inputOwnerCheck({
@@ -48,12 +46,14 @@ export class MemberRankControllerV1 {
         // for security checking.
         const { userId, ...fixedNewData } = newData;
 
+        // Menyimpan data
+        let createdMemberRank: MemberRank;
         try {
-            data = await this.service.create(fixedNewData);
+            createdMemberRank = await this.service.create(fixedNewData);
         } catch (error) {
             throw new InternalServerErrorException(error);
         }
-        return data;
+        return createdMemberRank;
     }
 
     @Get()

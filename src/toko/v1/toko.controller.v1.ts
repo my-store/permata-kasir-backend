@@ -31,8 +31,6 @@ export class TokoControllerV1 {
         @Body() newData: CreateTokoDtoV1,
         @Request() req: any,
     ): Promise<Toko> {
-        let toko: Toko;
-
         // Cek pemilik dan jumlah kuota pembuatan toko
         try {
             // Hasil pengecekan akan mengembalikan object { status, paid }
@@ -63,8 +61,10 @@ export class TokoControllerV1 {
             throw new UnauthorizedException(error);
         }
 
+        // Menyimpan data
+        let createdToko: Toko;
         try {
-            toko = await this.service.create(newData);
+            createdToko = await this.service.create(newData);
         } catch (error) {
             // Prisma error
             if (error instanceof Prisma.PrismaClientKnownRequestError) {
@@ -86,7 +86,7 @@ export class TokoControllerV1 {
                 throw new InternalServerErrorException(error);
             }
         }
-        return toko;
+        return createdToko;
     }
 
     @Get()

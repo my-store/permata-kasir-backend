@@ -31,8 +31,6 @@ export class MemberControllerV1 {
         @Body() newData: CreateMemberDtoV1,
         @Request() req: any,
     ): Promise<Member> {
-        let member: Member;
-
         // Check if this request is come from the owner, if not, block the request.
         try {
             await this.service.inputOwnerCheck({
@@ -48,8 +46,10 @@ export class MemberControllerV1 {
         // for security checking.
         const { userId, ...fixedNewData } = newData;
 
+        // Menyimpan data
+        let createdMember: Member;
         try {
-            member = await this.service.create(fixedNewData);
+            createdMember = await this.service.create(fixedNewData);
         } catch (error) {
             // Prisma error
             if (error instanceof Prisma.PrismaClientKnownRequestError) {
@@ -69,7 +69,7 @@ export class MemberControllerV1 {
                 throw new InternalServerErrorException(error);
             }
         }
-        return member;
+        return createdMember;
     }
 
     @Get()

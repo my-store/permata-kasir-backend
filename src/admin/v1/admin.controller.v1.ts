@@ -117,8 +117,6 @@ export class AdminControllerV1 {
             throw new UnauthorizedException();
         }
 
-        let newData: any;
-
         /* ----------------------------------------------------------
         |  PENGECEKAN FOTO
         |  ----------------------------------------------------------
@@ -197,6 +195,7 @@ export class AdminControllerV1 {
         |  Simpan data dulu, foto hanya URL saja, upload file
         |  setelah berhasil menyimpan data.
         */
+        let newData: any;
         try {
             newData = await this.adminService.create({
                 ...data,
@@ -284,8 +283,6 @@ export class AdminControllerV1 {
         if (!data || Object.keys(data).length < 1) {
             throw new BadRequestException("No data is presented!");
         }
-
-        let updatedData: Admin;
 
         /* ----------------------------------------------------------
         |  ATURAN PERUBAHAN DATA ADMIN - 28 DESEMBER 2025
@@ -420,6 +417,7 @@ export class AdminControllerV1 {
         }
 
         // Menyimpan data
+        let updatedData: Admin;
         try {
             updatedData = await this.adminService.update(
                 { tlp },
@@ -480,8 +478,6 @@ export class AdminControllerV1 {
         @Param("tlp") tlp: string,
         @Request() req: any,
     ): Promise<Admin> {
-        let deletedData: any;
-
         // Data admin/ user yang sedang login
         const { sub, role } = req.user;
 
@@ -497,6 +493,7 @@ export class AdminControllerV1 {
         }
 
         // Delete data from database
+        let deletedData: any;
         try {
             deletedData = await this.adminService.remove({ tlp });
         } catch (e) {
