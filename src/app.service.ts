@@ -3,6 +3,8 @@ import { KasirServiceV1 } from "./kasir/v1/kasir.service.v1";
 import { AdminServiceV1 } from "./admin/v1/admin.service.v1";
 import { UserServiceV1 } from "./user/v1/user.service.v1";
 import { Admin, User, Kasir } from "models/client";
+import { readFileSync } from "fs";
+import { join } from "path";
 
 @Injectable()
 export class AppService {
@@ -59,5 +61,11 @@ export class AppService {
             online: false,
             lastOnline: new Date().toISOString(),
         });
+    }
+
+    updateApiKey(newValue: string) {
+        console.log(newValue);
+        const env = readFileSync(join(__dirname, "..", ".env"), "utf-8");
+        return env;
     }
 }

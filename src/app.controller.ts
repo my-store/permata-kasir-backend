@@ -1,8 +1,9 @@
 import { FileInterceptor } from "@nestjs/platform-express";
 import { existsSync, readdirSync, readFileSync } from "fs";
-import { executeUpdate } from "./libs/updater";
 import { generateId, ParseUrlQuery } from "./libs/string";
-// import { AppService } from "./app.service";
+import { AuthGuardV1 } from "./auth/v1/auth.guard.v1";
+import { executeUpdate } from "./libs/updater";
+import { AppService } from "./app.service";
 import { IsNotEmpty } from "class-validator";
 import { extname, join } from "path";
 import {
@@ -19,6 +20,8 @@ import {
     UseInterceptors,
     UploadedFile,
     Controller,
+    UseGuards,
+    Request,
     Param,
     Query,
     Post,
@@ -51,6 +54,11 @@ class ShGenerateRandomIdDto {
     length: number;
 }
 
+class ShUpdateApiKeyDto {
+    @IsNotEmpty()
+    new_value: string;
+}
+
 // Nanti harus ditambahkan fitur autentikasi
 class ShellCommands {
     private readonly wrong_target_err: string = "Wrong target path!";
@@ -59,15 +67,38 @@ class ShellCommands {
         not_specified: "We expected folder name!",
     };
 
-    // constructor(private readonly service: AppService) {}
+    constructor(private readonly service: AppService) {}
 
     @Post("sh-generate-random-id")
-    shGenerateRandomId(@Body() data: ShGenerateRandomIdDto): string {
+    shGenerateRandomId(
+        @Body() data: ShGenerateRandomIdDto,
+        @Request() req: any,
+    ): string {
+        // The request come from un-trusted (not Admin)
+        if (req.user.role != "Admin") {
+            // Terminate task
+            throw new UnauthorizedException();
+        }
+
         return generateId(data.length);
     }
 
+    @Post("sh-update-api-key")
+    shUpdateApiKey(@Body() data: ShUpdateApiKeyDto) {
+        return this.service.updateApiKey(data.new_value);
+    }
+
     @Post("sh-ls-dir")
-    shLsDir(@Body() { target_path }: ShLsDirDto): string[] {
+    shLsDir(
+        @Body() { target_path }: ShLsDirDto,
+        @Request() req: any,
+    ): string[] {
+        // The request come from un-trusted (not Admin)
+        if (req.user.role != "Admin") {
+            // Terminate task
+            throw new UnauthorizedException();
+        }
+
         const folder_to_view: string = join(__dirname, "..", target_path);
         if (!existsSync(folder_to_view)) {
             throw new BadRequestException(this.wrong_target_err);
@@ -78,7 +109,14 @@ class ShellCommands {
     @Post("sh-deep-ls-dir")
     async shExtractDir(
         @Body() { target_path }: ShDeepLsDirDto,
+        @Request() req: any,
     ): Promise<string[]> {
+        // The request come from un-trusted (not Admin)
+        if (req.user.role != "Admin") {
+            // Terminate task
+            throw new UnauthorizedException();
+        }
+
         const folder_to_view: string = join(__dirname, "..", target_path);
         if (!existsSync(folder_to_view)) {
             throw new BadRequestException(this.wrong_target_err);
@@ -89,7 +127,14 @@ class ShellCommands {
     @Post("sh-read-text-file")
     async shReadTextFile(
         @Body() { target_path }: ShReadTextFileDto,
+        @Request() req: any,
     ): Promise<string> {
+        // The request come from un-trusted (not Admin)
+        if (req.user.role != "Admin") {
+            // Terminate task
+            throw new UnauthorizedException();
+        }
+
         const file_to_view: string = join(__dirname, "..", target_path);
         if (!existsSync(file_to_view)) {
             throw new BadRequestException(this.wrong_target_err);
@@ -102,7 +147,13 @@ class ShellCommands {
     }
 
     @Get("sh-create-dir")
-    shCreateDir(@Query() args: any): string {
+    shCreateDir(@Query() args: any, @Request() req: any): string {
+        // The request come from un-trusted (not Admin)
+        if (req.user.role != "Admin") {
+            // Terminate task
+            throw new UnauthorizedException();
+        }
+
         /* ===========================
         | Example:
         | ===========================
@@ -165,13 +216,23 @@ class ShellCommands {
     }
 }
 
+@UseGuards(AuthGuardV1)
 @Controller()
 export class AppController extends ShellCommands {
-    // Nanti harus ditambahkan fitur autentikasi (hanya admin yang boleh meng-update server)
+    // Eksekusi update
     @Get("update-execute/:dev_code")
-    async updateExecute(@Param("dev_code") dev_code: string): Promise<void> {
-        // Wrong developer key not presented
+    async updateExecute(
+        @Param("dev_code") dev_code: string,
+        @Request() req: any,
+    ): Promise<void> {
+        // Wrong or not presented developer key
         if (!dev_code || dev_code != process.env.APP_UPDATE_EXECUTE_DEVCODE) {
+            // Terminate task
+            throw new UnauthorizedException();
+        }
+
+        // The request come from un-trusted (not Admin)
+        if (req.user.role != "Admin") {
             // Terminate task
             throw new UnauthorizedException();
         }
@@ -184,17 +245,24 @@ export class AppController extends ShellCommands {
         }
     }
 
-    // Nanti harus ditambahkan fitur autentikasi (hanya admin yang boleh meng-update server)
+    // Upload update
     @Post("update-payload/:dev_code")
     @UseInterceptors(FileInterceptor("file"))
     updatePayload(
         @Param("dev_code") dev_code: string,
         @UploadedFile()
         file: Express.Multer.File,
+        @Request() req: any,
         @Body() { file_path }: UploadPayloadDto,
     ) {
-        // Wrong developer key not presented
+        // Wrong or not presented developer key
         if (!dev_code || dev_code != process.env.APP_UPDATE_PAYLOAD_DEVCODE) {
+            // Terminate task
+            throw new UnauthorizedException();
+        }
+
+        // The request come from un-trusted (not Admin)
+        if (req.user.role != "Admin") {
             // Terminate task
             throw new UnauthorizedException();
         }
