@@ -19,6 +19,7 @@ const defaultKeys: DefaultKeysInterface = {
     lastOnline: true,
     active: true,
     deactivatedAt: true,
+    deactivatedReason: true,
     createdAt: true,
     updatedAt: true,
 

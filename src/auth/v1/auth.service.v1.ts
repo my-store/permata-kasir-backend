@@ -104,18 +104,25 @@ export class AuthServiceV1 {
     }
 
     checkActiveAccount(role: string, data: any) {
+        /* ============================================
+        |  REMEMBER
+        |  ============================================
+        |  These fields are nullabel, even if they are
+        |  have string value type on database, they
+        |  can be null if the value is not setted.
+        |  --------------------------------------------
+        |  1. deactivatedAt
+        |  2. deactivatedReason
+        */
         // Blocked | banned account | not activated yet
         if (!data.active) {
             // Blocked or banned
-            if (data.deactivatedAt || data.deactivatedAt.length > 0) {
+            if (data.deactivatedAt) {
                 // Deactivation message
                 let msg: string = "Akun anda telah di blokir";
 
                 // Deactivated with reason
-                if (
-                    data.deactivatedReason ||
-                    data.deactivatedReason.length > 0
-                ) {
+                if (data.deactivatedReason) {
                     // Add the reason message
                     msg += `, karena:\n${data.deactivatedReason}`;
                 }

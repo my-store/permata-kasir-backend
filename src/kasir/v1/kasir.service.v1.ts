@@ -13,6 +13,11 @@ const defaultKeys: DefaultKeysInterface = {
     tlp: true,
     password: true,
     foto: true,
+    online: true,
+    lastOnline: true,
+    active: true,
+    deactivatedAt: true,
+    deactivatedReason: true,
     createdAt: true,
     updatedAt: true,
 
