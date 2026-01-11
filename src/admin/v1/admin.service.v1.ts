@@ -38,22 +38,6 @@ export class AdminServiceV1 {
         password: true,
     };
 
-    // FIND ALL REFRESH-TOKEN DATA - DISPLAYED KEYS
-    private readonly findAllRTKeys: Prisma.AdminRefreshTokenSelect = {
-        id: true,
-        token: true,
-        refreshToken: true,
-
-        // Admin keys
-        admin: {
-            // Only show some keys
-            select: {
-                nama: true,
-                online: true,
-            },
-        },
-    };
-
     constructor(private readonly prisma: PrismaService) {}
 
     cleanUpdateData(d: any): any {
@@ -110,17 +94,15 @@ export class AdminServiceV1 {
         where: Prisma.AdminWhereUniqueInput,
         data: any,
     ): Promise<Admin> {
-        let updatedData: Prisma.AdminUpdateInput = { ...data };
-
-        // Konfigurasi timestamp
-        const thisTime = new Date().toISOString();
-        updatedData.updatedAt = thisTime;
-
-        // Save updated data
         return this.prisma.admin.update({
             where,
-            data: updatedData,
-            select: this.findOneKeys,
+            data: {
+                ...data,
+
+                // Timestamp
+                updatedAt: getTimestamp(),
+            },
+            select: this.findOneKeys, // Default keys to display
         });
     }
 
@@ -132,19 +114,11 @@ export class AdminServiceV1 {
         where?: Prisma.AdminWhereInput;
         orderBy?: Prisma.AdminOrderByWithRelationInput;
     }): Promise<Admin[]> {
-        const { skip, take, select, cursor, where, orderBy } = params;
         return this.prisma.admin.findMany({
-            skip,
-            take,
-            cursor,
-            where,
-            orderBy,
+            ...params,
             select: {
-                // Default keys to display
-                ...this.findAllKeys,
-
-                // User specified keys to display
-                ...select,
+                ...this.findAllKeys, // Default keys to display
+                ...params.select, // User specified keys to display
             },
         });
     }
@@ -153,16 +127,12 @@ export class AdminServiceV1 {
         select?: DefaultKeysInterface;
         where: Prisma.AdminWhereUniqueInput;
     }): Promise<Admin | null> {
-        const { select, where } = params;
         return this.prisma.admin.findUniqueOrThrow({
+            ...params,
             select: {
-                // Default keys to display
-                ...this.findOneKeys,
-
-                // User specified keys to display
-                ...select,
+                ...this.findOneKeys, // Default keys to display
+                ...params.select, // User specified keys to display
             },
-            where,
         });
     }
 

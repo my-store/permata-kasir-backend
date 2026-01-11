@@ -192,7 +192,7 @@ export class KasirServiceV1 {
         };
 
         // Insert data
-        return this.prisma.kasir.create({ data });
+        return this.prisma.kasir.create({ data, select: this.findOneKeys });
     }
 
     async findAll(params: {
@@ -203,19 +203,11 @@ export class KasirServiceV1 {
         where?: Prisma.KasirWhereInput;
         orderBy?: Prisma.KasirOrderByWithRelationInput;
     }): Promise<Kasir[]> {
-        const { skip, take, select, cursor, where, orderBy } = params;
         return this.prisma.kasir.findMany({
-            skip,
-            take,
-            cursor,
-            where,
-            orderBy,
+            ...params,
             select: {
-                // Default keys to display
-                ...this.findAllKeys,
-
-                // User specified keys to display
-                ...select,
+                ...this.findAllKeys, // Default keys to display
+                ...params.select, // User specified keys to display
             },
         });
     }
@@ -224,16 +216,12 @@ export class KasirServiceV1 {
         select?: DefaultKeysInterface;
         where: Prisma.KasirWhereUniqueInput;
     }): Promise<Kasir | null> {
-        const { select, where } = params;
         return this.prisma.kasir.findUniqueOrThrow({
+            ...params,
             select: {
-                // Default keys to display
-                ...this.findOneKeys,
-
-                // User specified keys to display
-                ...select,
+                ...this.findOneKeys, // Default keys to display
+                ...params.select, // User specified keys to display
             },
-            where,
         });
     }
 
@@ -241,17 +229,18 @@ export class KasirServiceV1 {
         where: Prisma.KasirWhereUniqueInput,
         data: any,
     ): Promise<Kasir> {
-        let updatedData: Prisma.KasirUpdateInput = { ...data };
+        return this.prisma.kasir.update({
+            where,
+            data: {
+                ...data,
 
-        // Konfigurasi timestamp
-        const thisTime = new Date().toISOString();
-        updatedData.updatedAt = thisTime;
-
-        // Save updated data
-        return this.prisma.kasir.update({ where, data: updatedData });
+                // Timestamp
+                updatedAt: getTimestamp(),
+            },
+        });
     }
 
     async remove(where: Prisma.KasirWhereUniqueInput): Promise<Kasir> {
-        return this.prisma.kasir.delete({ where });
+        return this.prisma.kasir.delete({ where, select: this.findOneKeys });
     }
 }

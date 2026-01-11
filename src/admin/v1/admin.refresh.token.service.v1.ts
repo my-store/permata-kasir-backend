@@ -41,17 +41,15 @@ export class AdminRefreshTokenServiceV1 {
         where: Prisma.AdminRefreshTokenWhereUniqueInput,
         data: any,
     ): Promise<AdminRefreshToken> {
-        let updatedData: Prisma.AdminRefreshTokenUpdateInput = { ...data };
-
-        // Konfigurasi timestamp
-        const thisTime = new Date().toISOString();
-        updatedData.updatedAt = thisTime;
-
-        // Save updated data
         return this.prisma.adminRefreshToken.update({
             where,
-            data: updatedData,
-            select: this.findOneKeys,
+            data: {
+                ...data,
+
+                // Timestamp
+                updatedAt: getTimestamp(),
+            },
+            select: this.findOneKeys, // Default keys to display
         });
     }
 
@@ -60,7 +58,7 @@ export class AdminRefreshTokenServiceV1 {
     ): Promise<AdminRefreshToken> {
         return this.prisma.adminRefreshToken.delete({
             where,
-            select: this.findOneKeys,
+            select: this.findOneKeys, // Default keys to display
         });
     }
 
@@ -96,8 +94,7 @@ export class AdminRefreshTokenServiceV1 {
         return this.prisma.adminRefreshToken.create({
             data,
             select: {
-                // Default keys to display
-                ...this.findOneKeys,
+                ...this.findOneKeys, // Default keys to display
             },
         });
     }
@@ -106,16 +103,12 @@ export class AdminRefreshTokenServiceV1 {
         select?: Prisma.AdminRefreshTokenSelect;
         where: Prisma.AdminRefreshTokenWhereUniqueInput;
     }): Promise<AdminRefreshToken> {
-        const { select, where } = params;
         return this.prisma.adminRefreshToken.findUniqueOrThrow({
+            ...params,
             select: {
-                // Default keys to display
-                ...this.findOneKeys,
-
-                // User specified keys to display
-                ...select,
+                ...this.findOneKeys, // Default keys to display
+                ...params.select, // User specified keys to display
             },
-            where,
         });
     }
 
@@ -127,19 +120,11 @@ export class AdminRefreshTokenServiceV1 {
         where?: Prisma.AdminRefreshTokenWhereInput;
         orderBy?: Prisma.AdminRefreshTokenOrderByWithRelationInput;
     }): Promise<AdminRefreshToken[]> {
-        const { skip, take, select, cursor, where, orderBy } = params;
         return this.prisma.adminRefreshToken.findMany({
-            skip,
-            take,
-            cursor,
-            where,
-            orderBy,
+            ...params,
             select: {
-                // Default keys to display
-                ...this.findAllKeys,
-
-                // User specified keys to display
-                ...select,
+                ...this.findAllKeys, // Default keys to display
+                ...params.select, // User specified keys to display
             },
         });
     }

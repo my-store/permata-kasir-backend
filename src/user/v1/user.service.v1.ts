@@ -132,19 +132,11 @@ export class UserServiceV1 {
         orderBy?: Prisma.UserOrderByWithRelationInput;
         select?: DefaultKeysInterface;
     }): Promise<User[]> {
-        const { skip, take, cursor, where, orderBy, select } = params;
         return this.prisma.user.findMany({
-            skip,
-            take,
-            cursor,
-            where,
-            orderBy,
+            ...params,
             select: {
-                // Default keys to display
-                ...this.findAllKeys,
-
-                // User specified keys to display
-                ...select,
+                ...this.findAllKeys, // Default keys to display
+                ...params.select, // User specified keys to display
             },
         });
     }
@@ -153,16 +145,12 @@ export class UserServiceV1 {
         select?: DefaultKeysInterface;
         where: Prisma.UserWhereUniqueInput;
     }): Promise<User | null> {
-        const { select, where } = params;
         return this.prisma.user.findUniqueOrThrow({
+            ...params,
             select: {
-                // Default keys to display
-                ...this.findOneKeys,
-
-                // User specified keys to display
-                ...select,
+                ...this.findOneKeys, // Default keys to display
+                ...params.select, // User specified keys to display
             },
-            where,
         });
     }
 
