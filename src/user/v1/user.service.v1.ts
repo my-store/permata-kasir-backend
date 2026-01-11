@@ -79,7 +79,7 @@ export class UserServiceV1 {
         } catch {}
 
         // Prepare data
-        let data: Prisma.UserCreateInput = {
+        const data: Prisma.UserCreateInput = {
             ...newData,
 
             // UUID
@@ -93,25 +93,28 @@ export class UserServiceV1 {
             updatedAt: thisTime,
         };
 
-        // Fix active value (if client send through FormData)
-        // JSON form will not need this.
-        if (data.active) {
-            if (typeof data.active == "string") {
-                data.active =
-                    data.active == "1" || data.active == "true" ? true : false;
-            }
-        }
-
         // Insert data
         return this.prisma.user.create({ data, select: this.findOneKeys });
     }
 
     async update(where: Prisma.UserWhereUniqueInput, data: any): Promise<User> {
-        let updatedData: Prisma.UserUpdateInput = { ...data };
+        let updatedData: Prisma.UserUpdateInput = {
+            ...data,
 
-        // Konfigurasi timestamp
-        const thisTime = new Date().toISOString();
-        updatedData.updatedAt = thisTime;
+            // Timestamp
+            updatedAt: getTimestamp(),
+        };
+
+        // Fix active value (if client send through FormData body)
+        // JSON body dont need this.
+        if (updatedData.active) {
+            if (typeof updatedData.active == "string") {
+                updatedData.active =
+                    updatedData.active == "1" || updatedData.active == "true"
+                        ? true
+                        : false;
+            }
+        }
 
         // Save updated data
         return this.prisma.user.update({
