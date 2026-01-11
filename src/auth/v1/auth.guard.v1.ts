@@ -37,24 +37,7 @@ export class AuthGuardV1 implements CanActivate {
     }
 
     private extractTokenFromHeader(request: Request): string | undefined {
-        if (!request.headers.authorization) {
-            throw new UnauthorizedException();
-        }
-
-        // Tipe (Bearer) dan Token + Refresh Token
-        const [type, tokenWithRefreshToken] =
-            request.headers.authorization?.split(" ") ?? [];
-
-        // Spacer antara token dan refresh-token
-        const spacer: any = process.env.APP_AUTH_HEADERS_SPACER;
-
-        // Token dan refresh-token
-        const [realToken, refreshToken] =
-            tokenWithRefreshToken.split(spacer) ?? [];
-
-        // Pastikan token dan refresh-token di sematkan di header:
-        // Authorization: Bearer <token---refresh-token>
-        // --- berisi spacer pemisah token dan refresh-token, bisa dilihat di file .env
-        return type === "Bearer" && refreshToken ? realToken : undefined;
+        const [type, token] = request.headers.authorization?.split(" ") ?? [];
+        return type === "Bearer" && token ? token : undefined;
     }
 }
