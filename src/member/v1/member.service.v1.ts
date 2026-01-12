@@ -1,5 +1,5 @@
+import { generateId, getTimestamp } from "src/libs/string";
 import { PrismaService } from "src/prisma.service";
-import { generateId } from "src/libs/string";
 import { Injectable } from "@nestjs/common";
 import { Member, Prisma } from "models";
 
@@ -142,6 +142,25 @@ export class MemberServiceV1 {
         });
     }
 
+    cleanInsertData(d: any): any {
+        const {
+            // Disabled data to be manual inserted
+            id,
+            uuid,
+            createdAt,
+            updatedAt,
+
+            // Make sure to remove userId before insert, because that is only
+            // for security checking.
+            // If not removed, will cause error.
+            userId,
+
+            // Fixed | Now data insert will be save
+            ...cleanedInsertData
+        }: any = d;
+        return cleanedInsertData;
+    }
+
     cleanUpdateData(d: any): any {
         const {
             // Disabled data to be updated
@@ -152,14 +171,14 @@ export class MemberServiceV1 {
             updatedAt,
 
             // Fixed | Now data update will be save
-            ...cleanedData
+            ...cleanedUpdateData
         }: any = d;
-        return cleanedData;
+        return cleanedUpdateData;
     }
 
     async create(newData: any): Promise<Member> {
         // Konfigurasi timestamp
-        const thisTime = new Date().toISOString();
+        const thisTime = getTimestamp();
 
         // UUID
         const uuidLength: any = process.env.MEMBER_INSERT_UUID_LENGTH;
@@ -174,19 +193,37 @@ export class MemberServiceV1 {
             return this.create(newData);
         } catch {}
 
-        const data: Prisma.MemberCreateInput = {
-            ...newData,
-
-            // UUID
-            uuid,
-
-            // Timestamp
-            createdAt: thisTime,
-            updatedAt: thisTime,
-        };
-
         // Insert data
-        return this.prisma.member.create({ data });
+        return this.prisma.member.create({
+            data: {
+                ...newData,
+
+                // UUID
+                uuid,
+
+                // Timestamp
+                createdAt: thisTime,
+                updatedAt: thisTime,
+            },
+            // Fields to display after creation
+            select: this.findOneKeys,
+        });
+    }
+
+    async update(
+        where: Prisma.MemberWhereUniqueInput,
+        data: any,
+    ): Promise<Member> {
+        return this.prisma.member.update({
+            where,
+            data: {
+                ...data,
+
+                // Timestamp
+                updatedAt: getTimestamp(),
+            },
+            select: this.findOneKeys,
+        });
     }
 
     async findAll(params: {
@@ -197,19 +234,11 @@ export class MemberServiceV1 {
         where?: Prisma.MemberWhereInput;
         orderBy?: Prisma.MemberOrderByWithRelationInput;
     }): Promise<Member[]> {
-        const { skip, take, select, cursor, where, orderBy } = params;
         return this.prisma.member.findMany({
-            skip,
-            take,
-            cursor,
-            where,
-            orderBy,
+            ...params,
             select: {
-                // Default keys to display
-                ...this.findAllKeys,
-
-                // User specified keys to display
-                ...select,
+                ...this.findAllKeys, // Default keys to display
+                ...params.select, // User specified keys to display
             },
         });
     }
@@ -218,34 +247,12 @@ export class MemberServiceV1 {
         select?: DefaultKeysInterface;
         where: Prisma.MemberWhereUniqueInput;
     }): Promise<Member | null> {
-        const { select, where } = params;
         return this.prisma.member.findUniqueOrThrow({
+            ...params,
             select: {
-                // Default keys to display
-                ...this.findOneKeys,
-
-                // User specified keys to display
-                ...select,
+                ...this.findOneKeys, // Default keys to display
+                ...params.select, // User specified keys to display
             },
-            where,
-        });
-    }
-
-    async update(
-        where: Prisma.MemberWhereUniqueInput,
-        data: any,
-    ): Promise<Member> {
-        let updatedData: Prisma.MemberUpdateInput = { ...data };
-
-        // Konfigurasi timestamp
-        const thisTime = new Date().toISOString();
-        updatedData.updatedAt = thisTime;
-
-        // Save updated data
-        return this.prisma.member.update({
-            where,
-            data: updatedData,
-            select: this.findOneKeys,
         });
     }
 

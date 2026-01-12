@@ -1,6 +1,6 @@
+import { generateId, getTimestamp } from "src/libs/string";
 import { Toko, Prisma, User, UserRank } from "models";
 import { PrismaService } from "src/prisma.service";
-import { generateId } from "src/libs/string";
 import { Injectable } from "@nestjs/common";
 
 // Placeholder | Short type name purpose only
@@ -135,6 +135,22 @@ export class TokoServiceV1 {
         };
     }
 
+    cleanInsertData(d: any): any {
+        const {
+            // Disabled data to be manual inserted
+            id,
+            uuid,
+            createdAt,
+            updatedAt,
+
+            // Other fields... (soon)
+
+            // Fixed | Now data insert will be save
+            ...cleanedInsertData
+        }: any = d;
+        return cleanedInsertData;
+    }
+
     cleanUpdateData(d: any): any {
         const {
             // Disabled data to be updated
@@ -145,14 +161,14 @@ export class TokoServiceV1 {
             updatedAt,
 
             // Fixed | Now data update will be save
-            ...cleanedData
+            ...cleanedUpdateData
         } = d;
-        return cleanedData;
+        return cleanedUpdateData;
     }
 
     async create(newData: any): Promise<Toko> {
         // Konfigurasi timestamp
-        const thisTime = new Date().toISOString();
+        const thisTime = getTimestamp();
 
         // UUID
         const uuidLength: any = process.env.TOKO_INSERT_UUID_LENGTH;
@@ -167,20 +183,21 @@ export class TokoServiceV1 {
             return this.create(newData);
         } catch {}
 
-        // Prepare data
-        const data: Prisma.TokoCreateInput = {
-            ...newData,
-
-            // UUID
-            uuid,
-
-            // Timestamp
-            createdAt: thisTime,
-            updatedAt: thisTime,
-        };
-
         // Insert data
-        return this.prisma.toko.create({ data });
+        return this.prisma.toko.create({
+            data: {
+                ...newData,
+
+                // UUID
+                uuid,
+
+                // Timestamp
+                createdAt: thisTime,
+                updatedAt: thisTime,
+            },
+            // Fields to display after creation
+            select: this.findOneKeys,
+        });
     }
 
     async findAll(params: {
@@ -191,19 +208,11 @@ export class TokoServiceV1 {
         where?: Prisma.TokoWhereInput;
         orderBy?: Prisma.TokoOrderByWithRelationInput;
     }): Promise<Toko[]> {
-        const { skip, take, select, cursor, where, orderBy } = params;
         return this.prisma.toko.findMany({
-            skip,
-            take,
-            cursor,
-            where,
-            orderBy,
+            ...params,
             select: {
-                // Default keys to display
-                ...this.findAllKeys,
-
-                // User specified keys to display
-                ...select,
+                ...this.findAllKeys, // Default keys to display
+                ...params.select, // User specified keys to display
             },
         });
     }
@@ -212,16 +221,12 @@ export class TokoServiceV1 {
         select?: DefaultKeysInterface;
         where: Prisma.TokoWhereUniqueInput;
     }): Promise<Toko | null> {
-        const { select, where } = params;
         return this.prisma.toko.findUniqueOrThrow({
+            ...params,
             select: {
-                // Default keys to display
-                ...this.findOneKeys,
-
-                // User specified keys to display
-                ...select,
+                ...this.findOneKeys, // Default keys to display
+                ...params.select, // User specified keys to display
             },
-            where,
         });
     }
 
@@ -231,13 +236,13 @@ export class TokoServiceV1 {
             data: {
                 ...data,
 
-                // Update timestamp
-                updatedAt: new Date().toISOString(),
+                // Timestamp
+                updatedAt: getTimestamp(),
             },
         });
     }
 
     async remove(where: Prisma.TokoWhereUniqueInput): Promise<Toko> {
-        return this.prisma.toko.delete({ where });
+        return this.prisma.toko.delete({ where, select: this.findOneKeys });
     }
 }

@@ -1,6 +1,6 @@
-import { Prisma, UserRank } from "models/client";
+import { generateId, getTimestamp } from "src/libs/string";
 import { PrismaService } from "../../prisma.service";
-import { generateId } from "src/libs/string";
+import { Prisma, UserRank } from "models/client";
 import { Injectable } from "@nestjs/common";
 
 // Placeholder | Short type name purpose only
@@ -58,7 +58,7 @@ export class UserRankServiceV1 {
 
     async create(newData: any): Promise<UserRank> {
         // Konfigurasi timestamp
-        const thisTime = new Date().toISOString();
+        const thisTime = getTimestamp();
 
         // UUID
         const uuidLength: any = process.env.USER_RANK_INSERT_UUID_LENGTH;
@@ -75,39 +75,19 @@ export class UserRankServiceV1 {
             return this.create(newData);
         } catch {}
 
-        // Prepare data
-        let data: Prisma.UserRankCreateInput = {
-            ...newData,
-
-            // UUID
-            uuid,
-
-            // Timestamp
-            createdAt: thisTime,
-            updatedAt: thisTime,
-        };
-
         // Insert data
         return this.prisma.userRank.create({
-            data,
-            select: this.findOneKeys,
-        });
-    }
+            data: {
+                ...newData,
 
-    async update(
-        where: Prisma.UserRankWhereUniqueInput,
-        data: any,
-    ): Promise<UserRank> {
-        let updatedData: Prisma.UserRankUpdateInput = { ...data };
+                // UUID
+                uuid,
 
-        // Konfigurasi timestamp
-        const thisTime = new Date().toISOString();
-        updatedData.updatedAt = thisTime;
-
-        // Save updated data
-        return this.prisma.userRank.update({
-            where,
-            data: updatedData,
+                // Timestamp
+                createdAt: thisTime,
+                updatedAt: thisTime,
+            },
+            // Fields to display after creation
             select: this.findOneKeys,
         });
     }
@@ -120,19 +100,11 @@ export class UserRankServiceV1 {
         orderBy?: Prisma.UserRankOrderByWithRelationInput;
         select?: DefaultKeysInterface;
     }): Promise<UserRank[]> {
-        const { skip, take, cursor, where, orderBy, select } = params;
         return this.prisma.userRank.findMany({
-            skip,
-            take,
-            cursor,
-            where,
-            orderBy,
+            ...params,
             select: {
-                // Default keys to display
-                ...this.findAllKeys,
-
-                // User-rank specified keys to display
-                ...select,
+                ...this.findAllKeys, // Default keys to display
+                ...params.select, // User specified keys to display
             },
         });
     }
@@ -141,16 +113,29 @@ export class UserRankServiceV1 {
         select?: DefaultKeysInterface;
         where: Prisma.UserRankWhereUniqueInput;
     }): Promise<UserRank | null> {
-        const { select, where } = params;
         return this.prisma.userRank.findUniqueOrThrow({
+            ...params,
             select: {
-                // Default keys to display
-                ...this.findOneKeys,
-
-                // User-Rank specified keys to display
-                ...select,
+                ...this.findOneKeys, // Default keys to display
+                ...params.select, // User specified keys to display
             },
+        });
+    }
+
+    async update(
+        where: Prisma.UserRankWhereUniqueInput,
+        data: any,
+    ): Promise<UserRank> {
+        return this.prisma.userRank.update({
             where,
+            data: {
+                ...data,
+
+                // Timestamp
+                updatedAt: getTimestamp(),
+            },
+            // Fields to display after update data
+            select: this.findOneKeys,
         });
     }
 

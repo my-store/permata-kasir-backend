@@ -64,7 +64,10 @@ export class TokoControllerV1 {
         // Menyimpan data
         let createdToko: Toko;
         try {
-            createdToko = await this.service.create(newData);
+            createdToko = await this.service.create(
+                // Cleaned insert data
+                this.service.cleanInsertData(newData),
+            );
         } catch (error) {
             // Prisma error
             if (error instanceof Prisma.PrismaClientKnownRequestError) {

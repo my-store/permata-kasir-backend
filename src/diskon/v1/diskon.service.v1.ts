@@ -1,5 +1,5 @@
+import { generateId, getTimestamp } from "src/libs/string";
 import { PrismaService } from "src/prisma.service";
-import { generateId } from "src/libs/string";
 import { Injectable } from "@nestjs/common";
 import { Diskon, Prisma } from "models";
 
@@ -140,6 +140,25 @@ export class DiskonServiceV1 {
         });
     }
 
+    cleanInsertData(d: any): any {
+        const {
+            // Disabled data to be manual inserted
+            id,
+            uuid,
+            createdAt,
+            updatedAt,
+
+            // Make sure to remove userId before insert, because that is only
+            // for security checking.
+            // If not removed, will cause error.
+            userId,
+
+            // Fixed | Now data insert will be save
+            ...cleanedInsertData
+        }: any = d;
+        return cleanedInsertData;
+    }
+
     cleanUpdateData(d: any): any {
         const {
             // Disabled data to be updated
@@ -150,9 +169,9 @@ export class DiskonServiceV1 {
             updatedAt,
 
             // Fixed | Now data update will be save
-            ...cleanedData
+            ...cleanedUpdateData
         }: any = d;
-        return cleanedData;
+        return cleanedUpdateData;
     }
 
     async create(newData: any): Promise<Diskon> {
@@ -172,20 +191,21 @@ export class DiskonServiceV1 {
             return this.create(newData);
         } catch {}
 
-        // Prepare data
-        const data: Prisma.DiskonCreateInput = {
-            ...newData,
-
-            // UUID
-            uuid,
-
-            // Timestamp
-            createdAt: thisTime,
-            updatedAt: thisTime,
-        };
-
         // Insert data
-        return this.prisma.diskon.create({ data });
+        return this.prisma.diskon.create({
+            data: {
+                ...newData,
+
+                // UUID
+                uuid,
+
+                // Timestamp
+                createdAt: thisTime,
+                updatedAt: thisTime,
+            },
+            // Fields to display after creation
+            select: this.findOneKeys,
+        });
     }
 
     async findAll(params: {
@@ -196,19 +216,11 @@ export class DiskonServiceV1 {
         where?: Prisma.DiskonWhereInput;
         orderBy?: Prisma.DiskonOrderByWithRelationInput;
     }): Promise<Diskon[]> {
-        const { skip, take, select, cursor, where, orderBy } = params;
         return this.prisma.diskon.findMany({
-            skip,
-            take,
-            cursor,
-            where,
-            orderBy,
+            ...params,
             select: {
-                // Default keys to display
-                ...this.findAllKeys,
-
-                // User specified keys to display
-                ...select,
+                ...this.findAllKeys, // Default keys to display
+                ...params.select, // User specified keys to display
             },
         });
     }
@@ -217,16 +229,12 @@ export class DiskonServiceV1 {
         select?: DefaultKeysInterface;
         where: Prisma.DiskonWhereUniqueInput;
     }): Promise<Diskon | null> {
-        const { select, where } = params;
         return this.prisma.diskon.findUniqueOrThrow({
+            ...params,
             select: {
-                // Default keys to display
-                ...this.findOneKeys,
-
-                // User specified keys to display
-                ...select,
+                ...this.findOneKeys, // Default keys to display
+                ...params.select, // User specified keys to display
             },
-            where,
         });
     }
 
@@ -234,16 +242,14 @@ export class DiskonServiceV1 {
         where: Prisma.DiskonWhereUniqueInput,
         data: any,
     ): Promise<Diskon> {
-        let updatedData: Prisma.DiskonUpdateInput = { ...data };
-
-        // Konfigurasi timestamp
-        const thisTime = new Date().toISOString();
-        updatedData.updatedAt = thisTime;
-
-        // Save updated data
         return this.prisma.diskon.update({
             where,
-            data: updatedData,
+            data: {
+                ...data,
+
+                // Timestamp
+                updatedAt: getTimestamp(),
+            },
             select: this.findOneKeys,
         });
     }

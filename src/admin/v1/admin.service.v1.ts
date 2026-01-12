@@ -49,9 +49,9 @@ export class AdminServiceV1 {
             updatedAt,
 
             // Fixed | Now data update will be save
-            ...cleanedData
+            ...cleanedUpdateData
         }: any = d;
-        return cleanedData;
+        return cleanedUpdateData;
     }
 
     async create(newData: any): Promise<Admin> {
@@ -71,23 +71,24 @@ export class AdminServiceV1 {
             return this.create(newData);
         } catch {}
 
-        // Prepare data
-        const data: Prisma.AdminCreateInput = {
-            ...newData,
-
-            // UUID
-            uuid,
-
-            // Enkripsi password
-            password: encryptPassword(newData.password),
-
-            // Timestamp
-            createdAt: thisTime,
-            updatedAt: thisTime,
-        };
-
         // Insert data
-        return this.prisma.admin.create({ data, select: this.findOneKeys });
+        return this.prisma.admin.create({
+            data: {
+                ...newData,
+
+                // UUID
+                uuid,
+
+                // Enkripsi password
+                password: encryptPassword(newData.password),
+
+                // Timestamp
+                createdAt: thisTime,
+                updatedAt: thisTime,
+            },
+            // Fields to display after creation
+            select: this.findOneKeys,
+        });
     }
 
     async update(

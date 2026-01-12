@@ -1,6 +1,6 @@
+import { generateId, getTimestamp } from "src/libs/string";
 import { Prisma, TransaksiPembelian } from "models";
 import { PrismaService } from "src/prisma.service";
-import { generateId } from "src/libs/string";
 import { Injectable } from "@nestjs/common";
 
 // Placeholder | Short type name purpose only
@@ -139,6 +139,25 @@ export class TransaksiPembelianServiceV1 {
         });
     }
 
+    cleanInsertData(d: any): any {
+        const {
+            // Disabled data to be manual inserted
+            id,
+            uuid,
+            createdAt,
+            updatedAt,
+
+            // Make sure to remove userId before insert, because that is only
+            // for security checking.
+            // If not removed, will cause error.
+            userId,
+
+            // Fixed | Now data insert will be save
+            ...cleanedInsertData
+        }: any = d;
+        return cleanedInsertData;
+    }
+
     cleanUpdateData(d: any): any {
         const {
             // Disabled data to be updated
@@ -149,14 +168,14 @@ export class TransaksiPembelianServiceV1 {
             updatedAt,
 
             // Fixed | Now data update will be save
-            ...cleanedData
+            ...cleanedUpdateData
         }: any = d;
-        return cleanedData;
+        return cleanedUpdateData;
     }
 
     async create(newData: any): Promise<TransaksiPembelian> {
         // Konfigurasi timestamp
-        const thisTime = new Date().toISOString();
+        const thisTime = getTimestamp();
 
         // UUID
         const uuidLength: any =
@@ -174,22 +193,21 @@ export class TransaksiPembelianServiceV1 {
             return this.create(newData);
         } catch {}
 
-        const data: Prisma.TransaksiPembelianCreateInput = {
-            ...newData,
-
-            // UUID
-            uuid,
-
-            // Parse to integer
-            tokoId: parseInt(newData.tokoId),
-
-            // Timestamp
-            createdAt: thisTime,
-            updatedAt: thisTime,
-        };
-
         // Save a new data
-        return this.prisma.transaksiPembelian.create({ data });
+        return this.prisma.transaksiPembelian.create({
+            data: {
+                ...newData,
+
+                // UUID
+                uuid,
+
+                // Timestamp
+                createdAt: thisTime,
+                updatedAt: thisTime,
+            },
+            // Fields to display after creation
+            select: this.findOneKeys,
+        });
     }
 
     async findAll(params: {
@@ -200,19 +218,11 @@ export class TransaksiPembelianServiceV1 {
         where?: Prisma.TransaksiPembelianWhereInput;
         orderBy?: Prisma.TransaksiPembelianOrderByWithRelationInput;
     }): Promise<TransaksiPembelian[]> {
-        const { skip, take, select, cursor, where, orderBy } = params;
         return this.prisma.transaksiPembelian.findMany({
-            skip,
-            take,
-            cursor,
-            where,
-            orderBy,
+            ...params,
             select: {
-                // Default keys to display
-                ...this.findAllKeys,
-
-                // User specified keys to display
-                ...select,
+                ...this.findAllKeys, // Default keys to display
+                ...params.select, // User specified keys to display
             },
         });
     }
@@ -221,16 +231,12 @@ export class TransaksiPembelianServiceV1 {
         select?: DefaultKeysInterface;
         where: Prisma.TransaksiPembelianWhereUniqueInput;
     }): Promise<TransaksiPembelian | null> {
-        const { select, where } = params;
         return this.prisma.transaksiPembelian.findUniqueOrThrow({
+            ...params,
             select: {
-                // Default keys to display
-                ...this.findOneKeys,
-
-                // User specified keys to display
-                ...select,
+                ...this.findOneKeys, // Default keys to display
+                ...params.select, // User specified keys to display
             },
-            where,
         });
     }
 
@@ -238,22 +244,25 @@ export class TransaksiPembelianServiceV1 {
         where: Prisma.TransaksiPembelianWhereUniqueInput,
         data: any,
     ): Promise<TransaksiPembelian> {
-        let updatedData: Prisma.TransaksiPembelianUpdateInput = { ...data };
-
-        // Konfigurasi timestamp
-        const thisTime = new Date().toISOString();
-        updatedData.updatedAt = thisTime;
-
-        // Save updated data
         return this.prisma.transaksiPembelian.update({
             where,
-            data: updatedData,
+            data: {
+                ...data,
+
+                // Timestamp
+                updatedAt: getTimestamp(),
+            },
+            // Fields to display after update data
+            select: this.findOneKeys,
         });
     }
 
     async remove(
         where: Prisma.TransaksiPembelianWhereUniqueInput,
     ): Promise<TransaksiPembelian> {
-        return this.prisma.transaksiPembelian.delete({ where });
+        return this.prisma.transaksiPembelian.delete({
+            where,
+            select: this.findOneKeys,
+        });
     }
 }

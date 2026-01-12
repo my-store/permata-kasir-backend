@@ -78,23 +78,24 @@ export class UserServiceV1 {
             return this.create(newData);
         } catch {}
 
-        // Prepare data
-        const data: Prisma.UserCreateInput = {
-            ...newData,
-
-            // UUID
-            uuid,
-
-            // Enkripsi password
-            password: encryptPassword(newData.password),
-
-            // Timestamp
-            createdAt: thisTime,
-            updatedAt: thisTime,
-        };
-
         // Insert data
-        return this.prisma.user.create({ data, select: this.findOneKeys });
+        return this.prisma.user.create({
+            data: {
+                ...newData,
+
+                // UUID
+                uuid,
+
+                // Enkripsi password
+                password: encryptPassword(newData.password),
+
+                // Timestamp
+                createdAt: thisTime,
+                updatedAt: thisTime,
+            },
+            // Fields to display after creation
+            select: this.findOneKeys,
+        });
     }
 
     async update(where: Prisma.UserWhereUniqueInput, data: any): Promise<User> {

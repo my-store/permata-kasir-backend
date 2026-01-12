@@ -42,14 +42,13 @@ export class TransaksiPenjualanControllerV1 {
             throw new UnauthorizedException();
         }
 
-        // Make sure to remove userId before insert, because that is only
-        // for security checking.
-        const { userId, ...fixedNewData } = newData;
-
         // Menyimpan data
         let createdTransaksiPenjualan: TransaksiPenjualan;
         try {
-            createdTransaksiPenjualan = await this.service.create(fixedNewData);
+            createdTransaksiPenjualan = await this.service.create(
+                // Cleaned insert data
+                this.service.cleanInsertData(newData),
+            );
         } catch (error) {
             throw new InternalServerErrorException(error);
         }

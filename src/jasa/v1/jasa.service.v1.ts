@@ -1,5 +1,5 @@
+import { generateId, getTimestamp } from "src/libs/string";
 import { PrismaService } from "src/prisma.service";
-import { generateId } from "src/libs/string";
 import { Injectable } from "@nestjs/common";
 import { Prisma, Jasa } from "models";
 
@@ -149,6 +149,25 @@ export class JasaServiceV1 {
         });
     }
 
+    cleanInsertData(d: any): any {
+        const {
+            // Disabled data to be manual inserted
+            id,
+            uuid,
+            createdAt,
+            updatedAt,
+
+            // Make sure to remove userId before insert, because that is only
+            // for security checking.
+            // If not removed, will cause error.
+            userId,
+
+            // Fixed | Now data insert will be save
+            ...cleanedInsertData
+        }: any = d;
+        return cleanedInsertData;
+    }
+
     cleanUpdateData(d: any): any {
         const {
             // Disabled data to be updated
@@ -159,14 +178,14 @@ export class JasaServiceV1 {
             updatedAt,
 
             // Fixed | Now data update will be save
-            ...cleanedData
+            ...cleanedUpdateData
         }: any = d;
-        return cleanedData;
+        return cleanedUpdateData;
     }
 
     async create(newData: any): Promise<Jasa> {
         // Konfigurasi timestamp
-        const thisTime = new Date().toISOString();
+        const thisTime = getTimestamp();
 
         // UUID
         const uuidLength: any = process.env.JASA_INSERT_UUID_LENGTH;
@@ -181,20 +200,21 @@ export class JasaServiceV1 {
             return this.create(newData);
         } catch {}
 
-        // Prepare data
-        const data: Prisma.JasaCreateInput = {
-            ...newData,
-
-            // UUID
-            uuid,
-
-            // Timestamp
-            createdAt: thisTime,
-            updatedAt: thisTime,
-        };
-
         // Insert data
-        return this.prisma.jasa.create({ data });
+        return this.prisma.jasa.create({
+            data: {
+                ...newData,
+
+                // UUID
+                uuid,
+
+                // Timestamp
+                createdAt: thisTime,
+                updatedAt: thisTime,
+            },
+            // Fields to display after creation
+            select: this.findOneKeys,
+        });
     }
 
     async findAll(params: {
@@ -205,19 +225,11 @@ export class JasaServiceV1 {
         where?: Prisma.JasaWhereInput;
         orderBy?: Prisma.JasaOrderByWithRelationInput;
     }): Promise<Jasa[]> {
-        const { skip, take, select, cursor, where, orderBy } = params;
         return this.prisma.jasa.findMany({
-            skip,
-            take,
-            cursor,
-            where,
-            orderBy,
+            ...params,
             select: {
-                // Default keys to display
-                ...this.findAllKeys,
-
-                // User specified keys to display
-                ...select,
+                ...this.findAllKeys, // Default keys to display
+                ...params.select, // User specified keys to display
             },
         });
     }
@@ -226,31 +238,30 @@ export class JasaServiceV1 {
         select?: DefaultKeysInterface;
         where: Prisma.JasaWhereUniqueInput;
     }): Promise<Jasa | null> {
-        const { select, where } = params;
         return this.prisma.jasa.findUniqueOrThrow({
+            ...params,
             select: {
-                // Default keys to display
-                ...this.findOneKeys,
-
-                // User specified keys to display
-                ...select,
+                ...this.findOneKeys, // Default keys to display
+                ...params.select, // User specified keys to display
             },
-            where,
         });
     }
 
     async update(where: Prisma.JasaWhereUniqueInput, data: any): Promise<Jasa> {
-        let updatedData: Prisma.JasaUpdateInput = { ...data };
+        return this.prisma.jasa.update({
+            where,
+            data: {
+                ...data,
 
-        // Konfigurasi timestamp
-        const thisTime = new Date().toISOString();
-        updatedData.updatedAt = thisTime;
-
-        // Save updated data
-        return this.prisma.jasa.update({ where, data: updatedData });
+                // Timestamp
+                updatedAt: getTimestamp(),
+            },
+            // Fields to display after update data
+            select: this.findOneKeys,
+        });
     }
 
     async remove(where: Prisma.JasaWhereUniqueInput): Promise<Jasa> {
-        return this.prisma.jasa.delete({ where });
+        return this.prisma.jasa.delete({ where, select: this.findOneKeys });
     }
 }

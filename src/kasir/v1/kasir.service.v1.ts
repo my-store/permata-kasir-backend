@@ -147,6 +147,25 @@ export class KasirServiceV1 {
         });
     }
 
+    cleanInsertData(d: any): any {
+        const {
+            // Disabled data to be manual inserted
+            id,
+            uuid,
+            createdAt,
+            updatedAt,
+
+            // Make sure to remove userId before insert, because that is only
+            // for security checking.
+            // If not removed, will cause error.
+            userId,
+
+            // Fixed | Now data insert will be save
+            ...cleanedInsertData
+        }: any = d;
+        return cleanedInsertData;
+    }
+
     cleanUpdateData(d: any): any {
         const {
             // Disabled data to be updated
@@ -157,9 +176,9 @@ export class KasirServiceV1 {
             updatedAt,
 
             // Fixed | Now data update will be save
-            ...cleanedData
+            ...cleanedUpdateData
         }: any = d;
-        return cleanedData;
+        return cleanedUpdateData;
     }
 
     async create(newData: any): Promise<Kasir> {
@@ -179,20 +198,21 @@ export class KasirServiceV1 {
             return this.create(newData);
         } catch {}
 
-        // Prepare data
-        const data: Prisma.KasirCreateInput = {
-            ...newData,
-
-            // UUID
-            uuid,
-
-            // Timestamp
-            createdAt: thisTime,
-            updatedAt: thisTime,
-        };
-
         // Insert data
-        return this.prisma.kasir.create({ data, select: this.findOneKeys });
+        return this.prisma.kasir.create({
+            data: {
+                ...newData,
+
+                // UUID
+                uuid,
+
+                // Timestamp
+                createdAt: thisTime,
+                updatedAt: thisTime,
+            },
+            // Fields to display after creation
+            select: this.findOneKeys,
+        });
     }
 
     async findAll(params: {
@@ -229,14 +249,30 @@ export class KasirServiceV1 {
         where: Prisma.KasirWhereUniqueInput,
         data: any,
     ): Promise<Kasir> {
+        let updatedData: Prisma.KasirUpdateInput = {
+            ...data,
+
+            // Timestamp
+            updatedAt: getTimestamp(),
+        };
+
+        // Fix active value (if client send through FormData body)
+        // JSON body dont need this.
+        if (updatedData.active) {
+            if (typeof updatedData.active == "string") {
+                updatedData.active =
+                    updatedData.active == "1" || updatedData.active == "true"
+                        ? true
+                        : false;
+            }
+        }
+
+        // Save updated data
         return this.prisma.kasir.update({
             where,
-            data: {
-                ...data,
-
-                // Timestamp
-                updatedAt: getTimestamp(),
-            },
+            data: updatedData,
+            // Fields to display after update data
+            select: this.findOneKeys,
         });
     }
 

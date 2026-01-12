@@ -1,4 +1,5 @@
 import { PrismaService } from "src/prisma.service";
+import { getTimestamp } from "src/libs/string";
 import { Prisma, MonitorToko } from "models";
 import { Injectable } from "@nestjs/common";
 
@@ -138,36 +139,71 @@ export class MonitorTokoServiceV1 {
         });
     }
 
+    cleanInsertData(d: any): any {
+        const {
+            // Disabled data to be manual inserted
+            id,
+            createdAt,
+            updatedAt,
+
+            // Make sure to remove userId before insert, because that is only
+            // for security checking.
+            // If not removed, will cause error.
+            userId,
+
+            // Fixed | Now data insert will be save
+            ...cleanedInsertData
+        }: any = d;
+        return cleanedInsertData;
+    }
+
     cleanUpdateData(d: any): any {
         const {
             // Disabled data to be updated
             id,
-            uuid,
             tokoId,
             createdAt,
             updatedAt,
 
             // Fixed | Now data update will be save
-            ...cleanedData
+            ...cleanedUpdateData
         }: any = d;
-        return cleanedData;
+        return cleanedUpdateData;
     }
 
     async create(newData: any): Promise<MonitorToko> {
         // Konfigurasi timestamp
-        const thisTime = new Date().toISOString();
-
-        // Prepare data
-        const data: Prisma.MonitorTokoCreateInput = {
-            ...newData,
-
-            // Timestamp
-            createdAt: thisTime,
-            updatedAt: thisTime,
-        };
+        const thisTime = getTimestamp();
 
         // Insert data
-        return this.prisma.monitorToko.create({ data });
+        return this.prisma.monitorToko.create({
+            data: {
+                ...newData,
+
+                // Timestamp
+                createdAt: thisTime,
+                updatedAt: thisTime,
+            },
+            // Fields to display after creation
+            select: this.findOneKeys,
+        });
+    }
+
+    async update(
+        where: Prisma.MonitorTokoWhereUniqueInput,
+        data: any,
+    ): Promise<MonitorToko> {
+        return this.prisma.monitorToko.update({
+            where,
+            data: {
+                ...data,
+
+                // Timestamp
+                updatedAt: getTimestamp(),
+            },
+            // Fields to display after update data
+            select: this.findOneKeys,
+        });
     }
 
     async findAll(params: {
@@ -178,19 +214,11 @@ export class MonitorTokoServiceV1 {
         where?: Prisma.MonitorTokoWhereInput;
         orderBy?: Prisma.MonitorTokoOrderByWithRelationInput;
     }): Promise<MonitorToko[]> {
-        const { skip, take, select, cursor, where, orderBy } = params;
         return this.prisma.monitorToko.findMany({
-            skip,
-            take,
-            cursor,
-            where,
-            orderBy,
+            ...params,
             select: {
-                // Default keys to display
-                ...this.findAllKeys,
-
-                // User specified keys to display
-                ...select,
+                ...this.findAllKeys, // Default keys to display
+                ...params.select, // User specified keys to display
             },
         });
     }
@@ -199,36 +227,21 @@ export class MonitorTokoServiceV1 {
         select?: DefaultKeysInterface;
         where: Prisma.MonitorTokoWhereUniqueInput;
     }): Promise<MonitorToko | null> {
-        const { select, where } = params;
         return this.prisma.monitorToko.findUniqueOrThrow({
+            ...params,
             select: {
-                // Default keys to display
-                ...this.findOneKeys,
-
-                // User specified keys to display
-                ...select,
+                ...this.findOneKeys, // Default keys to display
+                ...params.select, // User specified keys to display
             },
-            where,
         });
-    }
-
-    async update(
-        where: Prisma.MonitorTokoWhereUniqueInput,
-        data: any,
-    ): Promise<MonitorToko> {
-        let updatedData: Prisma.MonitorTokoUpdateInput = { ...data };
-
-        // Konfigurasi timestamp
-        const thisTime = new Date().toISOString();
-        updatedData.updatedAt = thisTime;
-
-        // Save updated data
-        return this.prisma.monitorToko.update({ where, data: updatedData });
     }
 
     async remove(
         where: Prisma.MonitorTokoWhereUniqueInput,
     ): Promise<MonitorToko> {
-        return this.prisma.monitorToko.delete({ where });
+        return this.prisma.monitorToko.delete({
+            where,
+            select: this.findOneKeys,
+        });
     }
 }

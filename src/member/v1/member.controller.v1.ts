@@ -42,14 +42,13 @@ export class MemberControllerV1 {
             throw new UnauthorizedException();
         }
 
-        // Make sure to remove userId before insert, because that is only
-        // for security checking.
-        const { userId, ...fixedNewData } = newData;
-
         // Menyimpan data
         let createdMember: Member;
         try {
-            createdMember = await this.service.create(fixedNewData);
+            createdMember = await this.service.create(
+                // Cleaned insert data
+                this.service.cleanInsertData(newData),
+            );
         } catch (error) {
             // Prisma error
             if (error instanceof Prisma.PrismaClientKnownRequestError) {

@@ -42,15 +42,13 @@ export class JasaControllerV1 {
             throw new UnauthorizedException();
         }
 
-        // Make sure to remove userId before insert, because that is only
-        // for security checking.
-        // If not removed, will cause error.
-        const { userId, ...fixedNewData } = newData;
-
         // Menyimpan data
         let createdJasa: Jasa;
         try {
-            createdJasa = await this.service.create(fixedNewData);
+            createdJasa = await this.service.create(
+                // Cleaned insert data
+                this.service.cleanInsertData(newData),
+            );
         } catch (error) {
             throw new InternalServerErrorException(error);
         }
