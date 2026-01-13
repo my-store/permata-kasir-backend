@@ -1,7 +1,6 @@
 import { CreateUserRankDtoV1 } from "./dto/create.user.rank.v1.dto";
 import { UpdateUserRankDtoV1 } from "./dto/update.user.rank.v1.dto";
 import { UserRankServiceV1 } from "./user.rank.service.v1";
-import { AuthGuardV1 } from "src/auth/v1/auth.guard.v1";
 import { ParseUrlQuery } from "src/libs/string";
 import { UserRank } from "models";
 import {
@@ -10,7 +9,6 @@ import {
     BadRequestException,
     NotFoundException,
     Controller,
-    UseGuards,
     Request,
     Delete,
     Query,
@@ -21,7 +19,6 @@ import {
     Get,
 } from "@nestjs/common";
 
-@UseGuards(AuthGuardV1)
 @Controller({ version: "1", path: "user-rank" })
 export class UserRankControllerV1 {
     constructor(private readonly userRankService: UserRankServiceV1) {}

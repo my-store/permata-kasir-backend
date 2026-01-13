@@ -1,19 +1,12 @@
 import { UserRegisterTicketServiceV1 } from "./user.register.ticket.service.v1";
 import { AdminServiceV1 } from "src/admin/v1/admin.service.v1";
 import { FileInterceptor } from "@nestjs/platform-express";
-import { UserRegisterTicket, User } from "models/client";
-import { AuthGuardV1 } from "src/auth/v1/auth.guard.v1";
+import { CreateUserDtoV1 } from "./dto/create.user.v1.dto";
 import { encryptPassword } from "src/libs/bcrypt";
 import { UserServiceV1 } from "./user.service.v1";
+import { Public } from "src/auth/v1/auth.bypass";
 import { ParseUrlQuery } from "src/libs/string";
-import {
-    UpdateUserPasswordDtoV1,
-    UpdateUserDtoV1,
-} from "./dto/update.user.v1.dto";
-import {
-    CreateUserRegisterTicketDtoV1,
-    CreateUserDtoV1,
-} from "./dto/create.user.v1.dto";
+import { User } from "models";
 import {
     GetFileDestBeforeUpload,
     ProfileImageValidator,
@@ -21,6 +14,10 @@ import {
     upload_img_dir,
     UploadFile,
 } from "src/libs/upload-file-handler";
+import {
+    UpdateUserPasswordDtoV1,
+    UpdateUserDtoV1,
+} from "./dto/update.user.v1.dto";
 import * as bcrypt from "bcrypt";
 import { join } from "path";
 import {
@@ -30,7 +27,6 @@ import {
     UseInterceptors,
     UploadedFile,
     Controller,
-    UseGuards,
     Request,
     Delete,
     Query,
@@ -50,17 +46,20 @@ export class UserControllerV1 {
     ) {}
 
     /* =====================================================
-    |  REGISTRASI
+    |  REGISTRASI - PUBLIC ROUTE
     |  =====================================================
-    |  Saat user registrasi atau mengisi form di frontend,
-    |  dibalik layar data tersebut disimpan browser-storage,
-    |  sebelum melakukan submit, harus meminta kode aktivasi
-    |  terlebih dahulu ke admin, kemudian kode aktivasi itu
-    |  yang nantinya akan digunakan pada parameter dibawah.
+    |  Registrasi user adalah public route, untuk registrasi
+    |  hanya bisa menggunakan rute ini, dan harus
+    |  mendapatkan kode aktivasi (dev_code) dari admin.
+    |  -----------------------------------------------------
+    |  Kode aktivasi di generate oleh admin melalui:
+    |  - POST api/v1/user-register-ticket
+    |  - Body { adminId, userRankId }
     |  -----------------------------------------------------
     |  Kode tiket tersebut akan dihapus dari database,
     |  setelah user berhasil registrasi.
     */
+    @Public()
     @Post("register/:ticket_code")
     @UseInterceptors(FileInterceptor("foto"))
     async register(
@@ -98,40 +97,12 @@ export class UserControllerV1 {
     }
 
     /* =====================================================
-    |  USER PRA-REGISTRASI - KHUSUS ADMIN
-    |  =====================================================
-    |  Sebelum user berhasil registrasi, admin harus
-    |  membuatkan terlebihdahulu tiket pendaftaran
-    |  yang nantinya akan digunakan user.
-    */
-    @UseGuards(AuthGuardV1)
-    @Post("create-register-ticket")
-    async createRegisterTicket(
-        @Body() data: CreateUserRegisterTicketDtoV1,
-        @Request() req,
-    ): Promise<UserRegisterTicket> {
-        // Not admin but visited this route
-        if (!req.user.role || req.user.role != "Admin") {
-            // Block request
-            throw new UnauthorizedException();
-        }
-        let newRegisterCode: UserRegisterTicket;
-        try {
-            newRegisterCode = await this.registerTicketService.create(data);
-        } catch (error) {
-            throw new InternalServerErrorException(error);
-        }
-        return newRegisterCode;
-    }
-
-    /* =====================================================
-    |  VERIFIKASI PASSWORD
+    |  VERIFIKASI PASSWORD - PROTECTED ROUTE
     |  =====================================================
     |  Sebelum user berhasil melakukan perubahan password,
     |  harus dilakukan terlebih dahulu apakah password lama
     |  betul, jika tidak maka perubahan password dibatalkan.
     */
-    @UseGuards(AuthGuardV1)
     @Post("verify-password/:tlp")
     async checkPassword(
         @Param("tlp") tlp: string,
@@ -151,10 +122,9 @@ export class UserControllerV1 {
     }
 
     /* ----------------------------------------------------------
-    |  INPUT DATA
+    |  INPUT DATA - PROTECTED ROUTE
     |  ----------------------------------------------------------
     */
-    @UseGuards(AuthGuardV1)
     @Post()
     @UseInterceptors(FileInterceptor("foto"))
     async create(
@@ -297,11 +267,10 @@ export class UserControllerV1 {
     }
 
     /* ----------------------------------------------------------
-    |  GET ALL - GET WHERE - AND MORE
+    |  GET ALL - GET WHERE - AND MORE - PROTECTED ROUTE
     |  ----------------------------------------------------------
     |  Mengambil seluruh data ataupun spesifik sesuai query
     */
-    @UseGuards(AuthGuardV1)
     @Get()
     async findAll(@Query() query: any): Promise<User[]> {
         let data: User[];
@@ -314,12 +283,11 @@ export class UserControllerV1 {
     }
 
     /* ----------------------------------------------------------
-    |  GET ONE
+    |  GET ONE - PROTECTED ROUTE
     |  ----------------------------------------------------------
     |  Getone method will return User object or null,
     |  so set return type as any.
     */
-    @UseGuards(AuthGuardV1)
     @Get(":uuid")
     async findOne(
         @Param("uuid") uuid: string,
@@ -337,7 +305,10 @@ export class UserControllerV1 {
         return data;
     }
 
-    @UseGuards(AuthGuardV1)
+    /* ----------------------------------------------------------
+    |  UBAH DATA - PROTECTED ROUTE
+    |  ----------------------------------------------------------
+    */
     @Patch(":tlp")
     async update(
         @Param("tlp") tlp: string,
@@ -539,10 +510,9 @@ export class UserControllerV1 {
     }
 
     /* ----------------------------------------------------------
-    |  HAPUS DATA
+    |  HAPUS DATA - PROTECTED ROUTE
     |  ----------------------------------------------------------
     */
-    @UseGuards(AuthGuardV1)
     @Delete(":tlp")
     async remove(
         @Param("tlp") tlp: string,

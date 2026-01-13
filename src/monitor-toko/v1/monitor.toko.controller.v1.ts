@@ -1,7 +1,6 @@
 import { CreateMonitorTokoDtoV1 } from "./dto/create.monitor.toko.v1.dto";
 import { UpdateMonitorTokoDtoV1 } from "./dto/update.monitor.toko.v1.dto";
 import { MonitorTokoServiceV1 } from "./monitor.toko.service.v1";
-import { AuthGuardV1 } from "src/auth/v1/auth.guard.v1";
 import { ParseUrlQuery } from "src/libs/string";
 import { Prisma, MonitorToko } from "models";
 import {
@@ -10,7 +9,6 @@ import {
     BadRequestException,
     NotFoundException,
     Controller,
-    UseGuards,
     Request,
     Delete,
     Param,
@@ -21,7 +19,6 @@ import {
     Get,
 } from "@nestjs/common";
 
-@UseGuards(AuthGuardV1)
 @Controller({ version: "1", path: "monitor-toko" })
 export class MonitorTokoControllerV1 {
     constructor(private readonly service: MonitorTokoServiceV1) {}

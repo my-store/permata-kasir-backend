@@ -1,7 +1,6 @@
 import { FileInterceptor } from "@nestjs/platform-express";
 import { existsSync, readdirSync, readFileSync } from "fs";
 import { generateId, ParseUrlQuery } from "./libs/string";
-import { AuthGuardV1 } from "./auth/v1/auth.guard.v1";
 import { executeUpdate } from "./libs/updater";
 import { IsNotEmpty } from "class-validator";
 import { AppService } from "./app.service";
@@ -20,7 +19,6 @@ import {
     UseInterceptors,
     UploadedFile,
     Controller,
-    UseGuards,
     Request,
     Param,
     Query,
@@ -62,7 +60,6 @@ class ShUpdateEnvDto {
     new_value: string;
 }
 
-@UseGuards(AuthGuardV1)
 @Controller()
 class ShellCommands {
     private readonly wrong_target_err: string = "Wrong target path!";
@@ -240,7 +237,6 @@ class ShellCommands {
     }
 }
 
-@UseGuards(AuthGuardV1)
 @Controller()
 export class AppController extends ShellCommands {
     // Eksekusi update

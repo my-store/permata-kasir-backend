@@ -1,7 +1,6 @@
 import { CreateTransaksiPenjualanDtoV1 } from "./dto/create.transaksi.penjualan.v1.dto";
 import { UpdateTransaksiPenjualanDtoV1 } from "./dto/update.transaksi.penjualan.v1.dto";
 import { TransaksiPenjualanServiceV1 } from "./transaksi.penjualan.service.v1";
-import { AuthGuardV1 } from "src/auth/v1/auth.guard.v1";
 import { Prisma, TransaksiPenjualan } from "models";
 import { ParseUrlQuery } from "src/libs/string";
 import {
@@ -10,7 +9,6 @@ import {
     BadRequestException,
     NotFoundException,
     Controller,
-    UseGuards,
     Request,
     Delete,
     Param,
@@ -21,7 +19,6 @@ import {
     Get,
 } from "@nestjs/common";
 
-@UseGuards(AuthGuardV1)
 @Controller({ version: "1", path: "transaksi-penjualan" })
 export class TransaksiPenjualanControllerV1 {
     constructor(private readonly service: TransaksiPenjualanServiceV1) {}

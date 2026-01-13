@@ -1,6 +1,5 @@
 import { CreateJasaDtoV1 } from "./dto/create.jasa.v1.dto";
 import { UpdateJasaDtoV1 } from "./dto/update.jasa.v1.dto";
-import { AuthGuardV1 } from "src/auth/v1/auth.guard.v1";
 import { JasaServiceV1 } from "./jasa.service.v1";
 import { ParseUrlQuery } from "src/libs/string";
 import { Prisma, Jasa } from "models";
@@ -10,7 +9,6 @@ import {
     BadRequestException,
     NotFoundException,
     Controller,
-    UseGuards,
     Request,
     Delete,
     Param,
@@ -21,7 +19,6 @@ import {
     Get,
 } from "@nestjs/common";
 
-@UseGuards(AuthGuardV1)
 @Controller({ version: "1", path: "jasa" })
 export class JasaControllerV1 {
     constructor(private readonly service: JasaServiceV1) {}

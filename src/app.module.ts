@@ -7,6 +7,7 @@ import { ServeStaticModule } from "@nestjs/serve-static";
 import { ProdukModule } from "./produk/produk.module";
 import { DiskonModule } from "./diskon/diskon.module";
 import { MemberModule } from "./member/member.module";
+import { AuthGuardV1 } from "./auth/v1/auth.guard.v1";
 import { KasirModule } from "./kasir/kasir.module";
 import { AdminModule } from "./admin/admin.module";
 import { AppController } from "./app.controller";
@@ -17,14 +18,17 @@ import { JasaModule } from "./jasa/jasa.module";
 import { ConfigModule } from "@nestjs/config";
 import { AppGateway } from "./app.gateway";
 import { AppService } from "./app.service";
+import { APP_GUARD } from "@nestjs/core";
 import { Module } from "@nestjs/common";
 import { join } from "path";
 
 @Module({
     imports: [
+        // Display the React-Frontend-App in root URL: /
         ServeStaticModule.forRoot({
             rootPath: join(__dirname, "client"),
         }),
+
         ConfigModule.forRoot({ isGlobal: true }),
         AdminModule,
         UserModule,
@@ -44,6 +48,18 @@ import { join } from "path";
 
     controllers: [AppController],
 
-    providers: [AppGateway, AppService],
+    providers: [
+        AppGateway,
+        AppService,
+
+        // SET ALL ROUTES AS PROTECTED
+        // Updated on: 12 January 2026
+        {
+            provide: APP_GUARD,
+
+            // Change this if there a new auth-guard version available
+            useClass: AuthGuardV1,
+        },
+    ],
 })
 export class AppModule {}

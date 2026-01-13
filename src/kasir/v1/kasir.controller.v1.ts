@@ -1,6 +1,5 @@
 import { UpdateKasirDtoV1 } from "./dto/update.kasir.v1.dto";
 import { CreateKasirDtoV1 } from "./dto/create.kasir.v1.dto";
-import { AuthGuardV1 } from "src/auth/v1/auth.guard.v1";
 import { KasirServiceV1 } from "./kasir.service.v1";
 import { ParseUrlQuery } from "src/libs/string";
 import { Kasir, Prisma } from "models";
@@ -10,7 +9,6 @@ import {
     BadRequestException,
     NotFoundException,
     Controller,
-    UseGuards,
     Request,
     Delete,
     Query,
@@ -21,7 +19,6 @@ import {
     Get,
 } from "@nestjs/common";
 
-@UseGuards(AuthGuardV1)
 @Controller({ version: "1", path: "kasir" })
 export class KasirControllerV1 {
     constructor(private readonly service: KasirServiceV1) {}

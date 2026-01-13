@@ -1,9 +1,9 @@
 import { CreateAdminDtoV1 } from "./dto/create.admin.v1.dto";
 import { UserServiceV1 } from "src/user/v1/user.service.v1";
 import { FileInterceptor } from "@nestjs/platform-express";
-import { AuthGuardV1 } from "src/auth/v1/auth.guard.v1";
 import { AdminServiceV1 } from "./admin.service.v1";
 import { encryptPassword } from "src/libs/bcrypt";
+import { Public } from "src/auth/v1/auth.bypass";
 import { ParseUrlQuery } from "src/libs/string";
 import { Admin } from "models/client";
 import {
@@ -26,7 +26,6 @@ import {
     UseInterceptors,
     UploadedFile,
     Controller,
-    UseGuards,
     Request,
     Delete,
     Patch,
@@ -44,8 +43,17 @@ export class AdminControllerV1 {
         private readonly userService: UserServiceV1,
     ) {}
 
-    // Look at .env file
-    // The URL should be '/api/admin/register/APP_ADMIN_REGISTER_DEVCODE'
+    /* =====================================================
+    |  REGISTRASI - PUBLIC ROUTE
+    |  =====================================================
+    |  Registrasi admin adalah public route, pastikan kode
+    |  registrasi tersebut sama dengan yang ada pada file:
+    |  .env -> APP_ADMIN_REGISTER_DEVCODE
+    |  -----------------------------------------------------
+    |  Kode tersebut tidak boleh diketahui oleh siapapun
+    |  kecuali admin.
+    */
+    @Public()
     @Post("register/:dev_code")
     @UseInterceptors(FileInterceptor("foto"))
     async register(
@@ -69,13 +77,12 @@ export class AdminControllerV1 {
     }
 
     /* =====================================================
-    |  VERIFIKASI PASSWORD
+    |  VERIFIKASI PASSWORD - PROTECTED ROUTE
     |  =====================================================
     |  Sebelum admin berhasil melakukan perubahan password,
     |  harus dilakukan terlebih dahulu apakah password lama
     |  betul, jika tidak maka perubahan password dibatalkan.
     */
-    @UseGuards(AuthGuardV1)
     @Post("verify-password/:tlp")
     async checkPassword(
         @Param("tlp") tlp: string,
@@ -95,10 +102,9 @@ export class AdminControllerV1 {
     }
 
     /* ----------------------------------------------------------
-    |  INPUT DATA
+    |  INPUT DATA - PROTECTED ROUTE
     |  ----------------------------------------------------------
     */
-    @UseGuards(AuthGuardV1)
     @Post()
     @UseInterceptors(FileInterceptor("foto"))
     async create(
@@ -230,11 +236,10 @@ export class AdminControllerV1 {
     }
 
     /* ----------------------------------------------------------
-    |  GET ALL - GET WHERE - AND MORE
+    |  GET ALL - GET WHERE - AND MORE - PROTECTED ROUTE
     |  ----------------------------------------------------------
     |  Mengambil seluruh data ataupun spesifik sesuai query
     */
-    @UseGuards(AuthGuardV1)
     @Get()
     async findAll(@Query() query: any): Promise<Admin[]> {
         let data: Admin[];
@@ -247,12 +252,11 @@ export class AdminControllerV1 {
     }
 
     /* ----------------------------------------------------------
-    |  GET ONE
+    |  GET ONE - PROTECTED ROUTE
     |  ----------------------------------------------------------
     |  Getone method will return Admin object or null,
     |  so set return type as any.
     */
-    @UseGuards(AuthGuardV1)
     @Get(":uuid")
     async findOne(
         @Param("uuid") uuid: string,
@@ -270,7 +274,10 @@ export class AdminControllerV1 {
         return data;
     }
 
-    @UseGuards(AuthGuardV1)
+    /* ----------------------------------------------------------
+    |  UBAH DATA - PROTECTED ROUTE
+    |  ----------------------------------------------------------
+    */
     @Patch(":tlp")
     @UseInterceptors(FileInterceptor("foto"))
     async update(
@@ -469,10 +476,9 @@ export class AdminControllerV1 {
     }
 
     /* ----------------------------------------------------------
-    |  HAPUS DATA
+    |  HAPUS DATA - PROTECTED ROUTE
     |  ----------------------------------------------------------
     */
-    @UseGuards(AuthGuardV1)
     @Delete(":tlp")
     async remove(
         @Param("tlp") tlp: string,

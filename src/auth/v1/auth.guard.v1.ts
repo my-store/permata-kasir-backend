@@ -1,3 +1,5 @@
+import { IS_PUBLIC_KEY } from "./auth.bypass";
+import { Reflector } from "@nestjs/core";
 import { JwtService } from "@nestjs/jwt";
 import { Request } from "express";
 import {
@@ -9,9 +11,32 @@ import {
 
 @Injectable()
 export class AuthGuardV1 implements CanActivate {
-    constructor(private readonly jwtService: JwtService) {}
+    constructor(
+        private readonly jwtService: JwtService,
+        private readonly reflector: Reflector,
+    ) {}
 
     async canActivate(context: ExecutionContext): Promise<boolean> {
+        /* =======================================================
+        |  PUBLIC ROUTES - BYPASS AUTHENTICATION
+        |  =======================================================
+        |  Seluruh route yang menggunakan dekorator Public akan
+        |  dilakukan bypass, siapapun dapat mengakses tanpa login.
+        */ const isPublic = this.reflector.getAllAndOverride<boolean>(
+            IS_PUBLIC_KEY,
+            [context.getHandler(), context.getClass()],
+        );
+        if (isPublic) {
+            // Bypass security
+            return true;
+        }
+
+        /* =======================================================
+        |  PROTECTED ROUTES
+        |  =======================================================
+        |  Seluruh route yang tidak menggunakan dekorator Public
+        |  tidak dapat diakses sebelum login.
+        */
         const request = context.switchToHttp().getRequest();
         const token = this.extractTokenFromHeader(request);
 

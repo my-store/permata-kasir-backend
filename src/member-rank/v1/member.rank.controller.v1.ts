@@ -1,7 +1,6 @@
 import { CreateMemberRankDtoV1 } from "./dto/create.member.rank.v1.dto";
 import { UpdateMemberRankDtoV1 } from "./dto/update.member.rank.v1.dto";
 import { MemberRankServiceV1 } from "./member.rank.service.v1";
-import { AuthGuardV1 } from "src/auth/v1/auth.guard.v1";
 import { ParseUrlQuery } from "src/libs/string";
 import { MemberRank, Prisma } from "models";
 import {
@@ -10,7 +9,6 @@ import {
     BadRequestException,
     NotFoundException,
     Controller,
-    UseGuards,
     Request,
     Delete,
     Query,
@@ -21,7 +19,6 @@ import {
     Get,
 } from "@nestjs/common";
 
-@UseGuards(AuthGuardV1)
 @Controller({ version: "1", path: "member-rank" })
 export class MemberRankControllerV1 {
     constructor(private readonly service: MemberRankServiceV1) {}

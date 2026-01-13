@@ -1,6 +1,5 @@
 import { CreateMemberDtoV1 } from "./dto/create.member.v1.dto";
 import { UpdateMemberDtoV1 } from "./dto/update.member.v1.dto";
-import { AuthGuardV1 } from "src/auth/v1/auth.guard.v1";
 import { MemberServiceV1 } from "./member.service.v1";
 import { ParseUrlQuery } from "src/libs/string";
 import { Member, Prisma } from "models";
@@ -10,7 +9,6 @@ import {
     BadRequestException,
     NotFoundException,
     Controller,
-    UseGuards,
     Request,
     Delete,
     Param,
@@ -21,7 +19,6 @@ import {
     Get,
 } from "@nestjs/common";
 
-@UseGuards(AuthGuardV1)
 @Controller({ version: "1", path: "member" })
 export class MemberControllerV1 {
     constructor(private readonly service: MemberServiceV1) {}

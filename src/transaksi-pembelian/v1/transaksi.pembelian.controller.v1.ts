@@ -1,7 +1,6 @@
 import { CreateTransaksiPembelianDtoV1 } from "./dto/create.transaksi.pembelian.v1.dto";
 import { UpdateTransaksiPembelianDtoV1 } from "./dto/update.transaksi.pembelian.v1.dto";
 import { TransaksiPembelianServiceV1 } from "./transaksi.pembelian.service.v1";
-import { AuthGuardV1 } from "src/auth/v1/auth.guard.v1";
 import { Prisma, TransaksiPembelian } from "models";
 import { ParseUrlQuery } from "src/libs/string";
 import {
@@ -10,7 +9,6 @@ import {
     BadRequestException,
     NotFoundException,
     Controller,
-    UseGuards,
     Request,
     Delete,
     Query,
@@ -21,7 +19,6 @@ import {
     Get,
 } from "@nestjs/common";
 
-@UseGuards(AuthGuardV1)
 @Controller({ version: "1", path: "transaksi-pembelian" })
 export class TransaksiPembelianControllerV1 {
     constructor(private readonly service: TransaksiPembelianServiceV1) {}

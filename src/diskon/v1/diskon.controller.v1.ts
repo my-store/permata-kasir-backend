@@ -1,6 +1,5 @@
 import { CreateDiskonDtoV1 } from "./dto/create-diskon.dto.v1";
 import { UpdateDiskonDtoV1 } from "./dto/update-diskon.dto.v1";
-import { AuthGuardV1 } from "src/auth/v1/auth.guard.v1";
 import { DiskonServiceV1 } from "./diskon.service.v1";
 import { ParseUrlQuery } from "src/libs/string";
 import { Diskon, Prisma } from "models";
@@ -10,7 +9,6 @@ import {
     BadRequestException,
     NotFoundException,
     Controller,
-    UseGuards,
     Request,
     Delete,
     Param,
@@ -21,7 +19,6 @@ import {
     Get,
 } from "@nestjs/common";
 
-@UseGuards(AuthGuardV1)
 @Controller({ version: "1", path: "diskon" })
 export class DiskonControllerV1 {
     constructor(private readonly service: DiskonServiceV1) {}

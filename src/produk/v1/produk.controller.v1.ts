@@ -1,6 +1,5 @@
 import { CreateProdukDtoV1 } from "./dto/create.produk.v1.dto";
 import { UpdateProdukDtoV1 } from "./dto/update.produk.v1.dto";
-import { AuthGuardV1 } from "src/auth/v1/auth.guard.v1";
 import { ProdukServiceV1 } from "./produk.service.v1";
 import { ParseUrlQuery } from "src/libs/string";
 import { Prisma, Produk } from "models";
@@ -10,7 +9,6 @@ import {
     BadRequestException,
     NotFoundException,
     Controller,
-    UseGuards,
     Request,
     Delete,
     Param,
@@ -21,7 +19,6 @@ import {
     Get,
 } from "@nestjs/common";
 
-@UseGuards(AuthGuardV1)
 @Controller({ version: "1", path: "produk" })
 export class ProdukControllerV1 {
     constructor(private readonly service: ProdukServiceV1) {}
