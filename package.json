@@ -6,7 +6,8 @@
     "private": true,
     "license": "UNLICENSED",
     "scripts": {
-        "build": "nest build && npm run build --prefix ../permata-kasir-frontend",
+        "build": "nest build",
+        "build:with:frontend": "nest build && npm run build --prefix ../permata-kasir-frontend",
         "format": "prettier --write \"src/**/*.ts\" \"test/**/*.ts\"",
         "start": "nest start",
         "dev": "nest start --watch",
