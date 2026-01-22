@@ -288,15 +288,15 @@ export class UserControllerV1 {
     |  Getone method will return User object or null,
     |  so set return type as any.
     */
-    @Get(":uuid")
+    @Get(":tlp")
     async findOne(
-        @Param("uuid") uuid: string,
+        @Param("tlp") tlp: string,
         @Query() query: any,
     ): Promise<any> {
         let data: any;
         try {
             data = await this.userService.findOne({
-                where: { uuid },
+                where: { tlp },
                 ...ParseUrlQuery(query),
             });
         } catch (e) {
