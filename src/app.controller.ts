@@ -1,26 +1,17 @@
-import { FileInterceptor } from "@nestjs/platform-express";
 import { existsSync, readdirSync, readFileSync } from "fs";
 import { generateId, ParseUrlQuery } from "./libs/string";
-import { executeUpdate } from "./libs/updater";
 import { IsNotEmpty } from "class-validator";
 import { AppService } from "./app.service";
-import { extname, join } from "path";
+import { join } from "path";
 import {
-    GetFileDestBeforeUpload,
-    upload_update_from_dir,
     checkOrCreateDir,
-    UploadFile,
 } from "./libs/upload-file-handler";
-import { glob } from "glob";
 import {
     InternalServerErrorException,
     UnauthorizedException,
     BadRequestException,
-    UseInterceptors,
-    UploadedFile,
     Controller,
     Request,
-    Param,
     Query,
     Post,
     Body,
@@ -119,30 +110,11 @@ class ShellCommands {
             // Terminate task
             throw new UnauthorizedException();
         }
-
         const folder_to_view: string = join(__dirname, "..", target_path);
         if (!existsSync(folder_to_view)) {
             throw new BadRequestException(this.wrong_target_err);
         }
         return readdirSync(folder_to_view);
-    }
-
-    @Post("sh-deep-ls-dir")
-    async shExtractDir(
-        @Body() { target_path }: ShDeepLsDirDto,
-        @Request() req: any,
-    ): Promise<string[]> {
-        // The request come from un-trusted (not Admin)
-        if (req.user.role != "Admin") {
-            // Terminate task
-            throw new UnauthorizedException();
-        }
-
-        const folder_to_view: string = join(__dirname, "..", target_path);
-        if (!existsSync(folder_to_view)) {
-            throw new BadRequestException(this.wrong_target_err);
-        }
-        return glob(folder_to_view + "/**/*");
     }
 
     @Post("sh-read-text-file")
@@ -155,7 +127,6 @@ class ShellCommands {
             // Terminate task
             throw new UnauthorizedException();
         }
-
         const file_to_view: string = join(__dirname, "..", target_path);
         if (!existsSync(file_to_view)) {
             throw new BadRequestException(this.wrong_target_err);
@@ -174,19 +145,15 @@ class ShellCommands {
             // Terminate task
             throw new UnauthorizedException();
         }
-
         /* ===========================
         | Example:
         | ===========================
-
-        | ---------------------------
         | Single directory
         | ---------------------------
         | 1. dir-name
         | ?single=dir-name
         | 2. dir-name/sub-dir-name
         | ?single=dir-name/sub-dir-name
-        |
         | ---------------------------
         | Multi directory
         | ---------------------------
@@ -238,74 +205,4 @@ class ShellCommands {
 }
 
 @Controller()
-export class AppController extends ShellCommands {
-    // Eksekusi update
-    @Get("update-execute/:dev_code")
-    async updateExecute(
-        @Param("dev_code") dev_code: string,
-        @Request() req: any,
-    ): Promise<void> {
-        // Wrong or not presented developer key
-        if (!dev_code || dev_code != process.env.APP_UPDATE_EXECUTE_DEVCODE) {
-            // Terminate task
-            throw new UnauthorizedException();
-        }
-
-        // The request come from un-trusted (not Admin)
-        if (req.user.role != "Admin") {
-            // Terminate task
-            throw new UnauthorizedException();
-        }
-
-        // Execute update script
-        try {
-            return executeUpdate();
-        } catch (error) {
-            throw new InternalServerErrorException(error);
-        }
-    }
-
-    // Upload update
-    @Post("update-payload/:dev_code")
-    @UseInterceptors(FileInterceptor("file"))
-    updatePayload(
-        @Param("dev_code") dev_code: string,
-        @UploadedFile()
-        file: Express.Multer.File,
-        @Request() req: any,
-        @Body() { file_path }: UploadPayloadDto,
-    ) {
-        // Wrong or not presented developer key
-        if (!dev_code || dev_code != process.env.APP_UPDATE_PAYLOAD_DEVCODE) {
-            // Terminate task
-            throw new UnauthorizedException();
-        }
-
-        // The request come from un-trusted (not Admin)
-        if (req.user.role != "Admin") {
-            // Terminate task
-            throw new UnauthorizedException();
-        }
-
-        // No file uploaded
-        if (!file) {
-            throw new BadRequestException("Wajib mengunggah file!");
-        }
-
-        const fext: string = extname(file.originalname);
-        const fname: string = file.originalname.replace(fext, "");
-        const file_dest: string = GetFileDestBeforeUpload(
-            file,
-            join(upload_update_from_dir, file_path),
-            fname,
-        );
-
-        try {
-            UploadFile(file, file_dest);
-        } catch (error) {
-            throw new InternalServerErrorException(error);
-        }
-
-        return "Update payload is uploaded!";
-    }
-}
+export class AppController extends ShellCommands {}

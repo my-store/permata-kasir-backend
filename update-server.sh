@@ -1,19 +1,20 @@
 #!/bin/bash
 
-# Make sure this file is executable on linux
-# $ chmod +x update-server.sh
-
-# For to terminate PM2 process
+# Hentikan proses daemon aplikasi
 pm2 stop permata-kasir-backend
 
-# Force to restore un-staged
+# Jika ada perubahan, batalkan perubahan dan ambil file terbaru dari github,
+# jika tidak melakukan ini, proses "git pull" akan menghasilkan error.
 git restore .
 
-# Make a pull request and force to rebase (linear)
+# Ambil update terbaru dari github
 git pull --rebase
 
-# Re-build the app
+# Jalanakan script install, barangkali ada penambahan module baru pada update
+npm install
+
+# Compile aplikasi
 npm run build
 
-# Restart PM2 process
+# Nyalakan ulang proses daemon aplikasi
 pm2 start permata-kasir-backend

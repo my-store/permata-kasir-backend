@@ -5,11 +5,6 @@ import { dirname, extname } from "path";
 export const dist_dir: string = "dist";
 export const public_root_dir: string = "public";
 
-// Update configurations
-export const update_root_dir: string = "update";
-export const upload_update_from_dir: string = `${update_root_dir}/payload`;
-export const upload_update_to_dir: string = dist_dir;
-
 // Image upload configurations
 export const max_profile_img_size: number = 2097152;
 export const profile_img_type: RegExp = /image\/png|image\/jpeg|image\/jpg/;
