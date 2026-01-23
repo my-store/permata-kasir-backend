@@ -12,7 +12,3 @@ public/img/kasir
 .turbo
 dist
 test
-update
-
-# Remove backup of .env file, when .env file is updated, that will create backup file
-.env-backup

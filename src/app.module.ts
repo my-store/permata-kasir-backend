@@ -10,7 +10,6 @@ import { MemberModule } from "./member/member.module";
 import { AuthGuardV1 } from "./auth/v1/auth.guard.v1";
 import { KasirModule } from "./kasir/kasir.module";
 import { AdminModule } from "./admin/admin.module";
-import { AppController } from "./app.controller";
 import { AuthModule } from "./auth/auth.module";
 import { UserModule } from "./user/user.module";
 import { TokoModule } from "./toko/toko.module";
@@ -46,7 +45,7 @@ import { join } from "path";
         MonitorTokoModule,
     ],
 
-    controllers: [AppController],
+    // controllers: [],
 
     providers: [
         AppGateway,
