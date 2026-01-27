@@ -18,10 +18,27 @@ import {
     Post,
     Get,
 } from "@nestjs/common";
+import { Public } from "src/auth/v1/auth.bypass";
 
 @Controller({ version: "1", path: "monitor-toko" })
 export class MonitorTokoControllerV1 {
     constructor(private readonly service: MonitorTokoServiceV1) {}
+
+    // PUBLIC ROUTE
+    @Public()
+    @Get("laporan:enc_code")
+    laporan(@Param("enc_code") enc_code: string) {
+        // Check encrypted code
+        const valid_code: boolean = false;
+
+        // Not valid encrypted code
+        if (!valid_code) {
+            // Terminate task
+            throw new UnauthorizedException();
+        }
+
+        // Run tasks ...
+    }
 
     @Post()
     async create(

@@ -10,8 +10,8 @@ export class AuthControllerV1 {
     // PUBLIC ROUTE
     @Public()
     @Post()
-    signIn(@Body() signInDto: AuthLoginDtoV1) {
-        return this.service.signIn(signInDto.tlp, signInDto.password);
+    signIn(@Body() loginData: AuthLoginDtoV1) {
+        return this.service.signIn(loginData);
     }
 
     // PUBLIC ROUTE

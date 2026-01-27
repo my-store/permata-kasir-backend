@@ -92,7 +92,34 @@ export class AuthServiceV1 {
         return { data, role };
     }
 
-    async signIn(tlp: string, pass: string): Promise<JWTResponseInterface> {
+    async signIn(params: {
+        tlp: string;
+        password: string;
+        app_name: string;
+    }): Promise<JWTResponseInterface> {
+        const { tlp, password, app_name } = params;
+
+        /* --------------------------------------------------
+        |  Check if login are from valid Permata Kasir app
+        |  --------------------------------------------------
+        |  1. Desktop
+        |  2. Mobile
+        |  3. RestAPI (Postman, Bruno, etc)
+        */
+        const restAppName: string = "Permata-Kasir-Client-RestAPI";
+        const mobileAppName: string = "Permata-Kasir-Client-Mobile";
+        const desktopAppName: string = "Permata-Kasir-Client-Desktop";
+        const validApp: boolean =
+            app_name == desktopAppName ||
+            app_name == mobileAppName ||
+            app_name == restAppName;
+
+        // Unknown client
+        if (!validApp) {
+            // Terminate task
+            throw new UnauthorizedException();
+        }
+
         // Cari data Admin, User atau Kasir
         const { data, role }: any = await this.findAccount(tlp);
 
@@ -103,16 +130,27 @@ export class AuthServiceV1 {
         }
 
         // Compare password
-        const correctPassword = bcrypt.compareSync(pass, data.password);
+        const correctPassword = bcrypt.compareSync(password, data.password);
 
         // Wrong password
         if (!correctPassword) {
             throw new UnauthorizedException("Password salah!");
         }
 
-        // Check for active account (User & Kasir)
+        // Pengecekan apakah akun aktif (User & Kasir)
         if (role == "User" || role == "Kasir") {
             this.checkActiveAccount(role, data);
+        }
+
+        // Pengecekan admin
+        else {
+            // Blokir admin dari login menggunakan aplikasi desktop atau mobile.
+            if (app_name == mobileAppName || app_name == desktopAppName) {
+                // Terminate task
+                throw new UnauthorizedException(
+                    "Admin tidak di izinkan menggunakan aplikasi ini!",
+                );
+            }
         }
 
         /* =======================================================

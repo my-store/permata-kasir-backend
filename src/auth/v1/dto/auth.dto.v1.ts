@@ -6,6 +6,9 @@ export class AuthLoginDtoV1 {
 
     @IsNotEmpty()
     password: string;
+
+    @IsNotEmpty()
+    app_name: string;
 }
 
 export class AuthRefreshDtoV1 {

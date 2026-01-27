@@ -171,6 +171,10 @@ export class MonitorTokoServiceV1 {
         return cleanedUpdateData;
     }
 
+    decrypt(data: string) {
+        //
+    }
+
     async create(newData: any): Promise<MonitorToko> {
         // Konfigurasi timestamp
         const thisTime = getTimestamp();
