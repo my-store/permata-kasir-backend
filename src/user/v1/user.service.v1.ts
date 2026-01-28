@@ -46,6 +46,25 @@ export class UserServiceV1 {
 
     constructor(private readonly prisma: PrismaService) {}
 
+    cleanInsertData(d: any): any {
+        const {
+            // Disabled data to be inserted by user
+            id,
+            uuid,
+            online,
+            lastOnline,
+            active,
+            deactivatedAt,
+            deactivatedReason,
+            createdAt,
+            updatedAt,
+
+            // Fixed | Now data insert will be save
+            ...cleanedInsertData
+        }: any = d;
+        return cleanedInsertData;
+    }
+
     cleanUpdateData(d: any): any {
         const {
             // Disabled data to be updated
@@ -56,9 +75,9 @@ export class UserServiceV1 {
             updatedAt,
 
             // Fixed | Now data update will be save
-            ...cleanedData
+            ...cleanedUpdateData
         }: any = d;
-        return cleanedData;
+        return cleanedUpdateData;
     }
 
     async create(newData: any): Promise<User> {
@@ -93,6 +112,7 @@ export class UserServiceV1 {
                 createdAt: thisTime,
                 updatedAt: thisTime,
             },
+
             // Fields to display after creation
             select: this.findOneKeys,
         });

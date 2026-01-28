@@ -50,11 +50,11 @@ model User {
 
   /**
    * ==========================================================
-   * |  USER STATUS
-   * |  =======================================================
-   * |  1. active = Harus di aktivasi oleh admin
-   * |  2. deactivatedAt = kapan admin memblokir user
-   * |  3. deactivatedReason = alasan admin memblokir user
+   * USER STATUS
+   * =======================================================
+   * 1. active = Harus di aktivasi oleh admin
+   * 2. deactivatedAt = kapan admin memblokir user
+   * 3. deactivatedReason = alasan admin memblokir user
    */
   active            Boolean   @default(false)
   deactivatedAt     DateTime?
@@ -78,12 +78,12 @@ model User {
 
 /**
  * ========================================================
- * |  REGISTER SECURITY TABLE
- * |  =====================================================
- * |  Hanya dapat digunakan dalam waktu beberapa menit saja
- * |  jika batas waktu telah habis, atau telah digunakan
- * |  oleh orang lain, otomatis kode dihapus dan
- * |  tidak dapat digunakan untuk registrasi lagi.
+ * REGISTER SECURITY TABLE
+ * =====================================================
+ * Hanya dapat digunakan dalam waktu beberapa menit saja
+ * jika batas waktu telah habis, atau telah digunakan
+ * oleh orang lain, otomatis kode dihapus dan
+ * tidak dapat digunakan untuk registrasi lagi.
  */
 model UserRegisterTicket {
   id   Int    @id @default(autoincrement())
@@ -98,9 +98,9 @@ model UserRegisterTicket {
 
 /**
  * ========================================================
- * |  ATURAN PENGGUNA
- * |  =====================================================
- * |  Disini menyimpan aturan pengguna gratis dan berbayar
+ * ATURAN PENGGUNA
+ * =====================================================
+ * Disini menyimpan aturan pengguna gratis dan berbayar
  */
 model UserRank {
   id   Int    @id @default(autoincrement())
@@ -109,52 +109,40 @@ model UserRank {
 
   /**
    * ========================================================
-   * |  MAKSIMAL JUMLAH TOKO
-   * |  =====================================================
-   * |  1. Ultimate
-   * |     10 Toko
-   * |  2. Pro
-   * |     5 Toko
-   * |  3. Basic
-   * |     3 Toko
-   * |  4. Free
-   * |     1 Toko
+   * MAKSIMAL JUMLAH TOKO
+   * =====================================================
+   * 1. Ultimate = 10 Toko
+   * 2. Pro = 5 Toko
+   * 3. Basic = 3 Toko
+   * 4. Free = 1 Toko
    */
   maxToko Int
 
   /**
    * ========================================================
-   * |  MAKSIMAL JUMLAH PRODUK
-   * |  =====================================================
-   * |  Per toko (berbayar) maksimal nya memilik 3.000 produk,
-   * |  maksimal jumlah produk x maksimal jumlah toko.
-   * |  -----------------------------------------------------
-   * |  1. Ultimate
-   * |     30.000 Produk
-   * |  2. Pro
-   * |     15.000 Produk
-   * |  3. Basic
-   * |     9.000 Produk
-   * |  4. Free
-   * |     500 Produk
+   * MAKSIMAL JUMLAH PRODUK
+   * =====================================================
+   * Per toko (berbayar) maksimal nya memilik 3.000 produk,
+   * maksimal jumlah produk x maksimal jumlah toko.
+   * -----------------------------------------------------
+   * 1. Ultimate = 30.000 Produk
+   * 2. Pro = 15.000 Produk
+   * 3. Basic = 9.000 Produk
+   * 4. Free = 500 Produk
    */
   maxProduk Int
 
   /**
    * ========================================================
-   * |  MAKSIMAL JUMLAH JASA
-   * |  =====================================================
-   * |  Per toko (berbayar) maksimal nya memilik 100 jasa,
-   * |  maksimal jumlah jasa x maksimal jumlah toko.
-   * |  -----------------------------------------------------
-   * |  1. Ultimate
-   * |     1.000 Jasa
-   * |  2. Pro
-   * |     500 Jasa
-   * |  3. Basic
-   * |     300 Jasa
-   * |  4. Free
-   * |     50 Jasa
+   * MAKSIMAL JUMLAH JASA
+   * =====================================================
+   * Per toko (berbayar) maksimal nya memilik 100 jasa,
+   * maksimal jumlah jasa x maksimal jumlah toko.
+   * -----------------------------------------------------
+   * 1. Ultimate = 1.000 Jasa
+   * 2. Pro = 500 Jasa
+   * 3. Basic = 300 Jasa
+   * 4. Free = 50 Jasa
    */
   maxJasa Int
 
@@ -198,13 +186,13 @@ model Toko {
 
 /**
  * ========================================================
- * |  MONITORING STATISTIK TOKO
- * |  =====================================================
- * |  Data statistik toko dapat dilihat menggunakan
- * |  akun dibawah ini.
- * |  Tentunya sesuai izin pemilik toko (User)
- * |  -----------------------------------------------------
- * |  Harus login menggunakan uuid & password
+ * MONITORING STATISTIK TOKO
+ * =====================================================
+ * Data statistik toko dapat dilihat menggunakan
+ * akun dibawah ini.
+ * Tentunya sesuai izin pemilik toko (User)
+ * -----------------------------------------------------
+ * Harus login menggunakan uuid & password
  */
 model MonitorToko {
   id Int @id @default(autoincrement())
@@ -234,11 +222,11 @@ model Kasir {
 
   /**
    * ==========================================================
-   * |  KASIR STATUS
-   * |  =======================================================
-   * |  1. active = Harus di aktivasi oleh user (pemilik toko)
-   * |  2. deactivatedAt = kapan user memblokir kasir
-   * |  3. deactivatedReason = alasan user memblokir kasir
+   * KASIR STATUS
+   * =======================================================
+   * 1. active = Harus di aktivasi oleh user (pemilik toko)
+   * 2. deactivatedAt = kapan user memblokir kasir
+   * 3. deactivatedReason = alasan user memblokir kasir
    */
   active            Boolean   @default(false)
   deactivatedAt     DateTime?
@@ -269,6 +257,7 @@ model Produk {
 
   // Many to many relations
   diskon             Diskon[]
+  transaksiPembelian TransaksiPembelian[]
   transaksiPenjualan TransaksiPenjualan[]
 
   createdAt DateTime
@@ -356,26 +345,13 @@ model TransaksiPembelian {
   toko   Toko @relation(fields: [tokoId], references: [id])
   tokoId Int
 
-  /**
-   * ========================================================
-   * |  JSON DATA - TIDAK BERGANTUNG DENGAN RELASI
-   * |  =====================================================
-   * |  Jika tabel produk dihapus, tidak akan berpengaruh
-   * |  pada data JSON ini.
-   */
-  produk String // Example: [{ id: Important, nama, harga, dll }]
+  // Many to many relation
+  produk Produk[]
 
   createdAt DateTime
   updatedAt DateTime
 }
 
-/**
- * ========================================================
- * |  TRANSAKSI PENJUALAN TOKO
- * |  =====================================================
- * |  Jika tabel produk dihapus, tidak akan berpengaruh
- * |  pada data JSON ini.
- */
 model TransaksiPenjualan {
   id   Int    @id @default(autoincrement())
   uuid String @unique
@@ -393,18 +369,18 @@ model TransaksiPenjualan {
 
 /**
  * ========================================================
- * |  REFRESH LOGIN TOKEN
- * |  =====================================================
- * |  Berlaku untuk Admin, User dan Kasir
- * |  -----------------------------------------------------
- * |  Saat login akan dibuatkan otomatis refresh token
- * |  yang nantinya akan digunakan untuk membuat token baru
- * |  saat masa aktif token telah habis.
- * |  -----------------------------------------------------
- * |  Sebelum memberikan token baru, akan dilakukan
- * |  pengecekan apakah token dan refresh token
- * |  yang diberikan oleh user sesuai dengan yang ada
- * |  di database.
+ * REFRESH LOGIN TOKEN
+ * =====================================================
+ * Berlaku untuk Admin, User dan Kasir
+ * -----------------------------------------------------
+ * Saat login akan dibuatkan otomatis refresh token
+ * yang nantinya akan digunakan untuk membuat token baru
+ * saat masa aktif token telah habis.
+ * -----------------------------------------------------
+ * Sebelum memberikan token baru, akan dilakukan
+ * pengecekan apakah token dan refresh token
+ * yang diberikan oleh user sesuai dengan yang ada
+ * di database.
  */
 model AdminRefreshToken {
   id Int @id @default(autoincrement())

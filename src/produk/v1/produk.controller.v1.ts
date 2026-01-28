@@ -23,6 +23,11 @@ import {
 export class ProdukControllerV1 {
     constructor(private readonly service: ProdukServiceV1) {}
 
+    @Post("multi")
+    createMulti(@Body() data: CreateProdukDtoV1[]) {
+        console.log(data);
+    }
+
     @Post()
     async create(
         @Body() newData: CreateProdukDtoV1,

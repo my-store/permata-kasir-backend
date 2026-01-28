@@ -222,7 +222,8 @@ export class UserControllerV1 {
         let newData: any;
         try {
             newData = await this.userService.create({
-                ...data,
+                // Clean data before insert
+                ...this.userService.cleanInsertData(data),
 
                 // Remove 'public' from image directory
                 foto: data.foto.replace("public", ""),
