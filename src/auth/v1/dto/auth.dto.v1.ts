@@ -13,7 +13,10 @@ export class AuthLoginDtoV1 {
 
 export class AuthRefreshDtoV1 {
     @IsNotEmpty()
-    token: string;
+    tlp: string;
+
+    @IsNotEmpty()
+    access_token: string;
 
     @IsNotEmpty()
     refresh_token: string;

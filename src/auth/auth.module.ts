@@ -17,7 +17,7 @@ import { JwtModule } from "@nestjs/jwt";
             global: true,
             secret: process.env.APP_AUTH_API_KEY,
             signOptions: {
-                expiresIn: "1h", // 1 Jam
+                expiresIn: "1m", // 1 Menit
             },
         }),
     ],

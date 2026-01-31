@@ -6,12 +6,12 @@ import { KasirServiceV1 } from "src/kasir/v1/kasir.service.v1";
 import { UserServiceV1 } from "../../user/v1/user.service.v1";
 import { AuthRefreshDtoV1 } from "./dto/auth.dto.v1";
 import {
-    Admin,
     AdminRefreshToken,
-    Kasir,
     KasirRefreshToken,
-    User,
     UserRefreshToken,
+    Kasir,
+    Admin,
+    User,
 } from "models/client";
 import { generateId } from "src/libs/string";
 import { JwtService } from "@nestjs/jwt";
@@ -31,15 +31,6 @@ interface JWTResponseInterface {
     access_token: string;
     refresh_token: string;
     role: string;
-}
-
-interface RefreshTokenDataInterface {
-    // Dari header.user
-    role: string; // Admin | User | Kasir
-    sub: string; // No. Tlp
-
-    // Dari request body
-    tokenData: AuthRefreshDtoV1;
 }
 
 @Injectable()
@@ -86,7 +77,7 @@ export class AuthServiceV1 {
         // The kasir also not found
         if (!data) {
             // Terminate task
-            throw new UnauthorizedException();
+            throw new UnauthorizedException("Akun tidak ditemukan!");
         }
 
         return { data, role };
@@ -117,17 +108,11 @@ export class AuthServiceV1 {
         // Unknown client
         if (!validApp) {
             // Terminate task
-            throw new UnauthorizedException();
+            throw new UnauthorizedException("Missing app_name");
         }
 
         // Cari data Admin, User atau Kasir
         const { data, role }: any = await this.findAccount(tlp);
-
-        // Admin, User atau Kasir tidak ditemukan
-        if (!data || role.length < 1) {
-            // Terminate task
-            throw new UnauthorizedException("Akun tidak ditemukan!");
-        }
 
         // Compare password
         const correctPassword = bcrypt.compareSync(password, data.password);
@@ -418,24 +403,12 @@ export class AuthServiceV1 {
     |  --------------------------------------------------------------
     */
     async refresh(params: {
-        refreshData: RefreshTokenDataInterface;
+        refreshData: AuthRefreshDtoV1;
     }): Promise<JWTResponseInterface> {
         const { refreshData } = params;
 
-        // No refresh data is presented
-        if (!refreshData.sub || !refreshData.role) {
-            // Terminate task
-            throw new UnauthorizedException();
-        }
-
         // Cari data Admin, User atau Kasir
-        const { data, role }: any = await this.findAccount(refreshData.sub);
-
-        // Admin, User atau Kasir tidak ditemukan
-        if (!data) {
-            // Terminate task
-            throw new UnauthorizedException("Akun tidak ditemukan!");
-        }
+        const { data, role }: any = await this.findAccount(refreshData.tlp);
 
         // Check for active account (User & Kasir)
         if (role == "User" || role == "Kasir") {
@@ -445,17 +418,14 @@ export class AuthServiceV1 {
         // Security check passed state
         let passed: boolean = false;
 
-        // Token data { token, refresh_token }
-        const { tokenData } = refreshData;
-
         // Mencari refresh-token
         switch (role) {
             case "Admin":
                 try {
                     await this.adminRefreshToken.findOne({
                         where: {
-                            token: tokenData.token,
-                            refreshToken: tokenData.refresh_token,
+                            token: refreshData.access_token,
+                            refreshToken: refreshData.refresh_token,
                         },
                     });
                     passed = true;
@@ -467,8 +437,8 @@ export class AuthServiceV1 {
                     // Cari token
                     await this.userRefreshToken.findOne({
                         where: {
-                            token: tokenData.token,
-                            refreshToken: tokenData.refresh_token,
+                            token: refreshData.access_token,
+                            refreshToken: refreshData.refresh_token,
                         },
                     });
                     passed = true;
@@ -479,8 +449,8 @@ export class AuthServiceV1 {
                 try {
                     await this.kasirRefreshToken.findOne({
                         where: {
-                            token: tokenData.token,
-                            refreshToken: tokenData.refresh_token,
+                            token: refreshData.access_token,
+                            refreshToken: refreshData.refresh_token,
                         },
                     });
                     passed = true;

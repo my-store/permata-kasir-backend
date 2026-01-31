@@ -17,8 +17,8 @@ export class AuthControllerV1 {
     // PUBLIC ROUTE
     @Public()
     @Post("refresh")
-    refreshToken(@Request() req: any, @Body() data: AuthRefreshDtoV1) {
-        return this.service.refresh({ refreshData: { ...data, ...req.user } });
+    refreshToken(@Body() data: AuthRefreshDtoV1) {
+        return this.service.refresh({ refreshData: data });
     }
 
     @Get()

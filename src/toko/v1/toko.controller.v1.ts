@@ -54,8 +54,12 @@ export class TokoControllerV1 {
                 }
                 throw new BadRequestException({ errMsg, errCode });
             }
-        } catch (error) {
-            throw new UnauthorizedException(error);
+        } catch {
+            // User with { tlp, userId } is not found,
+            // tlp from headers, userId from request-body.
+
+            // Terminate task.
+            throw new UnauthorizedException();
         }
 
         // Menyimpan data

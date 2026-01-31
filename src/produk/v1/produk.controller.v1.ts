@@ -1,8 +1,11 @@
-import { CreateProdukDtoV1 } from "./dto/create.produk.v1.dto";
 import { UpdateProdukDtoV1 } from "./dto/update.produk.v1.dto";
 import { ProdukServiceV1 } from "./produk.service.v1";
 import { ParseUrlQuery } from "src/libs/string";
 import { Prisma, Produk } from "models";
+import {
+    CreateMultiProdukDtoV1,
+    CreateProdukDtoV1,
+} from "./dto/create.produk.v1.dto";
 import {
     InternalServerErrorException,
     UnauthorizedException,
@@ -24,8 +27,8 @@ export class ProdukControllerV1 {
     constructor(private readonly service: ProdukServiceV1) {}
 
     @Post("multi")
-    createMulti(@Body() data: CreateProdukDtoV1[]) {
-        console.log(data);
+    createMulti(@Body() { data }: CreateMultiProdukDtoV1) {
+        return data;
     }
 
     @Post()
