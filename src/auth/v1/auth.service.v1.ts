@@ -83,68 +83,14 @@ export class AuthServiceV1 {
         return { data, role };
     }
 
-    async signIn(params: {
-        tlp: string;
-        password: string;
-        app_name: string;
-    }): Promise<JWTResponseInterface> {
-        const { tlp, password, app_name } = params;
-
-        /* --------------------------------------------------
-        |  Check if login are from valid Permata Kasir app
-        |  --------------------------------------------------
-        |  1. Desktop
-        |  2. Mobile
-        |  3. RestAPI (Postman, Bruno, etc)
-        */
-        const restAppName: string = "Permata-Kasir-Client-RestAPI";
-        const mobileAppName: string = "Permata-Kasir-Client-Mobile";
-        const desktopAppName: string = "Permata-Kasir-Client-Desktop";
-        const validApp: boolean =
-            app_name == desktopAppName ||
-            app_name == mobileAppName ||
-            app_name == restAppName;
-
-        // Unknown client
-        if (!validApp) {
-            // Terminate task
-            throw new UnauthorizedException("Missing app_name");
-        }
-
-        // Cari data Admin, User atau Kasir
-        const { data, role }: any = await this.findAccount(tlp);
-
-        // Compare password
-        const correctPassword = bcrypt.compareSync(password, data.password);
-
-        // Wrong password
-        if (!correctPassword) {
-            throw new UnauthorizedException("Password salah!");
-        }
-
-        // Pengecekan apakah akun aktif (User & Kasir)
-        if (role == "User" || role == "Kasir") {
-            this.checkActiveAccount(role, data);
-        }
-
-        // Pengecekan admin
-        else {
-            // Blokir admin dari login menggunakan aplikasi desktop atau mobile.
-            if (app_name == mobileAppName || app_name == desktopAppName) {
-                // Terminate task
-                throw new UnauthorizedException(
-                    "Admin tidak di izinkan menggunakan aplikasi ini!",
-                );
-            }
-        }
-
-        /* =======================================================
-        |  HAPUS REFRESH-TOKEN LAMA
-        |  =======================================================
-        |  Refresh token akan menumpuk jika tidak dilakukan 
-        |  penghapusan secara rutin, oleh karena itu kita hapus
-        |  seluruh token ketika client akan login kembali.
-        |*/
+    /* =======================================================
+    |  HAPUS TOKEN & REFRESH-TOKEN LAMA
+    |  =======================================================
+    |  Refresh token akan menumpuk jika tidak dilakukan 
+    |  penghapusan secara rutin, oleh karena itu kita hapus
+    |  seluruh token ketika client akan login kembali.
+    |*/
+    async removeOldToken(role: string, tlp: string): Promise<any> {
         switch (role) {
             case "Admin":
                 try {
@@ -221,6 +167,62 @@ export class AuthServiceV1 {
                 } catch {}
                 break;
         }
+    }
+
+    async signIn(params: {
+        tlp: string;
+        password: string;
+        app_name: string;
+    }): Promise<JWTResponseInterface> {
+        const { tlp, password, app_name } = params;
+
+        /* --------------------------------------------------
+        |  Check if login are from valid Permata Kasir app
+        |  --------------------------------------------------
+        |  1. Desktop
+        |  2. Mobile
+        |  3. RestAPI (Postman, Bruno, etc)
+        */
+        const restAppName: string = "Permata-Kasir-Client-RestAPI";
+        const mobileAppName: string = "Permata-Kasir-Client-Mobile";
+        const desktopAppName: string = "Permata-Kasir-Client-Desktop";
+        const validApp: boolean =
+            app_name == desktopAppName ||
+            app_name == mobileAppName ||
+            app_name == restAppName;
+
+        // Unknown client
+        if (!validApp) {
+            // Terminate task
+            throw new UnauthorizedException("Missing app_name");
+        }
+
+        // Cari data Admin, User atau Kasir
+        const { data, role }: any = await this.findAccount(tlp);
+
+        // Compare password
+        const correctPassword = bcrypt.compareSync(password, data.password);
+
+        // Wrong password
+        if (!correctPassword) {
+            throw new UnauthorizedException("Password salah!");
+        }
+
+        // Pengecekan apakah akun aktif (User & Kasir)
+        if (role == "User" || role == "Kasir") {
+            this.checkActiveAccount(role, data);
+        }
+
+        // Pengecekan admin
+        else {
+            // Blokir admin dari login menggunakan aplikasi desktop atau mobile.
+            if (app_name == mobileAppName || app_name == desktopAppName) {
+                // Terminate task
+                throw new UnauthorizedException(
+                    "Admin tidak di izinkan menggunakan aplikasi ini!",
+                );
+            }
+        }
 
         // Return created token & refresh-token
         return this.createJwt(data, role);
@@ -291,26 +293,14 @@ export class AuthServiceV1 {
         // and then use it for generate random ID.
         const refresh_token = generateId(parseInt(rtLentgh));
 
+        // Hapus token lama
+        await this.removeOldToken(role, person.tlp);
+
         // Create refresh-token
         let refreshTokenCreated: boolean = false;
         switch (role) {
             case "Admin":
-                // Cari token yang memiliki access_token dan refresh_token yang sama (jika ada)
-                // untuk menghindari tabrakan data (unique-key error).
-                try {
-                    await this.adminRefreshToken.findOne({
-                        where: {
-                            token: access_token,
-                            refreshToken: refresh_token,
-                        },
-                    });
-                    // Token dengan data yang sama ditemukan, panggil lagi method ini
-                    // untuk membuat token dan refresh_token yang baru.
-                    return this.createJwt(person, role);
-                } catch {
-                    // Token dengan data yang sama tidak ditemukan, lanjut ke proses pembuatan token.
-                }
-                // Pembuatan token baru
+                // Pembuatan token baru admin
                 try {
                     await this.adminRefreshToken.create(person.tlp, {
                         token: access_token,
@@ -325,22 +315,7 @@ export class AuthServiceV1 {
                 break;
 
             case "User":
-                // Cari token yang memiliki access_token dan refresh_token yang sama (jika ada)
-                // untuk menghindari tabrakan data (unique-key error).
-                try {
-                    await this.userRefreshToken.findOne({
-                        where: {
-                            token: access_token,
-                            refreshToken: refresh_token,
-                        },
-                    });
-                    // Token dengan data yang sama ditemukan, panggil lagi method ini
-                    // untuk membuat token dan refresh_token yang baru.
-                    return this.createJwt(person, role);
-                } catch {
-                    // Token dengan data yang sama tidak ditemukan, lanjut ke proses pembuatan token.
-                }
-                // Pembuatan token baru
+                // Pembuatan token baru user
                 try {
                     await this.userRefreshToken.create(person.tlp, {
                         token: access_token,
@@ -355,22 +330,7 @@ export class AuthServiceV1 {
                 break;
 
             case "Kasir":
-                // Cari token yang memiliki access_token dan refresh_token yang sama (jika ada)
-                // untuk menghindari tabrakan data (unique-key error).
-                try {
-                    await this.kasirRefreshToken.findOne({
-                        where: {
-                            token: access_token,
-                            refreshToken: refresh_token,
-                        },
-                    });
-                    // Token dengan data yang sama ditemukan, panggil lagi method ini
-                    // untuk membuat token dan refresh_token yang baru.
-                    return this.createJwt(person, role);
-                } catch {
-                    // Token dengan data yang sama tidak ditemukan, lanjut ke proses pembuatan token.
-                }
-                // Pembuatan token baru
+                // Pembuatan token baru kasir
                 try {
                     await this.kasirRefreshToken.create(person.tlp, {
                         token: access_token,
@@ -442,7 +402,7 @@ export class AuthServiceV1 {
                         },
                     });
                     passed = true;
-                } catch {}
+                } catch (err) {}
                 break;
 
             case "Kasir":
