@@ -29,37 +29,51 @@ export class TokoControllerV1 {
         @Request() req: any,
     ): Promise<Toko> {
         // Cek pemilik dan jumlah kuota pembuatan toko
+        let status: boolean;
+        let paid: boolean | undefined;
         try {
             // Hasil pengecekan akan mengembalikan object { status, paid }
-            const { status, paid }: InputOwnerCheckInterface =
+            const ownCheck: InputOwnerCheckInterface =
                 await this.service.inputOwnerCheck({
                     ...req.user,
                     userId: newData.userId,
                 });
-            // Ada kesalahan
-            if (!status) {
-                let errMsg: string; // Error user message
-                let errCode: number; // Error user code
-                // Free user
-                if (!paid) {
-                    errMsg =
-                        "Silahkan upgrade ke premium untuk membuat toko lagi.";
-                    errCode = 401;
-                }
-                // Paid user
-                else {
-                    errMsg =
-                        "Maksimal jumlah toko telah tercapai, silahkan upgrade paket anda.";
-                    errCode = 200;
-                }
-                throw new BadRequestException({ errMsg, errCode });
+
+            // Set status
+            status = ownCheck.status;
+
+            // Set paid, ownCheck not returned paid for admin
+            if (ownCheck.paid) {
+                paid = ownCheck.paid;
             }
-        } catch {
+        } catch (err) {
             // User with { tlp, userId } is not found,
             // tlp from headers, userId from request-body.
 
             // Terminate task.
             throw new UnauthorizedException();
+        }
+
+        // Ada kesalahan
+        if (!status) {
+            let errMsg: string; // Error user message
+            let errCode: number; // Error user code
+
+            // Free user
+            if (!paid) {
+                errMsg = "Silahkan upgrade ke premium untuk membuat toko lagi.";
+                errCode = 401;
+            }
+
+            // Paid user
+            else {
+                errMsg =
+                    "Maksimal jumlah toko telah tercapai, silahkan upgrade paket anda.";
+                errCode = 200;
+            }
+
+            // Terminate task
+            throw new BadRequestException({ errMsg, errCode });
         }
 
         // Menyimpan data

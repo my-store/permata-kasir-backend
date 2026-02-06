@@ -183,18 +183,18 @@ export class AuthServiceV1 {
         |  2. Mobile
         |  3. RestAPI (Postman, Bruno, etc)
         */
-        const restAppName: string = "Permata-Kasir-Client-RestAPI";
-        const mobileAppName: string = "Permata-Kasir-Client-Mobile";
-        const desktopAppName: string = "Permata-Kasir-Client-Desktop";
+        const restAppName: any = process.env.APP_REST_CLIENT_NAME;
+        const mobileAppName: any = process.env.APP_MOBILE_CLIENT_NAME;
+        const desktopAppName: any = process.env.APP_DESKTOP_CLIENT_NAME;
         const validApp: boolean =
             app_name == desktopAppName ||
             app_name == mobileAppName ||
             app_name == restAppName;
 
-        // Unknown client
+        // Unknown client | Terminate
         if (!validApp) {
             // Terminate task
-            throw new UnauthorizedException("Missing app_name");
+            throw new UnauthorizedException("Missing or invalid app_name!");
         }
 
         // Cari data Admin, User atau Kasir
