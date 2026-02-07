@@ -49,14 +49,7 @@ export class UserRankControllerV1 {
     }
 
     @Get()
-    async findAll(
-        @Query() query: any,
-        @Request() req: any,
-    ): Promise<UserRank[]> {
-        const { role } = req.user;
-        if (role != "Admin") {
-            throw new UnauthorizedException();
-        }
+    async findAll(@Query() query: any): Promise<UserRank[]> {
         let userRank: UserRank[];
         try {
             userRank = await this.userRankService.findAll(ParseUrlQuery(query));
@@ -68,14 +61,7 @@ export class UserRankControllerV1 {
 
     // Getone method will return UserRank object or nul, so set return type as any.
     @Get(":uuid")
-    async findOne(
-        @Param("uuid") uuid: string,
-        @Request() req: any,
-    ): Promise<any> {
-        const { role } = req.user;
-        if (role != "Admin") {
-            throw new UnauthorizedException();
-        }
+    async findOne(@Param("uuid") uuid: string): Promise<any> {
         let userRank: any;
         try {
             userRank = await this.userRankService.findOne({
