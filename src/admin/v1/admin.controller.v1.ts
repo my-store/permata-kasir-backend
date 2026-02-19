@@ -1,3 +1,4 @@
+import { KasirServiceV1 } from "src/kasir/v1/kasir.service.v1";
 import { CreateAdminDtoV1 } from "./dto/create.admin.v1.dto";
 import { UserServiceV1 } from "src/user/v1/user.service.v1";
 import { FileInterceptor } from "@nestjs/platform-express";
@@ -40,6 +41,7 @@ import {
 export class AdminControllerV1 {
     constructor(
         private readonly adminService: AdminServiceV1,
+        private readonly kasirService: KasirServiceV1,
         private readonly userService: UserServiceV1,
     ) {}
 
@@ -149,10 +151,12 @@ export class AdminControllerV1 {
         |  PENGECEKAN NO. TLP
         |  ----------------------------------------------------------
         |  Pastikan No. Tlp belum ada yang menggunakan, jika ada
-        |  admin ataupun user yang menggunakan No. Tlp tersebut,
+        |  admin, user ataupun kasir yang menggunakan No. Tlp tersebut,
         |  permintaan input data ditolak.
         */
         let alreadyUsed: boolean = false;
+
+        // Pengecekan No. Tlp pada tabel admin
         try {
             // Pengecekan apakah ada admin yang menggunakan No. Tlp tersebut
             const admExist: any = await this.adminService.findOne({
@@ -178,7 +182,21 @@ export class AdminControllerV1 {
             } catch {}
         }
 
-        // Jika ada admin atau user yang telah menggunakan No. Tlp tersebut
+        // Tidak ada user yang menggunakan No. Tlp tersebut
+        if (!alreadyUsed) {
+            try {
+                // Pengecekan apakah ada kasir yang menggunakan No. Tlp tersebut
+                const usrExist: any = await this.kasirService.findOne({
+                    where: { tlp: data.tlp },
+                });
+                if (usrExist) {
+                    // No. Tlp telah digunakan oleh seorang kasir
+                    alreadyUsed = true;
+                }
+            } catch {}
+        }
+
+        // Jika ada admin, user atau kasir yang telah menggunakan No. Tlp tersebut
         if (alreadyUsed) {
             // Terminate task | Tolak permintaan input
             throw new BadRequestException(

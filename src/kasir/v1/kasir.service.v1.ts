@@ -1,5 +1,6 @@
 import { generateId, getTimestamp } from "src/libs/string";
 import { PrismaService } from "src/prisma.service";
+import { encryptPassword } from "src/libs/bcrypt";
 import { Injectable } from "@nestjs/common";
 import { Prisma, Kasir } from "models";
 
@@ -205,6 +206,9 @@ export class KasirServiceV1 {
 
                 // UUID
                 uuid,
+
+                // Enkripsi password
+                password: encryptPassword(newData.password),
 
                 // Timestamp
                 createdAt: thisTime,

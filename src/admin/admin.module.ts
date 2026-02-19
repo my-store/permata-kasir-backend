@@ -1,4 +1,5 @@
 import { AdminRefreshTokenServiceV1 } from "./v1/admin.refresh.token.service.v1";
+import { KasirServiceV1 } from "src/kasir/v1/kasir.service.v1";
 import { AdminControllerV1 } from "./v1/admin.controller.v1";
 import { UserServiceV1 } from "src/user/v1/user.service.v1";
 import { AdminServiceV1 } from "./v1/admin.service.v1";
@@ -12,6 +13,7 @@ import { Module } from "@nestjs/common";
         AdminServiceV1,
         PrismaService,
         UserServiceV1,
+        KasirServiceV1,
         AdminRefreshTokenServiceV1,
     ],
 })

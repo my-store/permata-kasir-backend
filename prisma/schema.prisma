@@ -213,6 +213,7 @@ model Kasir {
   id       Int     @id @default(autoincrement())
   uuid     String  @unique
   nama     String
+  alamat   String
   tlp      String  @unique
   password String
   foto     String? // URL foto

@@ -36,23 +36,39 @@ export class ProdukControllerV1 {
         @Body() newData: CreateProdukDtoV1,
         @Request() req: any,
     ): Promise<Produk> {
-        // Check if this request is come from the owner, if not, block the request.
-        try {
-            await this.service.inputOwnerCheck({
-                ...req.user,
-                userId: newData.userId,
-                tokoId: newData.tokoId,
-            });
-        } catch {
-            throw new UnauthorizedException();
-        }
+        // // Check if this request is come from the owner, if not, block the request.
+        // try {
+        //     await this.service.inputOwnerCheck({
+        //         ...req.user,
+        //         userId: newData.userId,
+        //         tokoId: newData.tokoId,
+        //     });
+        // } catch {
+        //     throw new UnauthorizedException();
+        // }
 
         // Menyimpan data
         let createdProduk: Produk;
         try {
             createdProduk = await this.service.create(
                 // Cleaned insert data
-                this.service.cleanInsertData(newData),
+                this.service.cleanInsertData(
+                    // Add connection between child and parent table
+                    {
+                        ...newData,
+                        toko: {
+                            connect: {
+                                id: newData.tokoId,
+                            },
+                            user: {
+                                connect: {
+                                    id: newData.userId,
+                                    tlp: req.user.sub,
+                                },
+                            },
+                        },
+                    },
+                ),
             );
         } catch (error) {
             throw new InternalServerErrorException(error);

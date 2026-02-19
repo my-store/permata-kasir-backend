@@ -11,8 +11,10 @@ export class CreateKasirDtoV1 {
     password: string;
 
     @IsNotEmpty()
-    tokoId: number;
+    tokoId: string;
 
     @IsNotEmpty()
-    userId: number;
+    userId: string;
+
+    foto?: string;
 }

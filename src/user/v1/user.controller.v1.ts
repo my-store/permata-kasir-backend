@@ -1,4 +1,5 @@
 import { UserRegisterTicketServiceV1 } from "./user.register.ticket.service.v1";
+import { KasirServiceV1 } from "src/kasir/v1/kasir.service.v1";
 import { AdminServiceV1 } from "src/admin/v1/admin.service.v1";
 import { FileInterceptor } from "@nestjs/platform-express";
 import { CreateUserDtoV1 } from "./dto/create.user.v1.dto";
@@ -42,6 +43,7 @@ export class UserControllerV1 {
     constructor(
         private readonly registerTicketService: UserRegisterTicketServiceV1,
         private readonly adminService: AdminServiceV1,
+        private readonly kasirService: KasirServiceV1,
         private readonly userService: UserServiceV1,
     ) {}
 
@@ -129,8 +131,7 @@ export class UserControllerV1 {
     @UseInterceptors(FileInterceptor("foto"))
     async create(
         @Body() data: CreateUserDtoV1,
-        @UploadedFile()
-        foto: Express.Multer.File,
+        @UploadedFile() foto: Express.Multer.File,
 
         // Security - This method can only called from register method
         ticket_code: string = "",
@@ -167,10 +168,12 @@ export class UserControllerV1 {
         |  PENGECEKAN NO. TLP
         |  ----------------------------------------------------------
         |  Pastikan No. Tlp belum ada yang menggunakan, jika ada
-        |  user ataupun admin yang menggunakan No. Tlp tersebut,
+        |  user, kasir ataupun admin yang menggunakan No. Tlp tersebut,
         |  permintaan input data ditolak.
         */
         let alreadyUsed: boolean = false;
+
+        // Pengecekan No. Tlp pada tabel user
         try {
             // Pengecekan apakah ada user yang menggunakan No. Tlp tersebut
             const usrExist: any = await this.userService.findOne({
@@ -184,6 +187,20 @@ export class UserControllerV1 {
 
         // Tidak ada user yang menggunakan No. Tlp tersebut
         if (!alreadyUsed) {
+            try {
+                // Pengecekan apakah ada kasir yang menggunakan No. Tlp tersebut
+                const usrExist: any = await this.kasirService.findOne({
+                    where: { tlp: data.tlp },
+                });
+                if (usrExist) {
+                    // No. Tlp telah digunakan oleh seorang kasir
+                    alreadyUsed = true;
+                }
+            } catch {}
+        }
+
+        // Tidak ada kasir yang menggunakan No. Tlp tersebut
+        if (!alreadyUsed) {
             // Pengecekan apakah ada admin yang menggunakan No. Tlp tersebut
             try {
                 const admExist: any = await this.adminService.findOne({
@@ -196,7 +213,7 @@ export class UserControllerV1 {
             } catch {}
         }
 
-        // Jika ada user atau admin yang telah menggunakan No. Tlp tersebut
+        // Jika ada user, kasir atau admin yang telah menggunakan No. Tlp tersebut
         if (alreadyUsed) {
             // Terminate task | Tolak permintaan input
             throw new BadRequestException(

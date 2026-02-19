@@ -1,13 +1,23 @@
+import { AdminServiceV1 } from "src/admin/v1/admin.service.v1";
 import { UpdateKasirDtoV1 } from "./dto/update.kasir.v1.dto";
 import { CreateKasirDtoV1 } from "./dto/create.kasir.v1.dto";
+import { UserServiceV1 } from "src/user/v1/user.service.v1";
 import { KasirServiceV1 } from "./kasir.service.v1";
 import { ParseUrlQuery } from "src/libs/string";
 import { Kasir, Prisma } from "models";
+import {
+    GetFileDestBeforeUpload,
+    ProfileImageValidator,
+    upload_img_dir,
+    UploadFile,
+} from "src/libs/upload-file-handler";
 import {
     InternalServerErrorException,
     UnauthorizedException,
     BadRequestException,
     NotFoundException,
+    UseInterceptors,
+    UploadedFile,
     Controller,
     Request,
     Delete,
@@ -18,37 +28,180 @@ import {
     Post,
     Get,
 } from "@nestjs/common";
+import { FileInterceptor } from "@nestjs/platform-express";
 
 @Controller({ version: "1", path: "kasir" })
 export class KasirControllerV1 {
-    constructor(private readonly service: KasirServiceV1) {}
+    constructor(
+        private readonly service: KasirServiceV1,
+        private readonly userService: UserServiceV1,
+        private readonly adminService: AdminServiceV1,
+    ) {}
 
     @Post()
+    @UseInterceptors(FileInterceptor("foto"))
     async create(
-        @Body() newData: CreateKasirDtoV1,
+        @Body() data: CreateKasirDtoV1,
+        @UploadedFile() foto: Express.Multer.File,
         @Request() req: any,
     ): Promise<Kasir> {
         // Check if this request is come from the owner, if not, block the request.
         try {
             await this.service.inputOwnerCheck({
                 ...req.user,
-                userId: newData.userId,
-                tokoId: newData.tokoId,
+                userId: parseInt(data.userId),
+                tokoId: parseInt(data.tokoId),
             });
         } catch {
             throw new UnauthorizedException();
         }
 
-        // Menyimpan data
+        /* ----------------------------------------------------------
+        |  PENGECEKAN FOTO
+        |  ----------------------------------------------------------
+        |  Jika kasir tidak mengunggah foto, permintaan input secara
+        |  otomatis akan ditolak.
+        |  ----------------------------------------------------------
+        |  Format dan ukuran foto akan di cek, format dan ukuran
+        |  yang di izinkan:
+        |  1. Format: JPG, PNG
+        |  2. Ukuran <= 2 Megabyte
+        |  ----------------------------------------------------------
+        |  Lihat selengkapnya di:
+        |  libs/upload-file-handler.ts/ProfileImageValidator()
+        */
+        if (!foto) {
+            throw new BadRequestException("Wajib mengunggah foto!");
+        }
+        const { status, message } = ProfileImageValidator(foto);
+        if (!status) {
+            throw new BadRequestException(message);
+        }
+
+        /* ----------------------------------------------------------
+        |  PENGECEKAN NO. TLP
+        |  ----------------------------------------------------------
+        |  Pastikan No. Tlp belum ada yang menggunakan, jika ada
+        |  kasir, user ataupun admin yang menggunakan No. Tlp tersebut,
+        |  permintaan input data ditolak.
+        */
+        let alreadyUsed: boolean = false;
+
+        // Pengecekan No. Tlp pada tabel kasir
+        try {
+            // Pengecekan apakah ada kasir yang menggunakan No. Tlp tersebut
+            const usrExist: any = await this.service.findOne({
+                where: { tlp: data.tlp },
+            });
+            if (usrExist) {
+                // No. Tlp telah digunakan oleh seorang kasir
+                alreadyUsed = true;
+            }
+        } catch {}
+
+        // Tidak ada kasir yang menggunakan No. Tlp tersebut
+        if (!alreadyUsed) {
+            try {
+                // Pengecekan apakah ada user yang menggunakan No. Tlp tersebut
+                const usrExist: any = await this.userService.findOne({
+                    where: { tlp: data.tlp },
+                });
+                if (usrExist) {
+                    // No. Tlp telah digunakan oleh seorang user
+                    alreadyUsed = true;
+                }
+            } catch {}
+        }
+
+        // Tidak ada user yang menggunakan No. Tlp tersebut
+        if (!alreadyUsed) {
+            // Pengecekan apakah ada admin yang menggunakan No. Tlp tersebut
+            try {
+                const admExist: any = await this.adminService.findOne({
+                    where: { tlp: data.tlp },
+                });
+                if (admExist) {
+                    // No. Tlp telah digunakan oleh seorang admin
+                    alreadyUsed = true;
+                }
+            } catch {}
+        }
+
+        // Jika ada kasir, user atau admin yang telah menggunakan No. Tlp tersebut
+        if (alreadyUsed) {
+            // Terminate task | Tolak permintaan input
+            throw new BadRequestException(
+                `No. Tlp ${data.tlp} telah digunakan!`,
+            );
+        }
+
+        /* ----------------------------------------------------------
+        |  NAMA FOTO
+        |  ----------------------------------------------------------
+        |  Nama foto berasal dari No. Tlp kasir
+        */
+        const img_path = `${upload_img_dir}/kasir/profile`;
+        const img_name = data.tlp;
+        data.foto = GetFileDestBeforeUpload(foto, img_path, img_name);
+
+        /* ----------------------------------------------------------
+        |  MENYIMPAN DATA
+        |  ----------------------------------------------------------
+        |  Simpan data dulu, foto hanya URL saja, upload file
+        |  setelah berhasil menyimpan data.
+        */
         let createdKasir: Kasir;
         try {
             createdKasir = await this.service.create(
                 // Cleaned insert data
-                this.service.cleanInsertData(newData),
+                this.service.cleanInsertData(
+                    // Add connection between child and parent table
+                    {
+                        ...data,
+
+                        // Parse to integer, because this request is come from Form-Data
+                        tokoId: parseInt(data.tokoId),
+
+                        // Remove 'public' from image directory
+                        foto: data.foto.replace("public", ""),
+
+                        // toko: {
+                        //     connect: {
+                        //         id: parseInt(data.tokoId),
+                        //     },
+                        //     user: {
+                        //         connect: {
+                        //             id: parseInt(data.userId),
+                        //             tlp: req.user.sub,
+                        //         },
+                        //     },
+                        // },
+                    },
+                ),
             );
         } catch (error) {
             throw new InternalServerErrorException(error);
         }
+
+        /* ----------------------------------------------------------
+        |  MENGUNGGAH FOTO
+        |  ----------------------------------------------------------
+        |  Setelah data berhasil disimpan, proses selanjutnya
+        |  adalah mengunggah foto.
+        */
+        try {
+            UploadFile(foto, data.foto);
+        } catch (e) {
+            throw new InternalServerErrorException(e);
+        }
+
+        /* ----------------------------------------------------------
+        |  SELESAI
+        |  ----------------------------------------------------------
+        |  Setelah data berhasil disimpan, dan foto
+        |  berhasil di unggah, proses selanjutnya adalah
+        |  mengembalikan data baru tersebut kepada client
+        */
         return createdKasir;
     }
 
