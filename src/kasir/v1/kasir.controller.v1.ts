@@ -2,6 +2,7 @@ import { AdminServiceV1 } from "src/admin/v1/admin.service.v1";
 import { UpdateKasirDtoV1 } from "./dto/update.kasir.v1.dto";
 import { CreateKasirDtoV1 } from "./dto/create.kasir.v1.dto";
 import { UserServiceV1 } from "src/user/v1/user.service.v1";
+import { FileInterceptor } from "@nestjs/platform-express";
 import { KasirServiceV1 } from "./kasir.service.v1";
 import { ParseUrlQuery } from "src/libs/string";
 import { Kasir, Prisma } from "models";
@@ -28,7 +29,6 @@ import {
     Post,
     Get,
 } from "@nestjs/common";
-import { FileInterceptor } from "@nestjs/platform-express";
 
 @Controller({ version: "1", path: "kasir" })
 export class KasirControllerV1 {
@@ -164,18 +164,6 @@ export class KasirControllerV1 {
 
                         // Remove 'public' from image directory
                         foto: data.foto.replace("public", ""),
-
-                        // toko: {
-                        //     connect: {
-                        //         id: parseInt(data.tokoId),
-                        //     },
-                        //     user: {
-                        //         connect: {
-                        //             id: parseInt(data.userId),
-                        //             tlp: req.user.sub,
-                        //         },
-                        //     },
-                        // },
                     },
                 ),
             );

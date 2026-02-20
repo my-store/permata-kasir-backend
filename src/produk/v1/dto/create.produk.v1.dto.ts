@@ -19,8 +19,3 @@ export class CreateProdukDtoV1 {
     @IsNotEmpty()
     userId: number;
 }
-
-export class CreateMultiProdukDtoV1 {
-    @IsNotEmpty()
-    data: CreateProdukDtoV1[];
-}

@@ -1,11 +1,8 @@
 import { UpdateProdukDtoV1 } from "./dto/update.produk.v1.dto";
+import { CreateProdukDtoV1 } from "./dto/create.produk.v1.dto";
 import { ProdukServiceV1 } from "./produk.service.v1";
 import { ParseUrlQuery } from "src/libs/string";
 import { Prisma, Produk } from "models";
-import {
-    CreateMultiProdukDtoV1,
-    CreateProdukDtoV1,
-} from "./dto/create.produk.v1.dto";
 import {
     InternalServerErrorException,
     UnauthorizedException,
@@ -26,53 +23,34 @@ import {
 export class ProdukControllerV1 {
     constructor(private readonly service: ProdukServiceV1) {}
 
-    @Post("multi")
-    createMulti(@Body() { data }: CreateMultiProdukDtoV1) {
-        return data;
-    }
-
     @Post()
     async create(
         @Body() newData: CreateProdukDtoV1,
         @Request() req: any,
     ): Promise<Produk> {
-        // // Check if this request is come from the owner, if not, block the request.
-        // try {
-        //     await this.service.inputOwnerCheck({
-        //         ...req.user,
-        //         userId: newData.userId,
-        //         tokoId: newData.tokoId,
-        //     });
-        // } catch {
-        //     throw new UnauthorizedException();
-        // }
+        // Check if this request is come from the owner, if not, block the request.
+        try {
+            await this.service.inputOwnerCheck({
+                ...req.user,
+                userId: newData.userId,
+                tokoId: newData.tokoId,
+            });
+        } catch {
+            throw new UnauthorizedException();
+        }
 
         // Menyimpan data
         let createdProduk: Produk;
         try {
             createdProduk = await this.service.create(
                 // Cleaned insert data
-                this.service.cleanInsertData(
-                    // Add connection between child and parent table
-                    {
-                        ...newData,
-                        toko: {
-                            connect: {
-                                id: newData.tokoId,
-                            },
-                            user: {
-                                connect: {
-                                    id: newData.userId,
-                                    tlp: req.user.sub,
-                                },
-                            },
-                        },
-                    },
-                ),
+                this.service.cleanInsertData(newData),
             );
         } catch (error) {
             throw new InternalServerErrorException(error);
         }
+
+        // Kembalikan data yang telah dibuat kepada client
         return createdProduk;
     }
 
