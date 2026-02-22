@@ -4,44 +4,8 @@ import { encryptPassword } from "src/libs/bcrypt";
 import { Injectable } from "@nestjs/common";
 import { Prisma, Kasir } from "models";
 
-// Placeholder | Short type name purpose only
-interface DefaultKeysInterface extends Prisma.KasirSelect {}
-
-export const defaultKasirKeys: DefaultKeysInterface = {
-    id: true,
-    uuid: true,
-    nama: true,
-    tlp: true,
-    password: true,
-    foto: true,
-    online: true,
-    lastOnline: true,
-    active: true,
-    deactivatedAt: true,
-    deactivatedReason: true,
-    createdAt: true,
-    updatedAt: true,
-
-    // Parent table data keys
-    tokoId: true,
-};
-
 @Injectable()
 export class KasirServiceV1 {
-    private readonly findAllKeys: DefaultKeysInterface = {
-        // Default keys
-        ...defaultKasirKeys,
-
-        // Another keys
-    };
-
-    private readonly findOneKeys: DefaultKeysInterface = {
-        // Default keys
-        ...defaultKasirKeys,
-
-        // Another keys
-    };
-
     constructor(private readonly prisma: PrismaService) {}
 
     /* -----------------------------------------------------
@@ -214,39 +178,15 @@ export class KasirServiceV1 {
                 createdAt: thisTime,
                 updatedAt: thisTime,
             },
-            // Fields to display after creation
-            select: this.findOneKeys,
         });
     }
 
-    async findAll(params: {
-        skip?: number;
-        take?: number;
-        select?: DefaultKeysInterface;
-        cursor?: Prisma.KasirWhereUniqueInput;
-        where?: Prisma.KasirWhereInput;
-        orderBy?: Prisma.KasirOrderByWithRelationInput;
-    }): Promise<Kasir[]> {
-        return this.prisma.kasir.findMany({
-            ...params,
-            select: {
-                ...this.findAllKeys, // Default keys to display
-                ...params.select, // User specified keys to display
-            },
-        });
+    async findAll(params: Prisma.KasirFindManyArgs): Promise<Kasir[]> {
+        return this.prisma.kasir.findMany(params);
     }
 
-    async findOne(params: {
-        select?: DefaultKeysInterface;
-        where: Prisma.KasirWhereUniqueInput;
-    }): Promise<Kasir | null> {
-        return this.prisma.kasir.findUniqueOrThrow({
-            ...params,
-            select: {
-                ...this.findOneKeys, // Default keys to display
-                ...params.select, // User specified keys to display
-            },
-        });
+    async findOne(params: Prisma.KasirFindUniqueOrThrowArgs): Promise<Kasir | null> {
+        return this.prisma.kasir.findUniqueOrThrow(params);
     }
 
     async update(
@@ -275,12 +215,10 @@ export class KasirServiceV1 {
         return this.prisma.kasir.update({
             where,
             data: updatedData,
-            // Fields to display after update data
-            select: this.findOneKeys,
         });
     }
 
     async remove(where: Prisma.KasirWhereUniqueInput): Promise<Kasir> {
-        return this.prisma.kasir.delete({ where, select: this.findOneKeys });
+        return this.prisma.kasir.delete({ where });
     }
 }

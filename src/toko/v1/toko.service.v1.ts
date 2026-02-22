@@ -3,43 +3,13 @@ import { Toko, Prisma, User, UserRank } from "models";
 import { PrismaService } from "src/prisma.service";
 import { Injectable } from "@nestjs/common";
 
-// Placeholder | Short type name purpose only
-interface DefaultKeysInterface extends Prisma.TokoSelect {}
-
 export interface InputOwnerCheckInterface {
     status: boolean;
     paid?: boolean;
 }
 
-const defaultKeys: DefaultKeysInterface = {
-    id: true,
-    uuid: true,
-    nama: true,
-    alamat: true,
-    tlp: true,
-    createdAt: true,
-    updatedAt: true,
-
-    // Parent table data keys
-    userId: true,
-};
-
 @Injectable()
 export class TokoServiceV1 {
-    private readonly findAllKeys: DefaultKeysInterface = {
-        // Default keys
-        ...defaultKeys,
-
-        // Another keys
-    };
-
-    private readonly findOneKeys: DefaultKeysInterface = {
-        // Default keys
-        ...defaultKeys,
-
-        // Another keys
-    };
-
     constructor(private readonly prisma: PrismaService) {}
 
     /* -----------------------------------------------------
@@ -195,39 +165,35 @@ export class TokoServiceV1 {
                 createdAt: thisTime,
                 updatedAt: thisTime,
             },
-            // Fields to display after creation
-            select: this.findOneKeys,
         });
     }
 
-    async findAll(params: {
-        skip?: number;
-        take?: number;
-        select?: DefaultKeysInterface;
-        cursor?: Prisma.TokoWhereUniqueInput;
-        where?: Prisma.TokoWhereInput;
-        orderBy?: Prisma.TokoOrderByWithRelationInput;
-    }): Promise<Toko[]> {
+    async findAll(params: Prisma.TokoFindManyArgs): Promise<Toko[]> {
         return this.prisma.toko.findMany({
             ...params,
-            select: {
-                ...this.findAllKeys, // Default keys to display
-                ...params.select, // User specified keys to display
+            include: {
+                ...params.include,
+                _count: {
+                    select: {
+                        monitorToko: true,
+                        kasir: true,
+                        produk: true,
+                        jasa: true,
+                        member: true,
+                        diskon: true,
+                        memberRank: true,
+                        transaksiPembelian: true,
+                        transaksiPenjualan: true,
+                    },
+                },
             },
         });
     }
 
-    async findOne(params: {
-        select?: DefaultKeysInterface;
-        where: Prisma.TokoWhereUniqueInput;
-    }): Promise<Toko | null> {
-        return this.prisma.toko.findUniqueOrThrow({
-            ...params,
-            select: {
-                ...this.findOneKeys, // Default keys to display
-                ...params.select, // User specified keys to display
-            },
-        });
+    async findOne(
+        params: Prisma.TokoFindUniqueOrThrowArgs,
+    ): Promise<Toko | null> {
+        return this.prisma.toko.findUniqueOrThrow(params);
     }
 
     async update(where: Prisma.TokoWhereUniqueInput, data: any): Promise<Toko> {
@@ -243,6 +209,6 @@ export class TokoServiceV1 {
     }
 
     async remove(where: Prisma.TokoWhereUniqueInput): Promise<Toko> {
-        return this.prisma.toko.delete({ where, select: this.findOneKeys });
+        return this.prisma.toko.delete({ where });
     }
 }
