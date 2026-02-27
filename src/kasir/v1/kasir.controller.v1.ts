@@ -244,9 +244,9 @@ export class KasirControllerV1 {
         return data;
     }
 
-    @Patch(":tlp")
+    @Patch(":uuid")
     async update(
-        @Param("tlp") tlp: string,
+        @Param("uuid") uuid: string,
         @Body() data: UpdateKasirDtoV1,
         @Request() req: any,
     ): Promise<Kasir> {
@@ -258,7 +258,7 @@ export class KasirControllerV1 {
         const q: any = this.service.secureQueries({
             queries: {
                 where: <Prisma.KasirWhereUniqueInput>{
-                    tlp,
+                    uuid,
                 },
             },
             headers: req.user,
@@ -274,16 +274,16 @@ export class KasirControllerV1 {
         return kasir;
     }
 
-    @Delete(":tlp")
+    @Delete(":uuid")
     async remove(
-        @Param("tlp") tlp: string,
+        @Param("uuid") uuid: string,
         @Request() req: any,
     ): Promise<Kasir> {
         let kasir: Kasir;
         const q: any = this.service.secureQueries({
             queries: {
                 where: <Prisma.KasirWhereUniqueInput>{
-                    tlp,
+                    uuid,
                 },
             },
             headers: req.user,
