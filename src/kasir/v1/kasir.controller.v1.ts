@@ -49,6 +49,8 @@ export class KasirControllerV1 {
         try {
             await this.service.inputOwnerCheck({
                 ...req.user,
+
+                // Wajib parse-integer jika body dikirim menggunakan FormData (Multipart)
                 userId: parseInt(data.userId),
                 tokoId: parseInt(data.tokoId),
             });
