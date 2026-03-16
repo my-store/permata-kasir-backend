@@ -2,9 +2,11 @@
 # BACKEND APLIKASI PERMATA KASIR
 
 ### 1. Persiapan Sebelum Menjalankan Program
-*- Install dependency: npm install*
-*<span style="color:yellow">Abaikan jika ada warning glob, inflight dll, itu digunakan oleh dev-dependency</span>*
+- Install dependency: npm install
+*(Abaikan jika ada warning glob, inflight dll, itu digunakan oleh dev-dependency)*
+
 *- Siapkan database: npm run db:update*
+
 *- Siapkan Frontend: npm run build:with:frontend*
 
 ### 2. Fix Prisma Extension pada VSCode
@@ -12,4 +14,5 @@
 
 ## Permata Komputer
 *Izzat Alharis, 16 Mar 2026*
+
 *Salem, Brebes Jawa tengah 52275*
