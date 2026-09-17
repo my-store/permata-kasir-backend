@@ -4,6 +4,8 @@
 ### 1. Persiapan Sebelum Menjalankan Program
 - Install dependency: npm install
 
+*Jika terjadi error saat instal, tambahkan parameter --legacy-peer-deps
+
 *(Abaikan jika ada warning glob, inflight dll, itu digunakan oleh dev-dependency)*
 
 - Siapkan database: npm run db:update
