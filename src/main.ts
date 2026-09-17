@@ -3,6 +3,9 @@ import { ValidationPipe, VersioningType } from "@nestjs/common";
 import { NestFactory } from "@nestjs/core";
 import { AppModule } from "./app.module";
 
+// Fix | Error Namespace 'global.Express' has no exported member 'Multer'
+import "multer";
+
 async function bootstrap() {
     const app = await NestFactory.create<NestExpressApplication>(AppModule);
 
