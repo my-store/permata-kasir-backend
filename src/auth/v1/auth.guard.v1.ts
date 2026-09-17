@@ -37,7 +37,7 @@ export class AuthGuardV1 implements CanActivate {
         |  Seluruh route yang tidak menggunakan dekorator Public
         |  tidak dapat diakses sebelum login.
         */
-        const request = context.switchToHttp().getRequest();
+        let request = context.switchToHttp().getRequest(); // Update from const to let - 17-9-2026
         const token = this.extractTokenFromHeader(request);
 
         if (!token) {
