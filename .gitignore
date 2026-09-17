@@ -12,3 +12,6 @@ public/img/kasir
 .turbo
 dist
 test
+
+# Generated build files
+tsconfig.build.tsbuildinfo
