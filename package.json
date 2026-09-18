@@ -28,6 +28,7 @@
         "git:push": "git push -u origin main"
     },
     "dependencies": {
+        "@nestjs/cache-manager": "^12.0.0",
         "@nestjs/common": "^11.0.1",
         "@nestjs/config": "^1.1.5",
         "@nestjs/core": "^11.0.1",
@@ -39,6 +40,7 @@
         "@nestjs/websockets": "^11.1.5",
         "@prisma/client": "^6.12.0",
         "bcrypt": "^6.0.0",
+        "cache-manager": "^7.2.9",
         "class-transformer": "^0.5.1",
         "class-validator": "^0.14.2",
         "dotenv": "^17.2.3",

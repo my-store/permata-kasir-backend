@@ -16,9 +16,11 @@ import { JwtModule } from "@nestjs/jwt";
         JwtModule.register({
             global: true,
             secret: process.env.APP_AUTH_API_KEY,
-            signOptions: {
-                expiresIn: "1m", // 1 Menit
-            },
+
+            // Removed in 18-9-2026 | Make the token live forever until the user logout.
+            // signOptions: {
+            //     expiresIn: "1m", // 1 Menit
+            // },
         }),
     ],
     controllers: [AuthControllerV1],

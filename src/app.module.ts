@@ -8,6 +8,7 @@ import { ProdukModule } from "./produk/produk.module";
 import { DiskonModule } from "./diskon/diskon.module";
 import { MemberModule } from "./member/member.module";
 import { AuthGuardV1 } from "./auth/v1/auth.guard.v1";
+import { CacheModule } from "@nestjs/cache-manager";
 import { KasirModule } from "./kasir/kasir.module";
 import { AdminModule } from "./admin/admin.module";
 import { AuthModule } from "./auth/auth.module";
@@ -23,6 +24,9 @@ import { join } from "path";
 
 @Module({
     imports: [
+        // Cache manager | Added in 18-9-2026
+        CacheModule.register({ isGlobal: true }),
+
         // Display the React-Frontend-App in root URL: /
         ServeStaticModule.forRoot({
             rootPath: join(__dirname, "client"),
