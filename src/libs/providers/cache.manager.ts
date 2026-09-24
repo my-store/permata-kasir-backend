@@ -12,4 +12,12 @@ export class CacheManagerProvider {
     async get<T>(key: string): Promise<T | undefined> {
         return this.cacheManager.get<T>(key);
     }
+
+    async delete(key: string): Promise<boolean> {
+        return this.cacheManager.del(key);
+    }
+
+    deleteAfter(key: string, ms: number): NodeJS.Timeout {
+        return setTimeout(() => this.delete(key), ms);
+    }
 }
