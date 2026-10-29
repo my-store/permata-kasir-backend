@@ -18,7 +18,7 @@ import {
     Post,
     Get,
 } from "@nestjs/common";
-import { Public } from "src/auth/v1/auth.bypass";
+import { Public } from "src/auth/v1/auth.bypass.v1";
 
 @Controller({ version: "1", path: "monitor-toko" })
 export class MonitorTokoControllerV1 {

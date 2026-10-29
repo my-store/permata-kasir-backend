@@ -186,8 +186,10 @@ export class AuthServiceV1 {
         const restAppName: any = process.env.APP_REST_CLIENT_NAME;
         const mobileAppName: any = process.env.APP_MOBILE_CLIENT_NAME;
         const desktopAppName: any = process.env.APP_DESKTOP_CLIENT_NAME;
+        const webappAppName: any = process.env.APP_WEBAPP_CLIENT_NAME;
         const validApp: boolean =
             app_name == desktopAppName ||
+            app_name == webappAppName ||
             app_name == mobileAppName ||
             app_name == restAppName;
 

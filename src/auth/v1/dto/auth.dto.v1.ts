@@ -1,14 +1,14 @@
 import { IsNotEmpty } from "class-validator";
 
+export class AuthLoginDataDataDtoV1 {
+    tlp: string;
+    password: string;
+    app_name: string;
+}
+
 export class AuthLoginDtoV1 {
     @IsNotEmpty()
-    tlp: string;
-
-    @IsNotEmpty()
-    password: string;
-
-    @IsNotEmpty()
-    app_name: string;
+    data: string;
 }
 
 export class AuthRefreshDtoV1 {

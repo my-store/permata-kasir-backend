@@ -3,9 +3,9 @@ import { KasirServiceV1 } from "src/kasir/v1/kasir.service.v1";
 import { AdminServiceV1 } from "src/admin/v1/admin.service.v1";
 import { FileInterceptor } from "@nestjs/platform-express";
 import { CreateUserDtoV1 } from "./dto/create.user.v1.dto";
+import { Public } from "src/auth/v1/auth.bypass.v1";
 import { encryptPassword } from "src/libs/bcrypt";
 import { UserServiceV1 } from "./user.service.v1";
-import { Public } from "src/auth/v1/auth.bypass";
 import { ParseUrlQuery } from "src/libs/string";
 import { User } from "models";
 import {

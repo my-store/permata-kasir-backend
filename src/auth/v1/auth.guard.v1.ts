@@ -1,4 +1,4 @@
-import { IS_PUBLIC_KEY } from "./auth.bypass";
+import { IS_PUBLIC_KEY } from "./auth.bypass.v1";
 import { Reflector } from "@nestjs/core";
 import { JwtService } from "@nestjs/jwt";
 import { Request } from "express";

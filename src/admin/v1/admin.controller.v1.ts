@@ -4,7 +4,7 @@ import { UserServiceV1 } from "src/user/v1/user.service.v1";
 import { FileInterceptor } from "@nestjs/platform-express";
 import { AdminServiceV1 } from "./admin.service.v1";
 import { encryptPassword } from "src/libs/bcrypt";
-import { Public } from "src/auth/v1/auth.bypass";
+import { Public } from "src/auth/v1/auth.bypass.v1";
 import { ParseUrlQuery } from "src/libs/string";
 import { Admin } from "models/client";
 import {
