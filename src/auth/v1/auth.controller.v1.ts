@@ -26,19 +26,28 @@ export class AuthControllerV1 {
         return Buffer.from(data, "hex").toString();
     }
 
-    decryptPayload(loginData: any): AuthLoginDataDataDtoV1 {
-        // Return encripted data value, for testing only
-        // return Buffer.from(JSON.stringify(loginData), "utf-8").toString("hex");
+    reverse(data: string): string {
+        return data.split("").reverse().join("");
+    }
 
+    decryptPayload(loginData: any): AuthLoginDataDataDtoV1 {
+        /*
+        |   -----------------------------------------
+        |   DECRYPTION
+        |   -----------------------------------------
+        |   1. Reverse the hex
+        |   2. Convert from hex to base64
+        |   3. Reverse the base64
+        |   4. Convert from base64 to utf-8
+        |   -----------------------------------------
+        |   Catatan:
+        |   Login data adalah string "hex" yang telah dibalik/ reverse
+        */
         let data: any;
         try {
-            const decryptedHex: string = this.decryptHex(loginData);
-            const decryptedB64: string = this.decryptB64(decryptedHex);
-            const reversedDecrypted: string = decryptedB64
-                .split("")
-                .reverse()
-                .join("");
-            data = JSON.parse(reversedDecrypted);
+            const _hex: string = this.decryptHex(this.reverse(loginData));
+            const _b64: string = this.decryptB64(this.reverse(_hex));
+            data = JSON.parse(_b64);
         } catch (error) {
             throw new UnauthorizedException();
         }
